@@ -1,0 +1,12 @@
+.venv/
+.git/
+__pycache__/
+.pytest_cache/
+*.pyc
+.DS_Store
+.env
+credentials.json
+agent-transcripts/
+*.md
+!README.md
+!docs/CLOUD_RUN.md

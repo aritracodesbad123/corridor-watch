@@ -5,29 +5,57 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Corridor Watch — Investigation Console</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --ink:#0F1419; --panel:#171C24; --panel2:#1C2430; --line:#2A3344;
-    --text:#E8ECF1; --muted:#8B95A8; --teal:#3FA796; --teal-dim:#1A3D38;
-    --amber:#E0A04A; --amber-dim:#4A3A1F; --red:#D36B55; --red-dim:#3A221C;
-    --green:#5BAF7A;
+    --ink:#F8FAFC; --panel:#FFFFFF; --panel2:#F1F5F9; --line:#E2E8F0;
+    --text:#0F172A; --muted:#64748B; --teal:#2563EB; --teal-dim:#EFF6FF;
+    --amber:#D97706; --amber-dim:#FEF3C7; --red:#DC2626; --red-dim:#FEE2E2;
+    --green:#059669; --navy:#07111F;
   }
   *{box-sizing:border-box}
-  body{margin:0;background:var(--ink);color:var(--text);font-family:'Source Sans 3',sans-serif;font-size:13.5px}
-  header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:#12171F}
-  header h1{font-size:16px;font-weight:700;margin:0;letter-spacing:.3px}
-  header .tag{color:var(--muted);font-size:11.5px;font-family:'IBM Plex Mono',monospace}
-  header .meta{display:flex;gap:10px;align-items:center}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:Inter,system-ui,sans-serif;font-size:13.5px}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 22px;border-bottom:1px solid var(--line);background:#fff;min-height:64px}
+  .topbar h1{font-size:16px;font-weight:700;margin:0;letter-spacing:.3px}
+  .topbar .tag{color:var(--muted);font-size:11.5px}
+  .topbar .meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .view-nav{display:flex;gap:0;margin-left:18px}
+  .view-nav button{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:0;padding:6px 10px;font-size:11.5px}
+  .view-nav button:first-child{border-radius:4px 0 0 4px}
+  .view-nav button:last-child{border-radius:0 4px 4px 0}
+  .view-nav button.on{background:var(--teal-dim);color:var(--teal);border-color:var(--teal)}
+  .ev-chip{display:inline-flex;align-items:center;gap:6px;margin:4px 6px 4px 0;padding:3px 8px;border:1px solid var(--teal);border-radius:4px;background:var(--teal-dim);color:var(--teal);font-family:'IBM Plex Mono',monospace;font-size:11px;cursor:pointer}
+  .ev-chip:hover{filter:brightness(1.15)}
+  .ev-card{border:1px solid var(--line);border-radius:6px;padding:8px 10px;margin:6px 0;background:var(--panel2)}
+  .ev-card.on{border-color:var(--teal);box-shadow:inset 0 0 0 1px var(--teal)}
+  .workflow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .wf-step{flex:1;min-width:110px;padding:8px;border:1px solid var(--line);border-radius:5px;text-align:center;color:var(--muted);font-size:11px}
+  .wf-step.on{border-color:var(--teal);color:var(--teal);background:var(--teal-dim)}
+  .wf-step.done{border-color:var(--green);color:var(--green)}
+  .dna-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px}
+  .dna-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
+  .row.showcase{background:#ECFDF5}
+  .row.showcase .pat{color:var(--teal)}
+  .app-view{display:none;flex:1;min-height:0;overflow:auto}
+  .app-view.on{display:block}
+  .app-view.layout{display:none}
+  .app-view.layout.on{display:grid}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:18px 22px}
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px}
+  .stat .n{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700}
+  .wide-table{width:100%;border-collapse:collapse;font-size:12px}
+  .wide-table th,.wide-table td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left}
+  .wide-table th{color:var(--muted);font-size:11px;text-transform:uppercase}
+  .pad{padding:18px 22px}
   .chip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:4px;color:var(--muted)}
   .chip.on{border-color:var(--teal);color:var(--teal)}
-  .layout{display:grid;grid-template-columns:340px 1fr 320px;height:calc(100vh - 49px)}
-  .queue,.side{border-right:1px solid var(--line);overflow-y:auto;background:#12171F}
+  .layout{display:grid;grid-template-columns:320px 1fr 300px;height:calc(100vh - 64px)}
+  .queue,.side{border-right:1px solid var(--line);overflow-y:auto;background:#fff}
   .side{border-right:none;border-left:1px solid var(--line)}
   .section-h{padding:10px 14px;color:var(--muted);font-size:11px;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
   .row{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer}
-  .row:hover{background:#1A222E}
-  .row.active{background:#1A2A33;border-left:3px solid var(--teal);padding-left:11px}
+  .row:hover{background:#F8FAFC}
+  .row.active{background:var(--teal-dim);border-left:3px solid var(--teal);padding-left:11px}
   .risk-bar{width:32px;height:32px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;flex-shrink:0}
   .risk-hi{background:var(--red-dim);color:var(--red)}
   .risk-mid{background:var(--amber-dim);color:var(--amber)}
@@ -46,13 +74,13 @@
   .node .age{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.35}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
   .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
   .card h3{margin:0 0 8px;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.3px;text-transform:uppercase}
   .kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:2px 0}
   .kv span:last-child{font-family:'IBM Plex Mono',monospace;color:var(--text);text-align:right}
-  button,.btn{background:var(--teal);color:#06201C;border:none;padding:9px 14px;border-radius:5px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit}
-  button.secondary{background:transparent;color:var(--text);border:1px solid var(--line)}
-  button:disabled{background:#2A3344;color:var(--muted);cursor:wait}
+  button,.btn{background:var(--teal);color:#fff;border:none;padding:9px 14px;border-radius:8px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit}
+  button.secondary{background:#fff;color:var(--text);border:1px solid var(--line)}
+  button:disabled{background:#E2E8F0;color:var(--muted);cursor:wait}
   button.danger{background:var(--red-dim);color:var(--red);border:1px solid #5A3228}
   .btn-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
   .verdict{margin-top:12px;padding:14px;border-radius:6px;border:1px solid var(--line);background:var(--panel)}
@@ -67,18 +95,18 @@
   .viz-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-top:6px}
   .viz-legend span{display:inline-flex;align-items:center;gap:6px}
   .viz-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
-  .flow-label{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#C9D0DC}
+  .flow-label{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#475569}
   @keyframes dashflow{to{stroke-dashoffset:-24}}
   .edge-flow{stroke-dasharray:6 6;animation:dashflow 1s linear infinite}
   .edge-flow-hi{stroke-dasharray:8 6;animation:dashflow .7s linear infinite}
-  .map-ocean{fill:#141C28}
-  .map-land{fill:#1E2A3A;stroke:#2F3D52;stroke-width:0.6}
+  .map-ocean{fill:#F8FAFC}
+  .map-land{fill:#E2E8F0;stroke:#CBD5E1;stroke-width:0.6}
   .dag{display:flex;flex-direction:column;gap:4px;max-height:280px;overflow:auto}
-  .dag-step{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;padding:4px 0;border-bottom:1px solid #222A38}
+  .dag-step{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;padding:4px 0;border-bottom:1px solid var(--line)}
   .dag-n{font-family:'IBM Plex Mono',monospace;color:var(--teal);width:18px;flex-shrink:0}
-  .bar{height:6px;background:#243041;border-radius:3px;overflow:hidden;margin-top:4px}
+  .bar{height:6px;background:#E2E8F0;border-radius:3px;overflow:hidden;margin-top:4px}
   .bar>i{display:block;height:100%;background:var(--amber)}
-  textarea,select,input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:8px;font-family:inherit;font-size:12.5px}
+  textarea,select,input[type=text],input[type=file]{width:100%;background:#fff;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-family:inherit;font-size:12.5px}
   .audit{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);max-height:200px;overflow:auto;line-height:1.45}
   .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin:0 -22px 14px;padding:0 22px}
   .tab{padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent}
@@ -89,9 +117,9 @@
   ul.tight{margin:6px 0;padding-left:16px} ul.tight li{margin:4px 0}
   .flow-node{cursor:pointer}
   .flow-node:hover rect{stroke-width:2.5;filter:brightness(1.15)}
-  .node-tooltip{position:fixed;pointer-events:none;background:#0B0F14;border:1px solid var(--line);
-    border-radius:6px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:11px;
-    color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:1000;max-width:260px;
+  .node-tooltip{position:fixed;pointer-events:none;background:#fff;border:1px solid var(--line);
+    border-radius:8px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+    color:var(--text);box-shadow:0 8px 24px rgba(15,23,42,.12);z-index:1000;max-width:260px;
     display:none;line-height:1.5}
   .node-tooltip .tt-title{font-weight:700;color:var(--teal);margin-bottom:5px;font-size:12px}
   .node-tooltip .tt-row{display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
@@ -100,37 +128,365 @@
     .layout{grid-template-columns:280px 1fr}
     .side{display:none}
   }
+  .queue-tools{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);background:#fff}
+  .queue-tools select{width:auto;flex:1;padding:5px 6px;font-size:11px}
+  body.locked .app-shell{display:none}
+  .login-mask{
+    position:fixed;inset:0;z-index:2000;display:grid;grid-template-columns:1fr 1fr;
+    font-family:Inter,system-ui,sans-serif;color:#0F172A;
+  }
+  .login-hero{
+    position:relative;overflow:hidden;color:#fff;
+    background:#050B18 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 800'%3E%3Cdefs%3E%3CradialGradient id='g' cx='70%25' cy='60%25' r='55%25'%3E%3Cstop offset='0' stop-color='%230a2a6a' stop-opacity='.55'/%3E%3Cstop offset='1' stop-color='%23050B18' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='1200' height='800' fill='%23050B18'/%3E%3Crect width='1200' height='800' fill='url(%23g)'/%3E%3C/svg%3E") center/cover;
+  }
+  .login-hero:after{
+    content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(5,11,24,.18),rgba(5,11,24,.55) 70%,rgba(5,11,24,.82));
+  }
+  .login-hero-inner{position:relative;z-index:1;height:100%;padding:56px 64px 48px;display:flex;flex-direction:column}
+  .login-brand{display:flex;align-items:center;gap:14px}
+  .login-mark{width:42px;height:42px;flex-shrink:0}
+  .login-brand-name{font-size:28px;font-weight:800;letter-spacing:.08em;line-height:1}
+  .login-brand-tag{margin-top:6px;color:#93C5FD;font-size:13px;font-weight:500}
+  .login-hero h2{margin:64px 0 16px;font-size:42px;line-height:1.15;font-weight:800;letter-spacing:-.03em;max-width:520px}
+  .login-hero p.lead{margin:0 0 36px;max-width:500px;color:#CBD5E1;font-size:16px;line-height:1.6}
+  .login-features{display:flex;flex-direction:column;gap:22px;margin-top:auto;padding-bottom:8px}
+  .login-feature{display:flex;gap:14px;align-items:flex-start}
+  .login-ico{width:36px;height:36px;border-radius:10px;background:rgba(37,99,235,.16);border:1px solid rgba(96,165,250,.28);display:grid;place-items:center;flex-shrink:0}
+  .login-feature b{display:block;font-size:15px;font-weight:700;margin-bottom:3px}
+  .login-feature span{color:#94A3B8;font-size:13.5px;line-height:1.45}
+  .login-globe{position:absolute;right:-8%;bottom:-6%;width:78%;max-width:720px;opacity:.95;pointer-events:none;z-index:0}
+  .login-panel{background:#F8FAFC;display:flex;align-items:center;justify-content:center;padding:40px 24px}
+  .login-card{width:min(420px,100%);background:transparent;border:0;padding:0}
+  .login-card-logo{display:flex;flex-direction:column;align-items:center;text-align:center;margin-bottom:28px}
+  .login-card-logo .login-mark{width:52px;height:52px;margin-bottom:14px}
+  .login-card-logo .nm{font-size:22px;font-weight:800;letter-spacing:.08em;color:#0B1220}
+  .login-card h2{margin:0 0 6px;font-size:28px;font-weight:700;letter-spacing:-.03em;color:#0B1220;text-align:center}
+  .login-card .sub{margin:0 0 28px;text-align:center;color:#64748B;font-size:14px}
+  .login-field{margin-bottom:16px}
+  .login-field label{display:block;font-size:13px;font-weight:600;color:#334155;margin-bottom:8px}
+  .login-field .box{position:relative}
+  .login-field .box svg.ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94A3B8}
+  .login-mask input[type=text],
+  .login-mask input[type=password],
+  .login-mask select{
+    width:100%;background:#fff;border:1px solid #E2E8F0;color:#0F172A;
+    border-radius:10px;padding:12px 14px 12px 40px;font-family:Inter,sans-serif;font-size:14px;
+    outline:none;box-shadow:0 1px 2px rgba(15,23,42,.04);
+  }
+  .login-mask input:focus, .login-mask select:focus{border-color:#2563EB;box-shadow:0 0 0 4px rgba(37,99,235,.12)}
+  .login-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:#94A3B8;padding:4px;cursor:pointer}
+  .login-submit{
+    width:100%;margin-top:8px;background:#2563EB;color:#fff;border:0;border-radius:10px;
+    padding:13px 16px;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  }
+  .login-submit:hover{filter:brightness(1.05)}
+  .login-or{display:flex;align-items:center;gap:12px;margin:22px 0 16px;color:#94A3B8;font-size:11px;font-weight:700;letter-spacing:.12em}
+  .login-or:before,.login-or:after{content:"";flex:1;height:1px;background:#E2E8F0}
+  .login-secure{margin-top:22px;text-align:center;color:#94A3B8;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px}
+  .login-error{margin-top:12px;color:#DC2626;font-size:13px;min-height:18px;text-align:center}
+  @media (max-width:900px){
+    .login-mask{grid-template-columns:1fr}
+    .login-hero{min-height:42vh}
+    .login-hero h2{margin-top:28px;font-size:32px}
+    .login-globe{width:70%;right:-10%;bottom:-20%}
+    .login-hero-inner{padding:28px 24px}
+  }
+  .app-shell{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+  .sidenav{background:var(--navy);color:#E2E8F0;display:flex;flex-direction:column;padding:18px 14px}
+  .sidenav-brand{display:flex;gap:10px;align-items:center;padding:6px 8px 22px}
+  .sidenav-brand b{display:block;font-size:12px;letter-spacing:.08em}
+  .sidenav-brand span{display:block;color:#7DD3FC;font-size:10px;margin-top:2px}
+  .sidenav .view-nav{display:flex;flex-direction:column;gap:6px;margin:0}
+  .sidenav .view-nav button{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:0;border-radius:10px;
+    background:transparent;color:#94A3B8;padding:10px 12px;font-size:13px;font-weight:600;
+  }
+  .sidenav .view-nav button.on{background:#2563EB;color:#fff}
+  .sidenav .view-nav button:hover{background:rgba(255,255,255,.06);color:#fff}
+  .sidenav-foot{margin-top:auto;padding:10px 12px;border-radius:10px;background:#0B1B33;color:#86EFAC;font-size:12px}
+  .sidenav-foot .ver{color:#64748B;margin-top:6px;font-size:11px}
+  .app-main{display:flex;flex-direction:column;min-width:0;background:var(--ink)}
+  .top-search{flex:1;max-width:520px;position:relative}
+  .top-search input{padding-left:36px;background:#F8FAFC}
+  .top-search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94A3B8}
+  .user-pill{display:flex;align-items:center;gap:8px;color:var(--text);font-size:12px}
+  .user-av{width:28px;height:28px;border-radius:50%;background:#0F172A;color:#fff;display:grid;place-items:center;font-size:11px;font-weight:700}
+  .page-head{padding:22px 24px 8px}
+  .page-head h2{margin:0;font-size:24px;letter-spacing:-.03em}
+  .page-head p{margin:6px 0 0;color:var(--muted)}
+  .explorer-filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:8px 24px 16px}
+  .explorer-filters select,.explorer-filters input{width:auto;min-width:150px}
+  .explorer-grid{display:grid;grid-template-columns:1fr 320px;gap:14px;padding:0 24px}
+  .explorer-bottom{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;padding:14px 24px 24px}
+  .graph-card{min-height:420px;position:relative}
+  .graph-toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .seg button{border:0;border-radius:0;background:#fff;color:var(--muted);padding:6px 10px}
+  .seg button.on{background:var(--teal-dim);color:var(--teal)}
+  #explorer-graph{height:360px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  #explorer-graph svg{width:100%;height:100%}
+  .entity-k{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:12px}
+  .entity-k span:last-child{font-weight:600;text-align:right}
+  .ind{display:flex;gap:8px;align-items:flex-start;margin:8px 0;color:#B45309;font-size:12px}
+  .activity li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:12px;list-style:none}
+  .activity{margin:0;padding:0}
+  .legend-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}
+  @media (max-width:1100px){
+    .explorer-grid,.explorer-bottom{grid-template-columns:1fr}
+    .app-shell{grid-template-columns:1fr}
+    .sidenav{flex-direction:row;flex-wrap:wrap;gap:8px}
+  }
 </style>
 </head>
-<body>
-<header>
-  <div>
-    <h1>Corridor Watch</h1>
-    <div class="tag">cross-border payment fraud investigation — synthetic data</div>
+<body class="locked">
+<div class="login-mask" id="login-mask">
+  <section class="login-hero" aria-hidden="true">
+    <svg class="login-globe" viewBox="0 0 720 560" fill="none">
+      <defs>
+        <radialGradient id="cw-glow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#1D4ED8" stop-opacity=".35"/>
+          <stop offset="100%" stop-color="#1D4ED8" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <circle cx="390" cy="300" r="250" fill="url(#cw-glow)"/>
+      <g stroke="#3B82F6" stroke-opacity=".28" fill="none">
+        <ellipse cx="390" cy="300" rx="210" ry="210"/>
+        <ellipse cx="390" cy="300" rx="210" ry="78"/>
+        <ellipse cx="390" cy="300" rx="210" ry="140"/>
+        <ellipse cx="390" cy="300" rx="92" ry="210"/>
+        <ellipse cx="390" cy="300" rx="160" ry="210"/>
+        <path d="M180 300h420M390 90v420"/>
+      </g>
+      <g stroke="#60A5FA" stroke-width="1.4" stroke-opacity=".55" fill="none">
+        <path d="M210 250C280 160 430 150 560 230"/>
+        <path d="M240 390C330 430 500 400 580 300"/>
+        <path d="M300 180C360 260 500 280 590 210"/>
+        <path d="M200 320C290 280 420 360 540 360"/>
+      </g>
+      <g fill="#93C5FD">
+        <circle cx="210" cy="250" r="3.2"/><circle cx="300" cy="180" r="2.4"/>
+        <circle cx="390" cy="140" r="2.2"/><circle cx="500" cy="190" r="3"/>
+        <circle cx="560" cy="230" r="3.4"/><circle cx="590" cy="210" r="2.2"/>
+        <circle cx="540" cy="360" r="3"/><circle cx="470" cy="410" r="2.2"/>
+        <circle cx="330" cy="420" r="2.6"/><circle cx="240" cy="390" r="3"/>
+        <circle cx="200" cy="320" r="2.4"/><circle cx="360" cy="260" r="2.8"/>
+        <circle cx="450" cy="300" r="3.2"/><circle cx="410" cy="340" r="2.2"/>
+      </g>
+      <g fill="#60A5FA">
+        <circle cx="450" cy="300" r="7" fill="#3B82F6" fill-opacity=".25"/>
+        <circle cx="450" cy="300" r="3.6"/>
+        <circle cx="560" cy="230" r="7" fill="#3B82F6" fill-opacity=".25"/>
+        <circle cx="210" cy="250" r="7" fill="#3B82F6" fill-opacity=".25"/>
+      </g>
+    </svg>
+    <div class="login-hero-inner">
+      <div class="login-brand">
+        <svg class="login-mark" viewBox="0 0 48 48" fill="none">
+          <path d="M24 4l16 6v12c0 11.2-7.2 21.4-16 24-8.8-2.6-16-12.8-16-24V10l16-6z" stroke="#60A5FA" stroke-width="2.2" fill="rgba(37,99,235,.12)"/>
+          <circle cx="24" cy="22" r="7" stroke="#93C5FD" stroke-width="2"/>
+          <circle cx="24" cy="22" r="2.4" fill="#93C5FD"/>
+        </svg>
+        <div>
+          <div class="login-brand-name">CORRIDOR WATCH</div>
+          <div class="login-brand-tag">Smarter Investigations. Safer Financial Corridors.</div>
+        </div>
+      </div>
+      <h2>AI-Powered Financial Crime Investigation</h2>
+      <p class="lead">Detect. Investigate. Prevent. Corridor Watch combines graph analytics, generative AI and human insight to uncover complex financial crime.</p>
+      <div class="login-features">
+        <div class="login-feature">
+          <div class="login-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="1.8"><circle cx="6" cy="6" r="2.2"/><circle cx="18" cy="7" r="2.2"/><circle cx="8" cy="18" r="2.2"/><circle cx="17" cy="17" r="2.2"/><path d="M8 7.5 16 8.6M7.6 8.2 8.4 16M16.2 9l.6 6.2M10 17.2h5"/></svg>
+          </div>
+          <div><b>Graph Detection</b><span>Find hidden connections across accounts, devices and entities.</span></div>
+        </div>
+        <div class="login-feature">
+          <div class="login-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="1.8"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8L19 15z"/></svg>
+          </div>
+          <div><b>GenAI Investigation</b><span>Get AI-powered analysis, evidence and reasoning with full audit trails.</span></div>
+        </div>
+        <div class="login-feature">
+          <div class="login-ico">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#93C5FD" stroke-width="1.8"><path d="M12 3l8 3v6c0 5.2-3.4 9.8-8 11-4.6-1.2-8-5.8-8-11V6l8-3z"/></svg>
+          </div>
+          <div><b>Regulatory Ready</b><span>Support for SARs, MRM, and compliance workflows.</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="login-panel">
+    <form class="login-card" id="login-form">
+      <div class="login-card-logo">
+        <svg class="login-mark" viewBox="0 0 48 48" fill="none">
+          <path d="M24 4l16 6v12c0 11.2-7.2 21.4-16 24-8.8-2.6-16-12.8-16-24V10l16-6z" stroke="#2563EB" stroke-width="2.2"/>
+          <circle cx="24" cy="22" r="7" stroke="#2563EB" stroke-width="2"/>
+          <circle cx="24" cy="22" r="2.4" fill="#2563EB"/>
+        </svg>
+        <div class="nm">CORRIDOR WATCH</div>
+      </div>
+      <h2>Welcome back</h2>
+      <p class="sub">Sign in to continue to your investigation workspace.</p>
+      <div class="login-field">
+        <label for="login-username">Analyst ID</label>
+        <div class="box">
+          <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 19c1.4-3 4-4.5 7-4.5S17.6 16 19 19"/></svg>
+          <input id="login-username" type="text" autocomplete="username" required placeholder="Enter your analyst ID"/>
+        </div>
+      </div>
+      <div class="login-field">
+        <label for="login-password">Password</label>
+        <div class="box">
+          <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+          <input id="login-password" type="password" autocomplete="current-password" required placeholder="Enter your password"/>
+          <button type="button" class="login-eye" id="btn-toggle-password" aria-label="Show password">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="login-submit" id="btn-login">Sign In <span aria-hidden="true">→</span></button>
+      <div class="login-or">OR</div>
+      <div class="login-field">
+        <label for="login-demo-role">Demo Mode (for testing)</label>
+        <div class="box">
+          <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="3.2"/><path d="M5 19c1.4-3 4-4.5 7-4.5S17.6 16 19 19"/></svg>
+          <select id="login-demo-role">
+            <option value="">Select a role</option>
+            <option value="analyst">Compliance Analyst</option>
+            <option value="fiu_lead">FIU Team Lead</option>
+            <option value="mrm_auditor">MRM Auditor</option>
+          </select>
+        </div>
+      </div>
+      <div class="login-error" id="login-error"></div>
+      <div class="login-secure">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        Secure · Encrypted · Compliant
+      </div>
+    </form>
+  </section>
+</div>
+<div class="app-shell" id="app-shell">
+<aside class="sidenav">
+  <div class="sidenav-brand">
+    <svg width="28" height="28" viewBox="0 0 48 48" fill="none"><path d="M24 4l16 6v12c0 11.2-7.2 21.4-16 24-8.8-2.6-16-12.8-16-24V10l16-6z" stroke="#60A5FA" stroke-width="2.2"/><circle cx="24" cy="22" r="7" stroke="#93C5FD" stroke-width="2"/><circle cx="24" cy="22" r="2.4" fill="#93C5FD"/></svg>
+    <div><b>CORRIDOR WATCH</b><span>Smarter Investigations. Safer Corridors.</span></div>
+  </div>
+  <div class="view-nav">
+    <button type="button" data-view="command" id="nav-command">Home</button>
+    <button type="button" class="on" data-view="corridors" id="nav-corridors">Corridor Explorer</button>
+    <button type="button" data-view="investigate" id="nav-investigate">Investigations</button>
+    <button type="button" data-view="patterns" id="nav-patterns">Pattern DNA</button>
+  </div>
+  <div class="sidenav-foot">
+    <div id="system-chip">System online</div>
+    <div class="ver">v1.6.0</div>
+  </div>
+</aside>
+<div class="app-main">
+<header class="topbar">
+  <div class="top-search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="global-search" type="text" placeholder="Search by account, transaction, device, or identifier"/>
   </div>
   <div class="meta">
     <span class="chip" id="gemini-chip">gemini: …</span>
-    <select id="user-role" style="width:auto;padding:4px 8px;font-size:11px">
-      <option value="analyst">Role: Compliance Analyst</option>
-      <option value="fiu_lead">Role: FIU Team Lead</option>
-      <option value="mrm_auditor">Role: MRM Auditor</option>
-    </select>
+    <span class="chip" id="live-chip">stream: idle</span>
+    <button class="secondary role-fiu role-mrm" id="btn-stream-start" type="button">Start stream</button>
+    <button class="secondary role-fiu role-mrm" id="btn-stream-stop" type="button">Stop stream</button>
+    <span class="chip on" id="session-chip">signed out</span>
+    <div class="user-pill"><span class="user-av" id="user-av">CW</span><span id="user-name">Analyst</span></div>
+    <button class="secondary" id="btn-logout" type="button">Sign out</button>
     <button class="secondary" id="btn-export" type="button" disabled>Export case</button>
-    <button class="secondary" id="btn-mrm" type="button">MRM draft</button>
-    <button class="secondary" id="btn-mined-rules" type="button">Mined rules</button>
-    <button class="secondary" id="btn-redteam" type="button">Run red-team</button>
-    <button class="secondary" id="btn-redteam-reset" type="button">Reset dataset</button>
+    <button class="secondary role-mrm" id="btn-mrm" type="button">MRM draft</button>
+    <button class="secondary role-mrm" id="btn-mined-rules" type="button">Mined rules</button>
+    <button class="secondary role-mrm" id="btn-redteam" type="button">Run red-team</button>
+    <button class="secondary role-mrm" id="btn-redteam-reset" type="button">Reset dataset</button>
   </div>
 </header>
-<div class="layout">
+<div class="app-view" id="view-command">
+  <div class="page-head"><h2>Home</h2><p>Live ingest, measured scorecard, and Lotus Ring.</p></div>
+  <div class="stats" id="command-stats"></div>
+  <div class="pad">
+    <div class="grid2">
+      <div class="card"><h3>Active corridors</h3><div id="command-corridors" class="muted">Loading…</div></div>
+      <div class="card"><h3>Ingest / investigation</h3><div id="command-ingest" class="muted">Loading…</div></div>
+    </div>
+    <div class="grid2" style="margin-top:12px">
+      <div class="card"><h3>Lotus Ring</h3><div id="command-showcase" class="muted">Loading…</div></div>
+      <div class="card"><h3>Measured scorecard</h3><div id="command-scorecard" class="muted">Loading…</div></div>
+    </div>
+  </div>
+</div>
+<div class="app-view on" id="view-corridors">
+  <div class="page-head">
+    <h2>Corridor Explorer</h2>
+    <p>Explore connections, uncover hidden flows, and investigate suspicious activity across the financial corridor.</p>
+  </div>
+  <div class="explorer-filters">
+    <select id="explorer-risk"><option value="">All risk levels</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+    <input id="explorer-search" type="text" placeholder="Search entity, account, or corridor"/>
+    <button type="button" id="btn-explorer-run">Run query</button>
+  </div>
+  <div class="explorer-grid">
+    <div class="card graph-card">
+      <div class="graph-toolbar">
+        <div>
+          <b>Entity network graph</b>
+          <div class="muted">Visualize relationships and trace money flow, device links, and common attributes.</div>
+        </div>
+        <div class="seg">
+          <button type="button" class="on" id="btn-explorer-graph">Graph</button>
+          <button type="button" id="btn-explorer-table">Table</button>
+        </div>
+      </div>
+      <div id="explorer-graph"></div>
+      <div id="explorer-table-wrap" style="display:none;overflow:auto">
+        <table class="wide-table" id="corridor-table"><thead><tr>
+          <th>Corridor</th><th>Volume</th><th>Count</th><th>Suspicious</th><th>Accounts</th><th>Networks</th><th>Patterns</th><th>Risk</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+      <div class="viz-legend" style="margin-top:10px">
+        <span><i class="legend-dot" style="background:#3B82F6"></i>Account</span>
+        <span><i class="legend-dot" style="background:#F59E0B"></i>Transaction</span>
+        <span><i class="legend-dot" style="background:#8B5CF6"></i>Location</span>
+        <span><i class="legend-dot" style="background:#EF4444"></i>Risk</span>
+      </div>
+    </div>
+    <div class="card" id="explorer-entity">
+      <div class="muted">Select an entity</div>
+    </div>
+  </div>
+  <div class="explorer-bottom">
+    <div class="card"><h3>Quick insights</h3><div id="explorer-insights" class="muted">Loading…</div></div>
+    <div class="card"><h3>Recent activity</h3><ul class="activity" id="explorer-activity"></ul></div>
+    <div class="card"><h3>Investigation timeline</h3><ul class="activity" id="explorer-timeline"></ul></div>
+  </div>
+</div>
+<div class="app-view" id="view-patterns">
+  <div class="pad">
+    <h2 style="margin-top:0">Crime Pattern DNA library</h2>
+    <p class="muted">Confirmed investigations become reusable fingerprints. Coverage and match scores are measured from the ledger.</p>
+    <div id="pattern-library" class="dna-grid muted">Loading…</div>
+  </div>
+</div>
+<div class="app-view layout" id="view-investigate">
   <div class="queue">
     <div class="section-h"><span id="queue-count">Loading…</span><span id="pattern-filter-label"></span></div>
+    <div class="queue-tools">
+      <select id="queue-corridor" title="Filter by corridor"><option value="">All corridors</option></select>
+      <select id="queue-sort" title="Sort by time">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+      </select>
+    </div>
     <div id="rows"></div>
   </div>
   <div class="detail" id="detail"><div class="empty">Select a flagged transaction to open the case.</div></div>
   <div class="side" id="side">
     <div class="section-h"><span>Case tools</span></div>
-    <div class="card"><h3>Phase 2</h3>
+    <div class="card"><h3>Judgment tools</h3>
       <p class="muted" style="margin:0 0 8px;font-size:12px">Analyst-facing drafts only — never automated decisions.</p>
       <div class="btn-row" style="padding:0">
         <button class="secondary" id="side-sof" type="button" disabled>SoF check</button>
@@ -141,6 +497,8 @@
     <div class="card"><h3>Audit trail</h3><div class="audit" id="side-audit">Open a case to load audit events.</div></div>
   </div>
 </div>
+</div>
+</div>
 
 <div class="node-tooltip" id="node-tooltip"></div>
 
@@ -148,6 +506,63 @@
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
 <script>
 const API = "/api";
+let session = null;
+  function authHeaders(extra={}){
+    const headers = {...extra};
+    const token = sessionStorage.getItem("cw_token");
+    if(token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+  }
+  function can(permission){
+    return !!(session && (session.permissions||[]).includes(permission));
+  }
+  function applyRoleChrome(){
+    const role = session?.role || "";
+    document.body.classList.toggle("locked", !session);
+    if($("login-mask")) $("login-mask").style.display = session ? "none" : "grid";
+    if($("session-chip")){
+      $("session-chip").textContent = session
+        ? `${session.display_name||session.role} · ${session.analyst_id}`
+        : "signed out";
+    }
+    if($("user-name")) $("user-name").textContent = session?.display_name || session?.analyst_id || "Analyst";
+    if($("user-av")){
+      const label = session?.display_name || session?.analyst_id || "CW";
+      $("user-av").textContent = String(label).split(/\s+/).map(p=>p[0]).join("").slice(0,2).toUpperCase();
+    }
+    document.querySelectorAll(".role-fiu").forEach(el => {
+      el.style.display = role === "fiu_lead" ? "" : "none";
+    });
+    document.querySelectorAll(".role-mrm").forEach(el => {
+      el.style.display = role === "mrm_auditor" ? "" : "none";
+    });
+    document.querySelectorAll(".role-analyst").forEach(el => {
+      el.style.display = role === "analyst" ? "" : "none";
+    });
+    const stream = role === "fiu_lead" || role === "mrm_auditor";
+    if($("btn-stream-start")) $("btn-stream-start").style.display = stream ? "" : "none";
+    if($("btn-stream-stop")) $("btn-stream-stop").style.display = stream ? "" : "none";
+  }
+  function apiError(data, fallback="request failed"){
+    const detail = data && data.detail;
+    if(typeof detail === "string") return detail;
+    if(Array.isArray(detail)) return detail.map(x => x.msg || x.message || JSON.stringify(x)).join("; ");
+    if(detail && typeof detail === "object") return detail.msg || detail.message || JSON.stringify(detail);
+    return fallback;
+  }
+  async function readJson(res, fallback="request failed"){
+    const text = await res.text();
+    let data = null;
+    if(text){
+      try{ data = JSON.parse(text); }
+      catch(_e){ throw new Error(res.ok ? "invalid response" : (text.replace(/\s+/g," ").slice(0,120) || fallback)); }
+    }
+    if(!res.ok) throw new Error(apiError(data, res.statusText || fallback));
+    return data;
+  }
+  function esc(value){
+    return String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
 let alerts = [];
 let current = null;
 let currentDetail = null;
@@ -160,23 +575,45 @@ async function health(){
     const chip = $("gemini-chip");
     chip.textContent = h.gemini ? "gemini: ready" : "gemini: off (deterministic)";
     chip.classList.toggle("on", !!h.gemini);
-  }catch(e){ $("gemini-chip").textContent = "api offline"; }
+    if($("system-chip")) $("system-chip").textContent = h.ok ? "System online" : "System degraded";
+  }catch(e){
+    $("gemini-chip").textContent = "api offline";
+    if($("system-chip")) $("system-chip").textContent = "System offline";
+  }
 }
 
 function riskClass(s){ return s>=80?'risk-hi':(s>=50?'risk-mid':'risk-lo'); }
 function pillClass(l){ return (l||'').toLowerCase(); }
 
 async function loadAlerts(){
-  const res = await fetch(`${API}/alerts`);
-  alerts = await res.json();
-  $("queue-count").textContent = `${alerts.length} alerts`;
+  if(!session) return;
+  const corridor = $("queue-corridor")?.value || "";
+  const sort = $("queue-sort")?.value || "newest";
+  let allAlerts;
+  try{
+    const res = await fetch(`${API}/alerts?sort=${encodeURIComponent(sort)}`, {headers: authHeaders()});
+    allAlerts = await readJson(res, "alerts unavailable");
+  }catch(e){
+    $("queue-count").textContent = e.message || "alerts unavailable";
+    return;
+  }
+  if(!Array.isArray(allAlerts)){ $("queue-count").textContent = "alerts unavailable"; return; }
+  if($("queue-corridor")){
+    const currentVal = corridor;
+    const corridors = [...new Set(allAlerts.map(a => a.corridor).filter(Boolean))].sort();
+    $("queue-corridor").innerHTML = `<option value="">All corridors</option>` +
+      corridors.map(c=>`<option value="${esc(c)}" ${c===currentVal?"selected":""}>${esc(c)}</option>`).join("");
+  }
+  alerts = corridor ? allAlerts.filter(a => a.corridor === corridor) : allAlerts;
+  const keep = current;
+  $("queue-count").textContent = `${alerts.length} alert${alerts.length===1?"":"s"}`;
   $("rows").innerHTML = alerts.map(a => `
-    <div class="row" data-id="${a.txn_id}">
+    <div class="row ${a.txn_id===keep?'active':''} ${a.showcase?'showcase':''}" data-id="${a.txn_id}">
       <div class="risk-bar ${riskClass(a.risk_score)}">${Math.round(a.risk_score)}</div>
       <div style="min-width:0">
         <div class="row-corridor">${a.corridor} · $${Number(a.amount).toLocaleString()}</div>
         <div class="row-sub">${a.sender_id} → ${a.receiver_id}</div>
-        <div class="pat">${a.primary_pattern||''}</div>
+        <div class="pat">${a.showcase?'LOTUS RING · ':''}${a.primary_pattern||''} · ${a.workflow_state||'open'}</div>
       </div>
     </div>`).join("");
   $("rows").querySelectorAll(".row").forEach(r => r.addEventListener("click", () => openCase(r.dataset.id)));
@@ -441,7 +878,7 @@ async function openCase(txnId){
   $("side-sof").disabled = false; $("side-mem").disabled = false; $("side-out").innerHTML = "";
   $("btn-export").disabled = false;
   $("btn-export").onclick = () => window.open(`${API}/alerts/${txnId}/export`, "_blank");
-  const d = await (await fetch(`${API}/alerts/${txnId}`)).json();
+  const d = await (await fetch(`${API}/alerts/${txnId}`, {headers:authHeaders()})).json();
   currentDetail = d;
   const t = d.transaction;
   const sRisk = d.sender.risk_features||{};
@@ -458,10 +895,10 @@ async function openCase(txnId){
       <div class="tab" data-tab="docverify">Doc Verifier</div>
       <div class="tab" data-tab="whatif">What-If</div>
       <div class="tab" data-tab="sar">SAR Filing</div>
-      <div class="tab" data-tab="decision">Decision</div>
+      <div class="tab" data-tab="decision">Workflow</div>
     </div>
     <div class="panel-block on" id="tab-overview">
-      <div class="case-id">CASE ${t.txn_id} · ${t.primary_pattern||''} · scenario ${t.fraud_scenario||'—'}</div>
+      <div class="case-id">CASE ${t.txn_id} · ${t.primary_pattern||''} · ${t.workflow_state||d.workflow_state||'open'}${t.showcase?' · LOTUS RING':''}</div>
       <div class="amount">$${Number(t.amount).toLocaleString()}</div>
       <div class="muted">${t.corridor} · ${new Date(t.ts).toLocaleString()} · purpose: ${t.purpose||'—'} · SoF: ${t.source_of_funds||'—'}</div>
       <div class="flow">
@@ -564,8 +1001,14 @@ async function openCase(txnId){
     <div class="panel-block" id="tab-docverify">
       <div class="card">
         <h3>Multimodal Document Verifier</h3>
-        <p class="muted">Extracts figures & stamps from uploaded invoices/bank statements and cross-checks with database evidence.</p>
-        <div class="btn-row"><button id="btn-verify-doc" type="button">Verify Document</button></div>
+        <p class="muted">Upload the requested source-of-funds document. Figures are extracted and cross-checked against this wire. Use <b>Verify &amp; run analysis</b> to continue the rest of the investigation with that document as evidence.</p>
+        <label class="muted" for="doc-file">Requested document (PNG, JPEG, WebP, or PDF · max 8 MB)</label>
+        <input id="doc-file" type="file" accept=".png,.jpg,.jpeg,.webp,.pdf,image/png,image/jpeg,image/webp,application/pdf" style="margin-top:6px"/>
+        <div class="muted" id="doc-file-name" style="margin-top:6px">No file selected — upload a source-of-funds document for this case.</div>
+        <div class="btn-row">
+          <button id="btn-verify-doc" type="button">Verify uploaded document</button>
+          <button id="btn-verify-continue" type="button">Verify &amp; run analysis</button>
+        </div>
         <div id="docverify-slot" style="margin-top:12px"></div>
       </div>
     </div>
@@ -600,15 +1043,25 @@ async function openCase(txnId){
     </div>
     <div class="panel-block" id="tab-decision">
       <div class="card">
-        <h3>Analyst decision</h3>
-        <p class="muted">Records override / disposition and writes to institutional case memory.</p>
+        <h3>Case workflow</h3>
+        <p class="muted">Analyst review → FIU lead action → MRM audit close. High-risk dispositions require FIU lead.</p>
+        <div class="workflow" id="workflow-steps"></div>
+        <div class="btn-row">
+          <button class="secondary" id="btn-wf-review" type="button">Start analyst review</button>
+          <button class="secondary" id="btn-wf-refer" type="button">Send to FIU lead</button>
+          <button class="secondary role-fiu" id="btn-wf-escalate" type="button">Take over (FIU)</button>
+          <button class="secondary role-fiu" id="btn-wf-close" type="button">Close case</button>
+          <button class="secondary role-mrm" id="btn-wf-audit" type="button">MRM audit acknowledge</button>
+        </div>
+        <div id="workflow-out" class="muted"></div>
+      </div>
+      <div class="card" style="margin-top:12px" id="disposition-card">
+        <h3>Disposition</h3>
+        <p class="muted">Records the disposition and writes to institutional case memory.</p>
         <label class="muted">Decision</label>
         <select id="decision-select">
-          <option>clear_false_positive</option>
-          <option>request_sof_docs</option>
-          <option>hold_payment</option>
-          <option>escalate_fiu</option>
-          <option>freeze_account</option>
+          <option value="clear">clear</option>
+          <option value="monitor">monitor</option>
         </select>
         <label class="muted" style="display:block;margin-top:8px">Notes</label>
         <textarea id="decision-notes" rows="3" placeholder="Rationale for audit…"></textarea>
@@ -644,21 +1097,34 @@ async function openCase(txnId){
     slot.innerHTML = `<div class="muted">Running ${mode} investigation…</div>`;
     try{
       const res = await fetch(`${API}/alerts/${txnId}/investigate`, {
-        method:"POST", headers:{"Content-Type":"application/json"},
+        method:"POST", headers:authHeaders({"Content-Type":"application/json"}),
         body: JSON.stringify({mode, force})
       });
       const data = await res.json();
-      if(!res.ok) throw new Error(data.detail||res.statusText);
+      if(!res.ok) throw new Error(apiError(data, res.statusText));
       renderVerdict(data);
       loadAudit(txnId);
     }catch(err){
-      slot.innerHTML = `<div class="verdict high"><span class="pill high">error</span><p>${err.message}</p></div>`;
+      slot.innerHTML = `<div class="verdict high"><span class="pill high">error</span><p>${esc(err.message)}</p></div>`;
     }
   };
   $("btn-invest-auto").onclick = ()=>runInvest("auto");
   $("btn-invest-det").onclick = ()=>runInvest("deterministic");
   $("btn-invest-gem").onclick = ()=>runInvest("gemini");
 
+  const wf = d.whatif_features || {};
+  const setSlider = (id, labelId, value, digits)=>{
+    const s=$(id), lab=$(labelId);
+    if(!s || value==null || Number.isNaN(Number(value))) return;
+    const lo = Number(s.min), hi = Number(s.max);
+    const clamped = Math.min(hi, Math.max(lo, Number(value)));
+    s.value = String(clamped);
+    if(lab) lab.textContent = digits==null ? String(Math.round(clamped)) : Number(clamped).toFixed(digits);
+  };
+  setSlider("slider-age", "val-age", wf.account_age_days);
+  setSlider("slider-ptr", "val-ptr", wf.pass_through_ratio, 2);
+  setSlider("slider-hold", "val-hold", wf.avg_hold_time_minutes);
+  setSlider("slider-dev", "val-dev", wf.shared_device_count);
   ["age","ptr","hold","dev"].forEach(k=>{
     const s=$(`slider-${k}`), v=$(`val-${k}`);
     if(s&&v) s.oninput=()=>{ v.textContent=s.value; };
@@ -670,8 +1136,9 @@ async function openCase(txnId){
       const slot = $("debate-slot");
       slot.innerHTML = `<div class="muted">Running 3-agent adversarial debate (Prosecutor vs Defense vs Judge)…</div>`;
       try{
-        const res = await fetch(`${API}/alerts/${current}/debate`, {method:"POST"});
+        const res = await fetch(`${API}/alerts/${current}/debate`, {method:"POST", headers:authHeaders()});
         const data = await res.json();
+        if(!res.ok) throw new Error(apiError(data, res.statusText));
         slot.innerHTML = `
           <div class="grid2">
             <div class="card" style="border-color:var(--red-dim)">
@@ -698,35 +1165,69 @@ async function openCase(txnId){
     };
   }
 
-  if($("btn-verify-doc")){
-    $("btn-verify-doc").onclick = async ()=>{
-      if(!current) return;
-      const slot = $("docverify-slot");
-      slot.innerHTML = `<div class="muted">Inspecting document figures with Multimodal OCR & DB verification…</div>`;
-      try{
-        const res = await fetch(`${API}/alerts/${current}/verify-document`, {
-          method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({})
-        });
-        const data = await res.json();
-        const doc = data.extracted_document||{};
-        slot.innerHTML = `
-          <div class="verdict ${data.verification_status==='VERIFIED_MATCH'?'low':'high'}">
-            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-              <span class="pill ${data.verification_status==='VERIFIED_MATCH'?'low':'high'}">${data.verification_status}</span>
-              <span class="case-id">Doc: ${doc.document_type||'Statement'} · Issuer: ${doc.issuer_name||'N/A'}</span>
-            </div>
-            <p>${data.verification_note}</p>
-            <div class="kv"><span>Wire Amount:</span><span>$${data.transaction_amount?.toLocaleString()}</span></div>
-            <div class="kv"><span>Document Amount:</span><span>$${doc.total_amount?.toLocaleString()}</span></div>
-            <div class="kv"><span>Discrepancy:</span><span>${data.discrepancy_percentage}%</span></div>
-            <div class="muted" style="margin-top:6px"><b>Authenticity Signals:</b> ${(doc.authenticity_indicators||[]).join(", ")||"Verified"}</div>
-            ${(doc.potential_red_flags||[]).length?`<div style="color:var(--red);margin-top:4px"><b>Red Flags:</b> ${doc.potential_red_flags.join(", ")}</div>`:''}
-          </div>`;
-        loadAudit(current);
-      }catch(e){ slot.innerHTML = `<div class="muted" style="color:var(--red)">Doc verification failed: ${e.message}</div>`; }
+  const renderDocResult = (data)=>{
+    const doc = data.extracted_document||{};
+    const ok = data.verification_status==='VERIFIED_MATCH';
+    const source = data.used_upload
+      ? `Uploaded file: ${data.filename||'document'}`
+        : "No document uploaded";
+    return `
+      <div class="verdict ${ok?'low':'high'}">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+          <span class="pill ${ok?'low':'high'}">${esc(data.verification_status||'UNVERIFIED')}</span>
+          <span class="case-id">${esc(doc.document_type||'Statement')} · ${esc(doc.issuer_name||'N/A')}</span>
+        </div>
+        <p>${esc(data.verification_note||'')}</p>
+        <div class="kv"><span>Source</span><span>${esc(source)}</span></div>
+        <div class="kv"><span>Wire Amount:</span><span>$${(data.transaction_amount||0).toLocaleString()}</span></div>
+        <div class="kv"><span>Document Amount:</span><span>$${(doc.total_amount||0).toLocaleString()}</span></div>
+        <div class="kv"><span>Discrepancy:</span><span>${data.discrepancy_percentage??'—'}%</span></div>
+        <div class="muted" style="margin-top:6px"><b>Authenticity Signals:</b> ${esc((doc.authenticity_indicators||[]).join(", ")||"None")}</div>
+        ${(doc.potential_red_flags||[]).length?`<div style="color:var(--red);margin-top:4px"><b>Red Flags:</b> ${esc(doc.potential_red_flags.join(", "))}</div>`:''}
+        ${data.vision_error?`<div class="muted" style="margin-top:6px">Vision note: ${esc(data.vision_error)}</div>`:''}
+      </div>`;
+  };
+
+  const runDocVerify = async (continueAnalysis)=>{
+    if(!current) return;
+    const slot = $("docverify-slot");
+    const file = $("doc-file")?.files?.[0];
+    slot.innerHTML = `<div class="muted">${file ? "Reading uploaded document and cross-checking the wire…" : "No file selected — running verification against the case record…"}</div>`;
+    try{
+      const form = new FormData();
+      if(file) form.append("file", file);
+      if(continueAnalysis) form.append("continue_analysis", "true");
+      const res = await fetch(`${API}/alerts/${current}/verify-document`, {
+        method:"POST",
+        headers:authHeaders(),
+        body: form
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(apiError(data, res.statusText));
+      let html = renderDocResult(data);
+      if(data.investigation_error){
+        html += `<div class="verdict high" style="margin-top:10px"><span class="pill high">analysis error</span><p>${esc(data.investigation_error)}</p></div>`;
+      } else if(data.investigation){
+        html += `<div class="muted" style="margin:12px 0 0">Document stored. Continuing the rest of the investigation with this evidence.</div>`;
+        renderVerdict(data.investigation);
+      }
+      slot.innerHTML = html;
+      loadAudit(current);
+    }catch(e){
+      slot.innerHTML = `<div class="muted" style="color:var(--red)">Doc verification failed: ${esc(e.message)}</div>`;
+    }
+  };
+
+  if($("doc-file") && $("doc-file-name")){
+    $("doc-file").onchange = ()=>{
+      const file = $("doc-file").files?.[0];
+      $("doc-file-name").textContent = file
+        ? `${file.name} · ${(file.size/1024).toFixed(1)} KB`
+        : "No file selected — upload a source-of-funds document for this case.";
     };
   }
+  if($("btn-verify-doc")) $("btn-verify-doc").onclick = ()=>runDocVerify(false);
+  if($("btn-verify-continue")) $("btn-verify-continue").onclick = ()=>runDocVerify(true);
 
   if($("btn-run-whatif")){
     $("btn-run-whatif").onclick = async ()=>{
@@ -741,14 +1242,15 @@ async function openCase(txnId){
           shared_device_count: parseInt($("slider-dev").value)
         };
         const res = await fetch(`${API}/alerts/${current}/counterfactual`, {
-          method:"POST", headers:{"Content-Type":"application/json"},
+          method:"POST", headers:authHeaders({"Content-Type":"application/json"}),
           body: JSON.stringify(body)
         });
         const data = await res.json();
+        if(!res.ok) throw new Error(apiError(data, res.statusText));
         slot.innerHTML = `
           <div class="grid2">
-            <div class="card"><h3>Baseline Score</h3><div class="amount">${data.baseline.risk_score}</div><div class="muted">Pattern: ${data.baseline.primary_pattern}</div></div>
-            <div class="card"><h3>Perturbed Score</h3><div class="amount" style="color:${data.score_delta<0?'var(--teal)':'var(--red)'}">${data.counterfactual.risk_score} (${data.score_delta > 0 ? '+' : ''}${data.score_delta})</div><div class="muted">Pattern: ${data.counterfactual.primary_pattern}</div></div>
+            <div class="card"><h3>Baseline Score</h3><div class="amount">${data.baseline.risk_score}</div><div class="muted">Pattern: ${esc(data.baseline.primary_pattern||"")} · ${esc(data.feature_source||"model")}</div>${data.case_risk_score!=null?`<div class="muted">Case screen score: ${data.case_risk_score}</div>`:""}</div>
+            <div class="card"><h3>Perturbed Score</h3><div class="amount" style="color:${data.score_delta<0?'var(--teal)':'var(--red)'}">${data.counterfactual.risk_score} (${data.score_delta > 0 ? '+' : ''}${data.score_delta})</div><div class="muted">Pattern: ${esc(data.counterfactual.primary_pattern||"")}</div></div>
           </div>
           <div class="card" style="margin-top:10px"><h3>Feature Sensitivity Ranking</h3>
             ${(data.sensitivity_rankings||[]).map(s=>`
@@ -767,8 +1269,9 @@ async function openCase(txnId){
       const jur = $("sar-jurisdiction").value;
       slot.innerHTML = `<div class="muted">Drafting ${jur.toUpperCase()} regulatory narrative…</div>`;
       try{
-        const res = await fetch(`${API}/alerts/${current}/sar?jurisdiction=${jur}`);
+        const res = await fetch(`${API}/alerts/${current}/sar?jurisdiction=${jur}`, {headers:authHeaders()});
         const data = await res.json();
+        if(!res.ok) throw new Error(apiError(data, res.statusText));
         slot.innerHTML = `
           <div class="verdict low">
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
@@ -785,24 +1288,69 @@ async function openCase(txnId){
   if(d.cached_verdict){
     renderVerdict({verdict:d.cached_verdict, cached:true});
   }
+  renderWorkflow(d.workflow_state || t.workflow_state || "open");
+  const runWorkflow = async (action)=>{
+    const out = $("workflow-out");
+    try{
+      const res = await fetch(`${API}/alerts/${txnId}/workflow`, {
+        method:"POST", headers:authHeaders({"Content-Type":"application/json"}),
+        body: JSON.stringify({action, notes: $("decision-notes")?.value || ""})
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(apiError(data, res.statusText));
+      renderWorkflow(data.workflow_state);
+      if(out) out.textContent = `${data.action} → ${data.workflow_state}`;
+      if(data.action === "refer_fiu"){
+        if(out) out.textContent = "Sent to FIU lead. It now appears on the FIU queue.";
+      }
+      loadAudit(txnId);
+      loadAlerts();
+    }catch(e){
+      if(out) out.textContent = e.message;
+    }
+  };
+  if($("btn-wf-review")){
+    $("btn-wf-review").style.display = can("workflow:review") ? "" : "none";
+    $("btn-wf-review").onclick = ()=>runWorkflow("start_review");
+  }
+  if($("btn-wf-refer")){
+    $("btn-wf-refer").style.display = can("workflow:refer") ? "" : "none";
+    $("btn-wf-refer").onclick = ()=>runWorkflow("refer_fiu");
+  }
+  if($("btn-wf-escalate")){
+    $("btn-wf-escalate").style.display = can("workflow:escalate") ? "" : "none";
+    $("btn-wf-escalate").onclick = ()=>runWorkflow("escalate");
+  }
+  if($("btn-wf-close")){
+    $("btn-wf-close").style.display = can("workflow:close") ? "" : "none";
+    $("btn-wf-close").onclick = ()=>runWorkflow("close");
+  }
+  if($("btn-wf-audit")){
+    $("btn-wf-audit").style.display = can("workflow:audit") ? "" : "none";
+    $("btn-wf-audit").onclick = ()=>runWorkflow("audit_ack");
+  }
+  if($("disposition-card")) $("disposition-card").style.display = can("decision:write") ? "" : "none";
+  if($("decision-select") && can("decision:high_risk")){
+    ["hold_payment","escalate_fiu","freeze_account"].forEach(v=>{
+      const opt = document.createElement("option");
+      opt.value = v; opt.textContent = v;
+      $("decision-select").appendChild(opt);
+    });
+  }
+  if($("side-sof")) $("side-sof").style.display = can("sof:run") ? "" : "none";
   renderDecisions(d.analyst_decisions||[]);
-  $("btn-decide").onclick = async ()=>{
-    const role = $("user-role").value;
+  if($("btn-decide")) $("btn-decide").onclick = async ()=>{
     const body = {
       decision: $("decision-select").value,
       notes: $("decision-notes").value,
-      analyst_id: `analyst_${role}`
+      analyst_id: session?.analyst_id || ""
     };
     await fetch(`${API}/alerts/${txnId}/decision`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Analyst-ID": `analyst_${role}`,
-        "X-Analyst-Role": role
-      },
+      headers: authHeaders({"Content-Type": "application/json"}),
       body: JSON.stringify(body)
     });
-    const refreshed = await (await fetch(`${API}/alerts/${txnId}`)).json();
+    const refreshed = await (await fetch(`${API}/alerts/${txnId}`, {headers:authHeaders()})).json();
     renderDecisions(refreshed.analyst_decisions||[]);
     loadAudit(txnId);
   };
@@ -811,16 +1359,20 @@ async function openCase(txnId){
 
 function renderVerdict(data){
   const v = data.verdict||{};
+  const doc = data.document_verification;
+  const docHtml = doc ? `<div class="muted" style="margin-top:8px"><b>Document evidence:</b> ${esc(doc.verification_status||'')} — ${esc(doc.verification_note||'')}</div>` : "";
   $("verdict-slot").innerHTML = `
     <div class="verdict ${pillClass(v.risk_level)}">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-        <span class="pill ${pillClass(v.risk_level)}">${v.risk_level||'—'} · ${v.risk_score??'—'}</span>
-        <span class="case-id">${v.primary_pattern||''} · mode ${v.mode||''}${data.cached?' · cached':''}</span>
+        <span class="pill ${pillClass(v.risk_level)}">${esc(v.risk_level||'—')} · ${v.risk_score??'—'}</span>
+        <span class="case-id">${esc(v.primary_pattern||'')} · mode ${esc(v.mode||'')}${data.cached?' · cached':''}</span>
       </div>
-      <p style="line-height:1.5;margin:0 0 8px">${v.rationale||''}</p>
-      <div class="muted"><b style="color:var(--text)">Action:</b> ${v.recommended_action||'—'}</div>
-      ${v.note?`<div class="muted" style="margin-top:6px">${v.note}</div>`:''}
-    </div>`;
+      <p style="line-height:1.5;margin:0 0 8px">${esc(v.rationale||'')}</p>
+      <div class="muted"><b style="color:var(--text)">Action:</b> ${esc(v.recommended_action||'—')}</div>
+      ${v.note?`<div class="muted" style="margin-top:6px">${esc(v.note)}</div>`:''}
+      ${docHtml}
+    </div>
+    ${renderReport(data.investigation_report || v.investigation_report)}`;
   if(data.dag && data.dag.trace){
     $("dag-trace-slot").innerHTML = `<div class="card" style="margin-top:12px"><h3>DAG run ${data.dag.run_id}</h3>
       <div class="dag">${data.dag.trace.map((s,i)=>`<div class="dag-step"><div class="dag-n">${i+1}</div>
@@ -838,7 +1390,7 @@ function renderDecisions(list){
 }
 
 async function loadAudit(txnId){
-  const rows = await (await fetch(`${API}/alerts/${txnId}/audit`)).json();
+  const rows = await (await fetch(`${API}/alerts/${txnId}/audit`, {headers:authHeaders()})).json();
   $("side-audit").innerHTML = rows.slice(-40).map(r=>
     `<div>[${r.event_type}] ${r.actor} · ${new Date(r.ts).toLocaleTimeString()}</div>`
   ).join("") || "No events yet.";
@@ -849,7 +1401,7 @@ $("side-sof").onclick = async ()=>{
   $("side-out").textContent = "Running SoF check…";
   const explanation = currentDetail?.transaction?.source_of_funds || "";
   const res = await fetch(`${API}/phase2/sof/${current}`, {
-    method:"POST", headers:{"Content-Type":"application/json"},
+    method:"POST", headers:authHeaders({"Content-Type":"application/json"}),
     body: JSON.stringify({explanation, use_llm:true})
   });
   const data = await res.json();
@@ -862,14 +1414,14 @@ $("side-sof").onclick = async ()=>{
 $("side-mem").onclick = async ()=>{
   if(!current) return;
   $("side-out").textContent = "Retrieving precedents…";
-  const data = await (await fetch(`${API}/phase2/memory/${current}`)).json();
+  const data = await (await fetch(`${API}/phase2/memory/${current}`, {headers:authHeaders()})).json();
   $("side-out").innerHTML = `<p>${data.summary}</p><ul class="tight">${
     (data.precedents||[]).map(p=>`<li><b>${p.pattern}</b> (${p.similarity}) — ${p.outcome}<br><span class="muted">${p.summary}</span></li>`).join("")
   }</ul>`;
 };
 
 $("btn-mrm").onclick = async ()=>{
-  const data = await (await fetch(`${API}/phase2/mrm`)).json();
+  const data = await (await fetch(`${API}/phase2/mrm`, {headers: authHeaders()})).json();
   const w = window.open("","mrm");
   w.document.write(`<pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;padding:24px">${
     JSON.stringify(data,null,2).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))
@@ -877,7 +1429,7 @@ $("btn-mrm").onclick = async ()=>{
 };
 
 $("btn-mined-rules").onclick = async ()=>{
-  const data = await (await fetch(`${API}/phase2/rules/mine`)).json();
+  const data = await (await fetch(`${API}/phase2/rules/mine`, {headers: authHeaders()})).json();
   const w = window.open("","rules");
   w.document.write(`<pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;padding:24px">${
     JSON.stringify(data,null,2).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))
@@ -889,7 +1441,7 @@ $("btn-redteam").onclick = async ()=>{
   $("btn-redteam").disabled = true; $("btn-redteam").textContent = "Red-teaming…";
   try{
     const data = await (await fetch(`${API}/phase2/redteam`, {
-      method:"POST", headers:{"Content-Type":"application/json"},
+      method:"POST", headers:authHeaders({"Content-Type":"application/json"}),
       body: JSON.stringify({include_llm:false, max_scenarios:3})
     })).json();
     alert(`Red-team done: ${data.detected} detected / ${data.evaded} evaded of ${data.ran}`);
@@ -900,10 +1452,10 @@ $("btn-redteam").onclick = async ()=>{
 };
 
 $("btn-redteam-reset").onclick = async ()=>{
-  if(!confirm("Wipe red-team test injections and restore dataset to clean synthetic baseline?")) return;
+  if(!confirm("Wipe red-team test injections and restore the baseline ledger?")) return;
   $("btn-redteam-reset").disabled = true; $("btn-redteam-reset").textContent = "Resetting…";
   try{
-    const data = await (await fetch(`${API}/phase2/redteam/reset`, { method: "POST" })).json();
+    const data = await (await fetch(`${API}/phase2/redteam/reset`, { method: "POST", headers: authHeaders() })).json();
     alert(data.message || "Dataset reset to clean baseline.");
     await loadAlerts();
   }finally{
@@ -911,8 +1463,459 @@ $("btn-redteam-reset").onclick = async ()=>{
   }
 };
 
+function renderWorkflow(state){
+  const el = $("workflow-steps");
+  if(!el) return;
+  const order = ["open","analyst_review","referred_fiu","escalated_fiu","closed"];
+  const labels = {open:"Open", analyst_review:"Analyst review", referred_fiu:"Sent to FIU", escalated_fiu:"FIU lead", closed:"Audit closed"};
+  const idx = order.indexOf(state||"open");
+  el.innerHTML = order.map((s,i)=>{
+    const cls = s===state ? "on" : (i<idx ? "done" : "");
+    return `<div class="wf-step ${cls}">${labels[s]}</div>`;
+  }).join("");
+}
+
+function focusEvidence(id){
+  document.querySelectorAll(".ev-card").forEach(el=>el.classList.toggle("on", el.dataset.eid===id));
+  const card = document.querySelector(`.ev-card[data-eid="${CSS.escape(id)}"]`);
+  if(card) card.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function renderReport(report){
+  if(!report) return "";
+  const items = report.supporting_evidence||[];
+  const chips = items.map(e=>`<button type="button" class="ev-chip" data-eid="${esc(e.evidence_id)}">${esc(e.evidence_id)}</button>`).join("");
+  const ev = items.map(e=>`
+    <div class="ev-card" id="ev-${esc(e.evidence_id)}" data-eid="${esc(e.evidence_id)}">
+      <div class="kv"><span>${esc(e.evidence_id)} · ${esc(e.type||"")}</span><span>${Math.round((e.confidence||0)*100)}%</span></div>
+      <div>${esc(e.description||"")}</div>
+      <div class="muted">${esc(e.source||"")} · ${esc(e.source_ref||"")}</div>
+    </div>`).join("");
+  const contra = (report.contradicting_evidence||[]).map(e=>
+    `<div class="ev-card"><b>${esc(e.evidence_id)}</b> — ${esc(e.description||"")}</div>`
+  ).join("");
+  const alts = (report.alternative_explanations||[]).map(a=>`<li>${esc(a)}</li>`).join("");
+  const next = (report.recommended_next_checks||[]).map(a=>`<li>${esc(a)}</li>`).join("");
+  const html = `<div class="card" style="margin-top:12px">
+    <h3>Grounded investigation</h3>
+    <p>${esc(report.investigation_summary||"")}</p>
+    <div class="muted"><b>Hypothesis:</b> ${esc(report.risk_hypothesis||"")}</div>
+    <div class="kv"><span>confidence</span><span>${report.confidence??"—"} · ${report.gemini_used?"gemini":"deterministic"}</span></div>
+    <div class="kv"><span>recommend</span><span>${esc(report.recommended_disposition||"")}</span></div>
+    <div class="muted" style="margin-top:6px">${esc(report.uncertainty||"")}</div>
+    <h3 style="margin-top:12px">Addressable evidence</h3>
+    <div>${chips||"<span class='muted'>No evidence IDs</span>"}</div>
+    ${ev||""}
+    ${contra?`<h3>Contradicting</h3>${contra}`:""}
+    <h3>Alternative explanations</h3><ul class="tight">${alts}</ul>
+    <h3>Next checks</h3><ul class="tight">${next}</ul>
+    ${(report.matched_patterns||[]).length?`<div class="muted">DNA: ${report.matched_patterns.map(esc).join(", ")}</div>`:""}
+  </div>`;
+  queueMicrotask(()=>{
+    document.querySelectorAll(".ev-chip").forEach(btn=>{
+      btn.onclick = ()=>focusEvidence(btn.dataset.eid);
+    });
+  });
+  return html;
+}
+
+function showView(name){
+  document.querySelectorAll(".app-view").forEach(el=>el.classList.remove("on"));
+  document.querySelectorAll(".view-nav button").forEach(el=>el.classList.toggle("on", el.dataset.view===name));
+  const el = $("view-"+name);
+  if(el) el.classList.add("on");
+  if(name==="command") loadCommand(true).then(()=>loadCommand(false));
+  if(name==="corridors") loadCorridors();
+  if(name==="patterns") loadPatterns();
+}
+
+document.querySelectorAll(".view-nav button").forEach(btn=>{
+  btn.onclick = ()=>showView(btn.dataset.view);
+});
+
+async function loadCommand(light=false){
+  if(!session) return;
+  try{
+    const d = await readJson(await fetch(`${API}/command-center${light?"?light=1":""}`, {headers: authHeaders()}), "command unavailable");
+    $("command-stats").innerHTML = [
+      ["Live TPS", d.live_tps],
+      ["Ingest P95 (ms)", d.p95_ingest_ms ?? d.ingestion_latency_ms?.p95],
+      ["Pub/Sub backlog", d.pubsub_backlog],
+      ["Cloud Run instances", d.cloud_run_instances],
+    ].map(([k,v])=>`<div class="stat"><div class="muted">${k}</div><div class="n">${v==null?'—' : v}</div></div>`).join("");
+    if(!d.light && d.active_corridors){
+    $("command-corridors").innerHTML = (d.active_corridors||[]).slice(0,6).map(c=>
+      `<div class="kv"><span>${c.corridor}</span><span>${c.suspicious_count} / ${c.count} · ${c.risk}</span></div>`
+    ).join("") || "No corridor stats yet.";
+    }
+    const ing = d.ingestion||{};
+    $("command-ingest").innerHTML = `
+      <div class="kv"><span>received</span><span>${ing.transactions_received_total||0}</span></div>
+      <div class="kv"><span>processed</span><span>${ing.transactions_processed_total||0}</span></div>
+      <div class="kv"><span>duplicates</span><span>${ing.transactions_duplicate_total||0}</span></div>
+      <div class="kv"><span>ingest p95 ms</span><span>${d.p95_ingest_ms ?? d.ingestion_latency_ms?.p95 ?? 0}</span></div>
+      <div class="kv"><span>network compression</span><span>${d.suspicious_networks?.compression_ratio||0}x</span></div>
+      <div class="kv"><span>workflow</span><span>open ${d.workflow?.open||0} · review ${d.workflow?.analyst_review||0} · referred ${d.workflow?.referred_fiu||0} · FIU ${d.workflow?.escalated_fiu||0} · closed ${d.workflow?.closed||0}</span></div>
+      <div class="kv"><span>database</span><span>${esc(d.database||"sqlite")}</span></div>
+      <div class="kv"><span>environment</span><span>${esc(d.environment||"local")}${d.pubsub?.project ? " · "+esc(d.pubsub.project) : ""}</span></div>
+      <div class="kv"><span>live stream</span><span>${d.live_stream?.running ? "RUNNING" : "idle"} · ${esc(d.live_stream?.transport||"in_process")}</span></div>
+      <div class="kv"><span>stream published</span><span>${d.live_stream?.accepted||0}</span></div>
+      <div class="kv"><span>stream flagged</span><span>${d.live_stream?.queued_for_investigation||0}</span></div>
+      <div class="kv"><span>pubsub</span><span>${d.pubsub?.wired ? "WIRED · "+esc(d.pubsub.topic)+" → "+esc(d.pubsub.subscription) : (d.environment==="local" ? "local in-process — open the Cloud Run URL for live Pub/Sub" : esc(d.pubsub?.error||"not confirmed"))}</span></div>
+      <div class="muted" style="margin-top:8px">${esc(d.observability_note||"")}</div>`;
+    const show = d.showcase || {};
+    if(!d.light && $("command-showcase") && d.showcase){
+      $("command-showcase").innerHTML = `
+        <div class="kv"><span>${esc(show.title||"Lotus Ring")}</span><span>${esc(show.hero_txn_id||"")}</span></div>
+        <p>${esc(show.story||"")}</p>
+        <div class="muted">${(show.corridors||[]).join(" · ")} · ${(show.institutions||[]).length} banks</div>
+        <div class="btn-row" style="padding:8px 0 0"><button type="button" id="btn-open-lotus">Open hero case</button></div>`;
+      if($("btn-open-lotus")) $("btn-open-lotus").onclick = ()=>{
+        showView("investigate");
+        if(show.hero_txn_id) openCase(show.hero_txn_id);
+      };
+    }
+    const sc = d.scorecard || {};
+    const det = sc.detection?.metrics || {};
+    const ingestBench = sc.ingest || {};
+    const comp = sc.investigation_compression || d.suspicious_networks || {};
+    if(!d.light && $("command-scorecard") && d.scorecard){
+      $("command-scorecard").innerHTML = `
+        <div class="kv"><span>precision / recall</span><span>${det.precision??"—"} / ${det.recall??"—"}</span></div>
+        <div class="kv"><span>false-positive rate</span><span>${det.false_positive_rate??sc.false_positives?.benchmark_false_positive_rate??"—"}</span></div>
+        <div class="kv"><span>analyst clear-rate</span><span>${sc.false_positives?.analyst_clear_rate??"—"}</span></div>
+        <div class="kv"><span>compression</span><span>${comp.flagged_transactions||0} flags → ${comp.network_investigations||0} networks (${comp.compression_ratio||"—"}x)</span></div>
+        <div class="kv"><span>measured ingest TPS</span><span>${ingestBench.achieved_tps??"—"} of ${ingestBench.requested_rate??"—"} requested</span></div>
+        <div class="muted" style="margin-top:6px">${esc((ingestBench.note||sc.false_positives?.note)||"Numbers are measured, not claimed.")}</div>`;
+    }
+    applyStreamChip(d.live_stream);
+  }catch(e){
+    $("command-stats").innerHTML = `<div class="muted">${e.message}</div>`;
+  }
+}
+
+function setExplorerMode(mode){
+  const graph = mode === "graph";
+  if($("explorer-graph")) $("explorer-graph").style.display = graph ? "" : "none";
+  if($("explorer-table-wrap")) $("explorer-table-wrap").style.display = graph ? "none" : "";
+  if($("btn-explorer-graph")) $("btn-explorer-graph").classList.toggle("on", graph);
+  if($("btn-explorer-table")) $("btn-explorer-table").classList.toggle("on", !graph);
+}
+
+function renderExplorerEntity(node, net){
+  if(!$("explorer-entity")) return;
+  if(!node){
+    $("explorer-entity").innerHTML = `<div class="muted">Select a node to inspect an account, location, or risk signal.</div>`;
+    return;
+  }
+  const links = (net.edges||[]).filter(e => e.source===node.id || e.target===node.id || e.source?.id===node.id || e.target?.id===node.id);
+  const score = Number(node.risk_score||0);
+  $("explorer-entity").innerHTML = `
+    <div class="kv"><span>${esc(node.id)}</span><span class="pill ${score>=80?"high":(score>=50?"medium":"low")}">${esc(node.kind||"account")}</span></div>
+    <div class="muted" style="margin:6px 0 10px">${esc(node.name||node.country||"")}</div>
+    <div class="entity-k"><span>Account / entity</span><span>${esc(node.id)}</span></div>
+    <div class="entity-k"><span>Country</span><span>${esc(node.country||"—")}</span></div>
+    <div class="entity-k"><span>Risk score</span><span>${score||"—"} / 100</span></div>
+    <div class="entity-k"><span>Connections</span><span>${links.length}</span></div>
+    <div class="entity-k"><span>Pattern</span><span>${esc(node.pattern||"—")}</span></div>
+    <h3 style="margin-top:14px">Key indicators</h3>
+    ${node.focus ? `<div class="ind">Focal account on this corridor network</div>` : ""}
+    ${node.external ? `<div class="ind">External / unregistered counterparty</div>` : ""}
+    ${score>=75 ? `<div class="ind">High-risk score on this entity</div>` : ""}
+    <button type="button" id="btn-explorer-open" style="width:100%;margin-top:14px">View full investigation →</button>`;
+  if($("btn-explorer-open") && net.hero_txn_id){
+    $("btn-explorer-open").onclick = ()=>{ showView("investigate"); openCase(net.hero_txn_id); };
+  }
+}
+
+function renderExplorerGraph(net){
+  const el = $("explorer-graph");
+  if(!el || !window.d3){ if(el) el.innerHTML = `<div class="muted" style="padding:24px">Graph unavailable.</div>`; return; }
+  el.innerHTML = "";
+  const nodes = (net.nodes||[]).map(n => ({...n}));
+  const idset = new Set(nodes.map(n=>n.id));
+  (net.nodes||[]).forEach(n=>{
+    if(!n.country || n.country==="??") return;
+    const lid = `LOC-${n.country}`;
+    if(!idset.has(lid)){
+      nodes.push({id:lid, name:n.country, kind:"location", country:n.country, risk_score:0});
+      idset.add(lid);
+    }
+  });
+  const links = (net.edges||[]).map(e => ({
+    source: e.source, target: e.target, amount: e.amount, corridor: e.corridor, highlight: e.highlight
+  }));
+  (net.nodes||[]).forEach(n=>{
+    if(n.country && n.country!=="??") links.push({source:n.id, target:`LOC-${n.country}`, amount:0});
+  });
+  const W = el.clientWidth || 640, H = el.clientHeight || 360;
+  const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`);
+  const color = d => d.kind==="location" ? "#8B5CF6" : (Number(d.risk_score||0)>=80 ? "#EF4444" : (d.focus ? "#EF4444" : "#3B82F6"));
+  const sim = d3.forceSimulation(nodes)
+    .force("link", d3.forceLink(links).id(d=>d.id).distance(90))
+    .force("charge", d3.forceManyBody().strength(-180))
+    .force("center", d3.forceCenter(W/2, H/2));
+  const link = svg.append("g").attr("stroke","#CBD5E1").selectAll("line").data(links).enter().append("line")
+    .attr("stroke-width", d => d.highlight ? 2.2 : 1)
+    .attr("stroke", d => d.highlight ? "#F59E0B" : "#CBD5E1");
+  const node = svg.append("g").selectAll("g").data(nodes).enter().append("g").style("cursor","pointer");
+  node.append("circle").attr("r", d => d.focus ? 14 : 9).attr("fill", color);
+  node.append("text").text(d => d.id).attr("x", 12).attr("y", 4).attr("fill","#334155").attr("font-size", 10);
+  node.on("click", (_, d)=>{ renderExplorerEntity(d, net); });
+  sim.on("tick", ()=>{
+    link.attr("x1", d=>d.source.x).attr("y1", d=>d.source.y).attr("x2", d=>d.target.x).attr("y2", d=>d.target.y);
+    node.attr("transform", d => `translate(${d.x},${d.y})`);
+  });
+  const focus = nodes.find(n=>n.focus) || nodes[0];
+  renderExplorerEntity(focus, net);
+}
+
+async function loadCorridors(){
+  if(!session) return;
+  const risk = $("explorer-risk")?.value || "";
+  const q = ($("explorer-search")?.value || "").trim().toLowerCase();
+  const tb = $("corridor-table")?.querySelector("tbody");
+  let rows = [];
+  try{
+    rows = await readJson(await fetch(`${API}/corridors`, {headers: authHeaders()}), "corridors unavailable");
+  }catch(e){
+    if(tb) tb.innerHTML = `<tr><td colspan="8" class="muted">${esc(e.message)}</td></tr>`;
+    return;
+  }
+  if(risk) rows = rows.filter(c => (c.risk||"") === risk);
+  if(q) rows = rows.filter(c => `${c.corridor} ${(c.patterns||[]).join(" ")}`.toLowerCase().includes(q));
+  if(tb){
+    tb.innerHTML = rows.map(c=>`<tr>
+      <td class="row-corridor">${c.corridor}</td>
+      <td>${money(c.volume)}</td>
+      <td>${c.count}</td>
+      <td>${c.suspicious_count} (${Math.round((c.suspicious_rate||0)*100)}%)</td>
+      <td>${c.unique_accounts}</td>
+      <td>${c.network_count}</td>
+      <td>${(c.patterns||[]).join(", ")||"—"}</td>
+      <td>${c.risk}</td>
+    </tr>`).join("") || `<tr><td colspan="8" class="muted">No corridor data.</td></tr>`;
+  }
+  const high = rows.filter(c => c.risk==="high").length;
+  const volume = rows.reduce((s,c)=>s+Number(c.volume||0),0);
+  const networks = rows.reduce((s,c)=>s+Number(c.network_count||0),0);
+  if($("explorer-insights")){
+    $("explorer-insights").innerHTML = `
+      <div class="stats" style="padding:0;grid-template-columns:1fr 1fr">
+        <div class="stat"><div class="muted">High-risk corridors</div><div class="n">${high}</div></div>
+        <div class="stat"><div class="muted">Networks</div><div class="n">${networks}</div></div>
+        <div class="stat"><div class="muted">Measured volume</div><div class="n">${money(volume)}</div></div>
+        <div class="stat"><div class="muted">Corridors shown</div><div class="n">${rows.length}</div></div>
+      </div>`;
+  }
+  const recent = (alerts||[]).slice(0,6);
+  if($("explorer-activity")){
+    $("explorer-activity").innerHTML = recent.map(a=>`<li><span>${esc(a.txn_id)} · ${esc(a.corridor)}</span><span>${esc(a.primary_pattern||"")}</span></li>`).join("") || `<li class="muted">No recent alerts</li>`;
+  }
+  if($("explorer-timeline")){
+    $("explorer-timeline").innerHTML = recent.map(a=>`<li><span>${esc((a.ts||"").replace("T"," ").slice(0,16))}</span><span>${esc(a.txn_id)}</span></li>`).join("") || `<li class="muted">No timeline yet</li>`;
+  }
+  let hero = "CW-LOTUS-04";
+  const hit = (alerts||[]).find(a => a.txn_id.toLowerCase()===q || (a.sender_id||"").toLowerCase()===q || (a.receiver_id||"").toLowerCase()===q);
+  if(hit) hero = hit.txn_id;
+  else if((alerts||[]).find(a=>a.showcase)) hero = (alerts||[]).find(a=>a.showcase).txn_id;
+  try{
+    const net = await readJson(await fetch(`${API}/alerts/${encodeURIComponent(hero)}/network`, {headers: authHeaders()}), "network unavailable");
+    net.hero_txn_id = hero;
+    renderExplorerGraph(net);
+  }catch(e){
+    if($("explorer-graph")) $("explorer-graph").innerHTML = `<div class="muted" style="padding:24px">${esc(e.message)}</div>`;
+  }
+}
+
+async function loadPatterns(){
+  let rows;
+  try{
+    rows = await readJson(await fetch(`${API}/patterns`, {headers: authHeaders()}), "patterns unavailable");
+  }catch(e){
+    $("pattern-library").innerHTML = `<div class="muted">${esc(e.message)}</div>`;
+    return;
+  }
+  $("pattern-library").innerHTML = rows.map(p=>{
+    const axes = p.axes || [];
+    const bars = axes.map(a=>`
+      <div class="dna-axis"><span>${a.axis}</span><span>${a.count}</span></div>
+      <div class="bar"><i style="width:${Math.min(100, (a.count||0)*18)}%"></i></div>
+    `).join("");
+    const score = p.avg_match_score==null ? "—" : Math.round(p.avg_match_score*100)+"%";
+    return `<div class="card">
+      <div class="kv"><span>${esc(p.pattern_id)} · v${p.version}</span><span>${p.match_count||0} matches · ${p.confirmed_cases||0} confirmed</span></div>
+      <b>${esc(p.name)}</b>
+      <p class="muted">${esc(p.description||"")}</p>
+      ${bars}
+      <div class="kv"><span>signals</span><span>${p.signal_count||0}</span></div>
+      <div class="kv"><span>avg match</span><span>${score}</span></div>
+      <div class="muted">graph ${esc(p.graph_signature||"—")} · time ${esc(p.temporal_signature||"—")}</div>
+    </div>`;
+  }).join("") || "Library empty.";
+}
+
+function applyStreamChip(stream){
+  const chip = $("live-chip");
+  if(!chip) return;
+  if(stream && stream.running){
+    const mins = Math.max(0, Math.floor((stream.remaining_seconds||0)/60));
+    chip.textContent = `stream: LIVE ${mins}m · flagged ${stream.queued_for_investigation||0}`;
+    chip.classList.add("on");
+  }else{
+    chip.textContent = "stream: idle";
+    chip.classList.remove("on");
+  }
+}
+
+async function controlStream(path, body){
+  const res = await fetch(`${API}${path}`, {
+    method:"POST",
+    headers:authHeaders({"Content-Type":"application/json"}),
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  try{
+    const data = await readJson(res, res.statusText);
+    applyStreamChip(data);
+  }catch(e){
+    if(res.status===403) throw new Error(e.message + " — switch role to FIU Team Lead or MRM Auditor.");
+    throw e;
+  }
+  if(document.querySelector(".view-nav button.on")?.dataset.view === "command") await loadCommand(true);
+}
+
+if($("btn-stream-start")){
+  $("btn-stream-start").onclick = async ()=>{
+    try{
+      $("btn-stream-start").disabled = true;
+      await controlStream("/simulate/start", {rate:8, duration_seconds:3600, scenario_mix:"live", force:true});
+    }catch(e){ alert(e.message); }
+    finally{ $("btn-stream-start").disabled = false; }
+  };
+}
+if($("btn-stream-stop")){
+  $("btn-stream-stop").onclick = async ()=>{
+    try{
+      $("btn-stream-stop").disabled = true;
+      await controlStream("/simulate/stop");
+    }catch(e){ alert(e.message); }
+    finally{ $("btn-stream-stop").disabled = false; }
+  };
+}
+
+async function tickLive(){
+  if(!session) return;
+  try{
+    const view = document.querySelector(".view-nav button.on")?.dataset.view || "command";
+    if(view === "investigate") await loadAlerts();
+    if(view === "command") await loadCommand(true);
+    const s = await readJson(await fetch(`${API}/simulate`, {headers: authHeaders()}), "stream unavailable");
+    applyStreamChip(s);
+  }catch(_e){ /* keep polling */ }
+}
+
+async function bootConsole(){
+  applyRoleChrome();
+  showView("corridors");
+  await health();
+  await loadAlerts();
+  loadCommand(true);
+}
+
+async function restoreSession(){
+  try{
+    const res = await fetch(`${API}/auth/me`, {headers: authHeaders(), credentials:"same-origin"});
+    if(!res.ok) throw new Error("signed out");
+    session = await readJson(res, "signed out");
+    await bootConsole();
+  }catch(_e){
+    sessionStorage.removeItem("cw_token");
+    session = null;
+    applyRoleChrome();
+  }
+}
+
+const DEMO_ACCOUNTS = {
+  analyst: {username:"analyst", password:"change-me-analyst"},
+  fiu_lead: {username:"fiu_lead", password:"change-me-fiu"},
+  mrm_auditor: {username:"mrm_auditor", password:"change-me-mrm"},
+};
+async function signIn(username, password){
+  const err = $("login-error");
+  if(err) err.textContent = "";
+  const res = await fetch(`${API}/auth/login`, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    credentials:"same-origin",
+    body: JSON.stringify({username, password})
+  });
+  const data = await readJson(res, "sign in failed");
+  session = data;
+  if(data.token) sessionStorage.setItem("cw_token", data.token);
+  if($("login-password")) $("login-password").value = "";
+  if($("login-demo-role")) $("login-demo-role").value = "";
+  await bootConsole();
+}
+if($("login-form")){
+  $("login-form").onsubmit = async (ev)=>{
+    ev.preventDefault();
+    try{
+      await signIn($("login-username").value.trim(), $("login-password").value);
+    }catch(e){
+      if($("login-error")) $("login-error").textContent = e.message;
+    }
+  };
+}
+if($("btn-toggle-password")){
+  $("btn-toggle-password").onclick = ()=>{
+    const input = $("login-password");
+    if(!input) return;
+    input.type = input.type === "password" ? "text" : "password";
+  };
+}
+if($("login-demo-role")){
+  $("login-demo-role").onchange = async ()=>{
+    const spec = DEMO_ACCOUNTS[$("login-demo-role").value];
+    if(!spec) return;
+    try{
+      $("login-username").value = spec.username;
+      await signIn(spec.username, spec.password);
+    }catch(e){
+      if($("login-error")) $("login-error").textContent = e.message;
+    }
+  };
+}
+if($("btn-logout")){
+  $("btn-logout").onclick = async ()=>{
+    try{ await fetch(`${API}/auth/logout`, {method:"POST", headers:authHeaders(), credentials:"same-origin"}); }catch(_e){}
+    sessionStorage.removeItem("cw_token");
+    session = null;
+    applyRoleChrome();
+  };
+}
+if($("queue-corridor")) $("queue-corridor").onchange = ()=>loadAlerts();
+if($("queue-sort")) $("queue-sort").onchange = ()=>loadAlerts();
+if($("btn-explorer-graph")) $("btn-explorer-graph").onclick = ()=>setExplorerMode("graph");
+if($("btn-explorer-table")) $("btn-explorer-table").onclick = ()=>setExplorerMode("table");
+if($("btn-explorer-run")) $("btn-explorer-run").onclick = ()=>loadCorridors();
+if($("explorer-risk")) $("explorer-risk").onchange = ()=>loadCorridors();
+if($("global-search")){
+  $("global-search").addEventListener("keydown", ev=>{
+    if(ev.key!=="Enter") return;
+    const q = $("global-search").value.trim();
+    if(!q) return;
+    const hit = (alerts||[]).find(a => a.txn_id===q || a.sender_id===q || a.receiver_id===q);
+    if(hit){ showView("investigate"); openCase(hit.txn_id); }
+    else {
+      if($("explorer-search")) $("explorer-search").value = q;
+      showView("corridors");
+    }
+  });
+}
+
 health();
-loadAlerts();
+restoreSession();
+setInterval(tickLive, 4000);
 </script>
 </body>
 </html>

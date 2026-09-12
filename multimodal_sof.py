@@ -7,7 +7,6 @@ database transaction evidence.
 """
 from __future__ import annotations
 
-import base64
 import json
 from typing import Any
 
@@ -37,13 +36,74 @@ Return ONLY JSON:
 }"""
 
 
+ALLOWED_MIME = {
+    "image/png", "image/jpeg", "image/jpg", "image/webp", "application/pdf",
+}
+MAX_BYTES = 8 * 1024 * 1024
+
+
+def latest_verification(txn_id: str) -> dict[str, Any] | None:
+    from db import init_schema
+    init_schema()
+    con = connect()
+    row = con.execute(
+        "SELECT result, filename, mime_type, created_at FROM document_verifications WHERE txn_id=?",
+        (txn_id,),
+    ).fetchone()
+    con.close()
+    if not row:
+        return None
+    try:
+        data = json.loads(row["result"])
+    except (json.JSONDecodeError, TypeError):
+        return None
+    data["filename"] = row["filename"]
+    data["stored_at"] = row["created_at"]
+    return data
+
+
+def _persist(txn_id: str, filename: str | None, mime_type: str, result: dict) -> None:
+    from datetime import datetime, timezone
+    from db import init_schema, upsert
+    init_schema()
+    con = connect(row_factory=False)
+    upsert(con, "document_verifications", "txn_id", {
+        "txn_id": txn_id,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "filename": filename or "",
+        "mime_type": mime_type,
+        "result": json.dumps(result, default=str),
+    })
+    con.commit()
+    con.close()
+
+
+def _extract_with_gemini(image_bytes: bytes, mime_type: str) -> dict:
+    from google.genai import types
+    c = agent_mod.client()
+    try:
+        part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
+    except Exception:
+        part = types.Part(inline_data=types.Blob(data=image_bytes, mime_type=mime_type))
+    resp = c.models.generate_content(
+        model=agent_mod.MODEL,
+        contents=[MULTIMODAL_PROMPT, part],
+        config=types.GenerateContentConfig(temperature=0.1),
+    )
+    parsed = _safe_parse(getattr(resp, "text", None) or "")
+    if not parsed:
+        raise ValueError("Gemini returned an unreadable document extraction")
+    return _coerce_extracted(parsed)
+
+
 def verify_document(
     txn_id: str,
     image_bytes: bytes | None = None,
     mime_type: str = "image/png",
     sample_doc_name: str | None = None,
+    filename: str | None = None,
 ) -> dict[str, Any]:
-    audit.log(txn_id, "doc_verify_start", {"txn_id": txn_id, "sample": sample_doc_name}, actor="multimodal_sof")
+    audit.log(txn_id, "doc_verify_start", {"txn_id": txn_id, "sample": sample_doc_name, "filename": filename}, actor="multimodal_sof")
     con = connect()
     txn = con.execute("SELECT * FROM flagged_transactions WHERE txn_id=?", (txn_id,)).fetchone()
     if not txn:
@@ -54,28 +114,40 @@ def verify_document(
     txn = dict(txn)
     txn_amount = float(txn.get("amount") or 0)
 
-    # If image bytes provided & LLM available, use Gemini Vision
     extracted = None
-    if image_bytes and agent_mod.gemini_available():
-        try:
-            from google.genai import types
-            c = agent_mod.client()
-            b64_data = base64.b64encode(image_bytes).decode("utf-8")
-            part = types.Part.from_bytes(data=image_bytes, mime_type=mime_type)
-            resp = c.models.generate_content(
-                model=agent_mod.MODEL,
-                contents=[part, MULTIMODAL_PROMPT],
-                config=types.GenerateContentConfig(temperature=0.1),
-            )
-            extracted = _safe_parse(resp.text)
-        except Exception as e:
-            audit.log(txn_id, "doc_verify_vision_error", {"error": str(e)}, actor="multimodal_sof")
+    vision_error = None
+    if image_bytes:
+        if len(image_bytes) > MAX_BYTES:
+            raise ValueError("document exceeds 8 MB limit")
+        mime_type = (mime_type or "application/octet-stream").split(";")[0].strip().lower()
+        if mime_type == "image/jpg":
+            mime_type = "image/jpeg"
+        if mime_type not in ALLOWED_MIME:
+            raise ValueError(f"unsupported document type: {mime_type}. Upload a PNG, JPEG, WebP, or PDF.")
+        if agent_mod.gemini_available():
+            try:
+                extracted = _extract_with_gemini(image_bytes, mime_type)
+            except Exception as e:
+                vision_error = str(e)
+                audit.log(txn_id, "doc_verify_vision_error", {"error": vision_error}, actor="multimodal_sof")
+        else:
+            vision_error = "GEMINI_API_KEY not available for vision extraction"
 
-    # Fallback / Simulated verification if no upload or vision error
-    if not extracted:
+    if not extracted and image_bytes:
+        extracted = {
+            "document_type": "Uploaded document",
+            "issuer_name": "unreadable",
+            "document_date": "",
+            "total_amount": 0,
+            "authenticity_indicators": [],
+            "potential_red_flags": [f"Vision extraction failed: {vision_error or 'unknown error'}"],
+            "summary": "The uploaded file was stored, but figures could not be read automatically. Analyst review required.",
+        }
+    elif not extracted:
         extracted = _simulated_document_extraction(txn, sample_doc_name)
+    extracted = _coerce_extracted(extracted)
 
-    doc_amount = float(extracted.get("total_amount") or 0)
+    doc_amount = _to_amount(extracted.get("total_amount"))
     diff = abs(doc_amount - txn_amount)
     pct_diff = (diff / txn_amount * 100) if txn_amount > 0 else 0
 
@@ -97,8 +169,13 @@ def verify_document(
         "verification_note": match_note,
         "discrepancy_percentage": round(pct_diff, 1),
         "requires_human_review": match_status != "VERIFIED_MATCH",
+        "filename": filename,
+        "mime_type": mime_type,
+        "vision_error": vision_error,
+        "used_upload": bool(image_bytes),
     }
-    audit.log(txn_id, "doc_verify_complete", {"status": match_status}, actor="multimodal_sof")
+    _persist(txn_id, filename, mime_type, result)
+    audit.log(txn_id, "doc_verify_complete", {"status": match_status, "filename": filename}, actor="multimodal_sof")
     return result
 
 
@@ -139,11 +216,41 @@ def _simulated_document_extraction(txn: dict, sample_name: str | None = None) ->
         }
 
 
+def _to_amount(value) -> float:
+    if value is None:
+        return 0.0
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).replace(",", "").replace("$", "").replace("USD", "").strip()
+    try:
+        return float(text)
+    except ValueError:
+        return 0.0
+
+
+def _coerce_extracted(extracted: dict) -> dict:
+    data = dict(extracted or {})
+    data["total_amount"] = _to_amount(data.get("total_amount"))
+    if not isinstance(data.get("authenticity_indicators"), list):
+        data["authenticity_indicators"] = []
+    if not isinstance(data.get("potential_red_flags"), list):
+        data["potential_red_flags"] = []
+    return data
+
+
 def _safe_parse(text: str) -> dict:
     if not text:
         return {}
     clean = text.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
     try:
-        return json.loads(clean)
+        data = json.loads(clean)
+        return data if isinstance(data, dict) else {}
     except json.JSONDecodeError:
+        start, end = clean.find("{"), clean.rfind("}")
+        if start >= 0 and end > start:
+            try:
+                data = json.loads(clean[start : end + 1])
+                return data if isinstance(data, dict) else {}
+            except json.JSONDecodeError:
+                return {}
         return {}

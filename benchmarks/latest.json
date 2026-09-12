@@ -1,0 +1,95 @@
+{
+  "mode": "both",
+  "detection": {
+    "status": "ok",
+    "benchmark": "synthetic_v1",
+    "ground_truth": "transactions.fraud_scenario",
+    "positive_scenarios": [
+      "mule_pass_through",
+      "multi_hop_chain",
+      "shared_device_ring",
+      "split_transaction_laundering",
+      "synthetic_identity"
+    ],
+    "sample_count": 586,
+    "metrics": {
+      "tp": 117,
+      "fp": 0,
+      "fn": 0,
+      "tn": 469,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0
+    },
+    "per_scenario": {
+      "mule_pass_through": {
+        "total": 36,
+        "flagged": 36,
+        "flag_rate": 1.0
+      },
+      "multi_hop_chain": {
+        "total": 9,
+        "flagged": 9,
+        "flag_rate": 1.0
+      },
+      "normal": {
+        "total": 469,
+        "flagged": 0,
+        "flag_rate": 0.0
+      },
+      "shared_device_ring": {
+        "total": 15,
+        "flagged": 15,
+        "flag_rate": 1.0
+      },
+      "split_transaction_laundering": {
+        "total": 36,
+        "flagged": 36,
+        "flag_rate": 1.0
+      },
+      "synthetic_identity": {
+        "total": 21,
+        "flagged": 21,
+        "flag_rate": 1.0
+      }
+    },
+    "pattern_accuracy": 0.9915,
+    "pattern_confusion": {
+      "mule_pass_through->mule_pass_through": 36,
+      "multi_hop_chain->multi_hop_chain": 8,
+      "multi_hop_chain->shared_device_ring": 1,
+      "shared_device_ring->shared_device_ring": 15,
+      "split_transaction_laundering->split_transaction_laundering": 36,
+      "synthetic_identity->synthetic_identity": 21
+    },
+    "quality_gate": {
+      "minimum_recall": 0.9,
+      "minimum_precision": 0.5,
+      "minimum_pattern_accuracy": 0.9,
+      "passed": true
+    }
+  },
+  "investigation_compression": {
+    "flagged_transactions": 117,
+    "network_investigations": 30,
+    "compression_ratio": 3.9,
+    "unit_of_work": "network_investigation",
+    "note": "Compression is measured from shared-account / queue network grouping, not a claimed industry average."
+  },
+  "ingest": {
+    "requested_rate": 5000,
+    "duration_seconds": 1,
+    "batch_size": 500,
+    "events_generated": 5000,
+    "accepted": 5000,
+    "duplicates": 0,
+    "failed": 0,
+    "queued_for_investigation": 546,
+    "elapsed_seconds": 2.615,
+    "achieved_tps": 1912.35,
+    "measured_at": "2026-09-12T22:08:14.221919+00:00",
+    "mode": "in_process",
+    "note": "achieved_tps is measured, not a marketing claim."
+  }
+}

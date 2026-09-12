@@ -4,3 +4,4 @@ __pycache__/
 fraud_demo.db
 .DS_Store
 .env
+credentials.json

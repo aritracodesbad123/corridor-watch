@@ -1,15 +1,22 @@
-"""Shared SQLite helpers and schema bootstrap."""
+"""Shared persistence helpers.
+
+Local default remains SQLite (`fraud_demo.db`). Set DATABASE_URL to a
+postgresql:// URI for Cloud SQL-compatible deployments. Application modules
+keep using `connect()` / `init_schema()` / `upsert()` — they must not import
+sqlite3 directly for new platform tables.
+"""
+from __future__ import annotations
+
+import os
 import sqlite3
+import time
 from pathlib import Path
+from typing import Any, Iterable, Sequence
+from urllib.parse import urlparse, unquote
 
-DB_PATH = Path(__file__).resolve().parent / "fraud_demo.db"
+from config import get_settings
 
-
-def connect(row_factory: bool = True) -> sqlite3.Connection:
-    con = sqlite3.connect(DB_PATH)
-    if row_factory:
-        con.row_factory = sqlite3.Row
-    return con
+DB_PATH = Path(os.getenv("CW_DB_PATH") or (Path(__file__).resolve().parent / "fraud_demo.db"))
 
 
 SCHEMA = """
@@ -171,12 +178,517 @@ CREATE TABLE IF NOT EXISTS verdicts (
 );
 """
 
+PLATFORM_SCHEMA = """
+CREATE TABLE IF NOT EXISTS banks (
+    bank_id TEXT PRIMARY KEY,
+    name TEXT,
+    country TEXT,
+    institution_type TEXT
+);
 
-def init_schema(con: sqlite3.Connection | None = None) -> None:
+CREATE TABLE IF NOT EXISTS ingestion_events (
+    message_id TEXT PRIMARY KEY,
+    txn_id TEXT,
+    received_at TEXT,
+    source TEXT
+);
+
+CREATE TABLE IF NOT EXISTS investigation_queue (
+    queue_id TEXT PRIMARY KEY,
+    txn_id TEXT,
+    network_id TEXT,
+    risk_tier TEXT,
+    status TEXT,
+    created_at TEXT,
+    updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS investigations (
+    case_id TEXT PRIMARY KEY,
+    created_at TEXT,
+    updated_at TEXT,
+    status TEXT,
+    risk_level TEXT,
+    primary_txn_id TEXT,
+    network_id TEXT,
+    pattern_ids TEXT,
+    ai_summary TEXT,
+    ai_hypothesis TEXT,
+    confidence REAL,
+    analyst_decision TEXT,
+    assigned_role TEXT
+);
+
+CREATE TABLE IF NOT EXISTS crime_patterns (
+    pattern_id TEXT PRIMARY KEY,
+    version INTEGER,
+    name TEXT,
+    description TEXT,
+    entry_signals TEXT,
+    movement_signals TEXT,
+    relationship_signals TEXT,
+    geography_signals TEXT,
+    timing_signals TEXT,
+    exit_signals TEXT,
+    graph_signature TEXT,
+    temporal_signature TEXT,
+    corridor_signature TEXT,
+    created_at TEXT,
+    created_by TEXT,
+    active INTEGER,
+    confirmed_cases INTEGER
+);
+
+CREATE TABLE IF NOT EXISTS pattern_matches (
+    match_id TEXT PRIMARY KEY,
+    pattern_id TEXT,
+    txn_id TEXT,
+    case_id TEXT,
+    score REAL,
+    evidence TEXT,
+    created_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS document_verifications (
+    txn_id TEXT PRIMARY KEY,
+    created_at TEXT,
+    filename TEXT,
+    mime_type TEXT,
+    result TEXT
+);
+
+CREATE TABLE IF NOT EXISTS platform_benchmarks (
+    benchmark_id TEXT PRIMARY KEY,
+    created_at TEXT,
+    kind TEXT,
+    payload TEXT
+);
+"""
+
+INDEXES = [
+    "CREATE INDEX IF NOT EXISTS idx_txn_ts ON transactions(ts)",
+    "CREATE INDEX IF NOT EXISTS idx_txn_corridor ON transactions(corridor)",
+    "CREATE INDEX IF NOT EXISTS idx_txn_sender_ts ON transactions(sender_id, ts)",
+    "CREATE INDEX IF NOT EXISTS idx_txn_receiver_ts ON transactions(receiver_id, ts)",
+    "CREATE INDEX IF NOT EXISTS idx_txn_device_ts ON transactions(device_id, ts)",
+    "CREATE INDEX IF NOT EXISTS idx_txn_benef ON transactions(beneficiary_id)",
+    "CREATE INDEX IF NOT EXISTS idx_accounts_bank ON accounts(bank_id)",
+    "CREATE INDEX IF NOT EXISTS idx_flagged_risk ON flagged_transactions(risk_score)",
+    "CREATE INDEX IF NOT EXISTS idx_audit_case ON audit_log(case_id)",
+    "CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_log(ts)",
+    "CREATE INDEX IF NOT EXISTS idx_investigations_status ON investigations(status)",
+    "CREATE INDEX IF NOT EXISTS idx_queue_status ON investigation_queue(status)",
+    "CREATE INDEX IF NOT EXISTS idx_pattern_matches_txn ON pattern_matches(txn_id)",
+]
+
+ACCOUNT_COLUMNS = {
+    "customer_id": "TEXT",
+    "bank_id": "TEXT",
+    "account_type": "TEXT",
+    "risk_profile": "TEXT",
+}
+
+DEVICE_COLUMNS = {
+    "last_seen": "TEXT",
+    "country": "TEXT",
+}
+
+BENEFICIARY_COLUMNS = {
+    "bank_id": "TEXT",
+    "created_at": "TEXT",
+}
+
+TRANSACTION_COLUMNS = {
+    "origin_country": "TEXT",
+    "destination_country": "TEXT",
+    "origin_bank_id": "TEXT",
+    "destination_bank_id": "TEXT",
+    "channel": "TEXT",
+    "risk_score": "REAL",
+    "risk_tier": "TEXT",
+    "status": "TEXT",
+}
+
+AUDIT_COLUMNS = {
+    "role": "TEXT",
+    "model_version": "TEXT",
+    "pattern_version": "TEXT",
+}
+
+FLAGGED_COLUMNS = {
+    "risk_tier": "TEXT",
+    "network_id": "TEXT",
+    "workflow_state": "TEXT",
+    "showcase": "TEXT",
+}
+
+
+class CompatRow(dict):
+    """Dict that also supports integer indexing like sqlite3.Row."""
+
+    def __getitem__(self, key: Any) -> Any:
+        if isinstance(key, int):
+            return list(self.values())[key]
+        return super().__getitem__(key)
+
+
+class CompatConnection:
+    """Minimal sqlite-like facade over psycopg connections."""
+
+    def __init__(self, raw: Any, row_factory: bool = True):
+        self._raw = raw
+        self._row_factory = row_factory
+
+    def _adapt(self, sql: str) -> str:
+        import re
+        sql = sql.replace("?", "%s")
+        return re.sub(r"(?<!:):([A-Za-z_][A-Za-z0-9_]*)", r"%(\1)s", sql)
+
+    def execute(self, sql: str, params: Sequence[Any] | dict | None = None):
+        cur = self._raw.cursor()
+        adapted = self._adapt(sql)
+        if isinstance(params, dict):
+            cur.execute(adapted, params)
+        else:
+            cur.execute(adapted, tuple(params or ()))
+        return _PgCursor(cur, self._row_factory)
+
+    def executemany(self, sql: str, seq_of_params: Iterable[Sequence[Any] | dict]):
+        cur = self._raw.cursor()
+        cur.executemany(self._adapt(sql), list(seq_of_params))
+        return _PgCursor(cur, self._row_factory)
+
+    def executescript(self, script: str) -> None:
+        for stmt in script.split(";"):
+            stmt = stmt.strip()
+            if not stmt:
+                continue
+            self._raw.cursor().execute(stmt)
+
+    def commit(self) -> None:
+        self._raw.commit()
+
+    def close(self) -> None:
+        ingest = getattr(self, "_ingest_slot", False)
+        try:
+            if getattr(self, "_overflow", False):
+                try:
+                    self._raw.close()
+                finally:
+                    _pg_pool_init()
+                    with _PG_POOL["lock"]:
+                        _PG_POOL["overflow"] = max(0, int(_PG_POOL["overflow"]) - 1)
+                return
+            if getattr(self, "_pooled", False):
+                _release_postgres(self)
+                return
+            self._raw.close()
+        finally:
+            if ingest:
+                _release_ingest_slot()
+
+    def cursor(self):
+        return _PgCursor(self._raw.cursor(), self._row_factory)
+
+
+class _PgCursor:
+    def __init__(self, cur: Any, row_factory: bool):
+        self._cur = cur
+        self._row_factory = row_factory
+
+    def execute(self, sql: str, params: Sequence[Any] | dict | None = None):
+        import re
+        adapted = re.sub(r"(?<!:):([A-Za-z_][A-Za-z0-9_]*)", r"%(\1)s", sql.replace("?", "%s"))
+        if isinstance(params, dict):
+            self._cur.execute(adapted, params)
+        else:
+            self._cur.execute(adapted, tuple(params or ()))
+        return self
+
+    def executemany(self, sql: str, seq_of_params: Iterable[Sequence[Any] | dict]):
+        import re
+        adapted = re.sub(r"(?<!:):([A-Za-z_][A-Za-z0-9_]*)", r"%(\1)s", sql.replace("?", "%s"))
+        self._cur.executemany(adapted, list(seq_of_params))
+        return self
+
+    def fetchone(self):
+        row = self._cur.fetchone()
+        return _pg_row(row, self._cur) if row is not None else None
+
+    def fetchall(self):
+        rows = self._cur.fetchall()
+        return [_pg_row(r, self._cur) for r in rows]
+
+    def __iter__(self):
+        return iter(self.fetchall())
+
+    @property
+    def lastrowid(self):
+        return None
+
+    @property
+    def rowcount(self):
+        return self._cur.rowcount
+
+
+def _pg_row(row: Any, cur: Any) -> CompatRow:
+    names = [d[0] for d in cur.description]
+    if isinstance(row, dict):
+        return CompatRow(row)
+    return CompatRow(zip(names, row))
+
+
+class DatabaseBusy(RuntimeError):
+    """Raised when the Cloud SQL pool and overflow slots are exhausted."""
+
+
+_PG_POOL: dict[str, Any] = {
+    "lock": None,
+    "idle": None,
+    "size": 0,
+    "max": 8,
+    "overflow": 0,
+    "max_overflow": 4,
+    "ingest_sem": None,
+}
+_SCHEMA_READY_FOR: str | None = None
+
+
+def _db_identity() -> str:
+    settings = get_settings()
+    if settings.is_postgres:
+        return settings.database_url or "postgres"
+    return str(DB_PATH)
+
+
+def _pg_pool_init() -> None:
+    if _PG_POOL["lock"] is None:
+        import threading
+        from queue import Queue
+        _PG_POOL["lock"] = threading.Lock()
+        _PG_POOL["idle"] = Queue()
+        _PG_POOL["ingest_sem"] = threading.BoundedSemaphore(3)
+
+
+def _release_ingest_slot() -> None:
+    sem = _PG_POOL.get("ingest_sem")
+    if sem is None:
+        return
+    try:
+        sem.release()
+    except ValueError:
+        pass
+
+
+def _new_postgres(row_factory: bool) -> CompatConnection:
+    url = get_settings().database_url
+    try:
+        import psycopg
+        from psycopg.rows import dict_row
+        conn = psycopg.connect(url, row_factory=dict_row if row_factory else None)
+        wrapped = CompatConnection(conn, row_factory=row_factory)
+        wrapped._pooled = True
+        return wrapped
+    except ImportError:
+        pass
+    try:
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+    except ImportError as exc:
+        raise RuntimeError("Install psycopg[binary] to use DATABASE_URL PostgreSQL") from exc
+    parsed = urlparse(url)
+    conn = psycopg2.connect(
+        host=parsed.hostname,
+        port=parsed.port or 5432,
+        dbname=(parsed.path or "/").lstrip("/"),
+        user=unquote(parsed.username or ""),
+        password=unquote(parsed.password or ""),
+        sslmode=os.getenv("PGSSLMODE", "prefer"),
+        cursor_factory=RealDictCursor if row_factory else None,
+    )
+    wrapped = CompatConnection(conn, row_factory=row_factory)
+    wrapped._pooled = True
+    return wrapped
+
+
+def _release_postgres(con: CompatConnection) -> None:
+    _pg_pool_init()
+    try:
+        con._raw.rollback()
+    except Exception:
+        try:
+            con._raw.close()
+        except Exception:
+            pass
+        with _PG_POOL["lock"]:
+            _PG_POOL["size"] = max(0, int(_PG_POOL["size"]) - 1)
+        return
+    _PG_POOL["idle"].put(con)
+
+
+def _checkout_postgres(row_factory: bool, *, wait: float, allow_overflow: bool) -> CompatConnection:
+    from queue import Empty
+
+    _pg_pool_init()
+    idle = _PG_POOL["idle"]
+    try:
+        con = idle.get_nowait()
+        if getattr(con, "_row_factory", True) == row_factory:
+            return con
+        _release_postgres(con)
+    except Empty:
+        pass
+    with _PG_POOL["lock"]:
+        if int(_PG_POOL["size"]) < int(_PG_POOL["max"]):
+            _PG_POOL["size"] = int(_PG_POOL["size"]) + 1
+            create = True
+        else:
+            create = False
+    if create:
+        return _new_postgres(row_factory)
+    try:
+        return idle.get(timeout=wait)
+    except Empty:
+        pass
+    if allow_overflow:
+        with _PG_POOL["lock"]:
+            if int(_PG_POOL["overflow"]) < int(_PG_POOL["max_overflow"]):
+                _PG_POOL["overflow"] = int(_PG_POOL["overflow"]) + 1
+                allow = True
+            else:
+                allow = False
+        if allow:
+            try:
+                con = _new_postgres(row_factory)
+            except Exception:
+                with _PG_POOL["lock"]:
+                    _PG_POOL["overflow"] = max(0, int(_PG_POOL["overflow"]) - 1)
+                raise
+            con._pooled = False
+            con._overflow = True
+            return con
+    raise DatabaseBusy("database busy")
+
+
+def _connect_postgres(row_factory: bool, purpose: str = "interactive") -> CompatConnection:
+    if not row_factory:
+        con = _new_postgres(False)
+        con._pooled = False
+        return con
+    interactive = purpose != "ingest"
+    if not interactive:
+        _pg_pool_init()
+        sem = _PG_POOL["ingest_sem"]
+        if not sem.acquire(timeout=2.0):
+            raise DatabaseBusy("database busy")
+        try:
+            con = _checkout_postgres(row_factory, wait=2.0, allow_overflow=False)
+        except Exception:
+            _release_ingest_slot()
+            raise
+        con._ingest_slot = True
+        return con
+    return _checkout_postgres(row_factory, wait=8.0, allow_overflow=True)
+
+
+def connect(row_factory: bool = True, purpose: str = "interactive") -> sqlite3.Connection | CompatConnection:
+    if get_settings().is_postgres:
+        if purpose == "interactive" and row_factory:
+            last: Exception | None = None
+            for attempt in range(3):
+                try:
+                    return _connect_postgres(row_factory, purpose)
+                except DatabaseBusy as exc:
+                    last = exc
+                    time.sleep(0.2 * (attempt + 1))
+            raise last or DatabaseBusy("database busy")
+        return _connect_postgres(row_factory, purpose)
+    con = sqlite3.connect(DB_PATH, timeout=10.0)
+    con.execute("PRAGMA journal_mode=WAL")
+    con.execute("PRAGMA foreign_keys=ON")
+    if row_factory:
+        con.row_factory = sqlite3.Row
+    return con
+
+
+def dialect() -> str:
+    return get_settings().dialect
+
+
+def upsert(con: Any, table: str, pk: str | Sequence[str], data: dict[str, Any]) -> None:
+    """Portable insert-or-replace for SQLite and PostgreSQL."""
+    keys = list(data.keys())
+    values = [data[k] for k in keys]
+    cols = ", ".join(keys)
+    placeholders = ", ".join("?" * len(keys))
+    pk_cols = (pk,) if isinstance(pk, str) else tuple(pk)
+    if get_settings().is_postgres:
+        assignments = ", ".join(f"{k}=EXCLUDED.{k}" for k in keys if k not in pk_cols)
+        conflict = ", ".join(pk_cols)
+        sql = (
+            f"INSERT INTO {table} ({cols}) VALUES ({placeholders}) "
+            f"ON CONFLICT ({conflict}) DO UPDATE SET {assignments}"
+        )
+        con.execute(sql, values)
+        return
+    sql = f"INSERT OR REPLACE INTO {table} ({cols}) VALUES ({placeholders})"
+    con.execute(sql, values)
+
+
+def _table_columns(con: Any, table: str) -> set[str]:
+    if get_settings().is_postgres:
+        rows = con.execute(
+            "SELECT column_name FROM information_schema.columns WHERE table_name=?",
+            (table,),
+        ).fetchall()
+        return {r["column_name"] if isinstance(r, dict) else r[0] for r in rows}
+    rows = con.execute(f"PRAGMA table_info({table})").fetchall()
+    return {r["name"] if not isinstance(r, tuple) else r[1] for r in rows}
+
+
+def _ensure_columns(con: Any, table: str, columns: dict[str, str]) -> None:
+    try:
+        existing = _table_columns(con, table)
+    except Exception:
+        return
+    for name, typedef in columns.items():
+        if name in existing:
+            continue
+        try:
+            con.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typedef}")
+        except Exception:
+            pass
+
+
+def _create_indexes(con: Any) -> None:
+    for stmt in INDEXES:
+        try:
+            con.execute(stmt)
+        except Exception:
+            pass
+
+
+def init_schema(con: sqlite3.Connection | CompatConnection | None = None) -> None:
+    global _SCHEMA_READY_FOR
     own = con is None
+    ident = _db_identity()
+    if own and _SCHEMA_READY_FOR == ident:
+        return
     if own:
         con = connect(row_factory=False)
-    con.executescript(SCHEMA)
+    schema = SCHEMA
+    if get_settings().is_postgres:
+        schema = SCHEMA.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+    con.executescript(schema)
+    con.executescript(PLATFORM_SCHEMA)
+    _ensure_columns(con, "accounts", ACCOUNT_COLUMNS)
+    _ensure_columns(con, "devices", DEVICE_COLUMNS)
+    _ensure_columns(con, "beneficiaries", BENEFICIARY_COLUMNS)
+    _ensure_columns(con, "transactions", TRANSACTION_COLUMNS)
+    _ensure_columns(con, "audit_log", AUDIT_COLUMNS)
+    _ensure_columns(con, "flagged_transactions", FLAGGED_COLUMNS)
+    _create_indexes(con)
     con.commit()
+    _SCHEMA_READY_FOR = ident
     if own:
         con.close()

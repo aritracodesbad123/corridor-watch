@@ -11,17 +11,48 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def log(case_id: str, event_type: str, detail, actor: str = "system") -> None:
+def log(
+    case_id: str,
+    event_type: str,
+    detail,
+    actor: str = "system",
+    *,
+    role: str | None = None,
+    model_version: str | None = None,
+    pattern_version: str | None = None,
+) -> None:
     init_schema()
-    con = connect(row_factory=False)
-    if not isinstance(detail, str):
-        detail = json.dumps(detail, default=str)
-    con.execute(
-        "INSERT INTO audit_log (ts, case_id, actor, event_type, detail) VALUES (?,?,?,?,?)",
-        (_now(), case_id, actor, event_type, detail),
-    )
-    con.commit()
-    con.close()
+    con = None
+    try:
+        con = connect()
+        if not isinstance(detail, str):
+            payload = dict(detail) if isinstance(detail, dict) else {"value": detail}
+            if role:
+                payload.setdefault("role", role)
+            if model_version:
+                payload.setdefault("model_version", model_version)
+            if pattern_version:
+                payload.setdefault("pattern_version", pattern_version)
+            detail = json.dumps(payload, default=str)
+        try:
+            con.execute(
+                "INSERT INTO audit_log (ts, case_id, actor, event_type, detail, role, model_version, pattern_version) VALUES (?,?,?,?,?,?,?,?)",
+                (_now(), case_id, actor, event_type, detail, role, model_version, pattern_version),
+            )
+        except Exception:
+            con.execute(
+                "INSERT INTO audit_log (ts, case_id, actor, event_type, detail) VALUES (?,?,?,?,?)",
+                (_now(), case_id, actor, event_type, detail),
+            )
+        con.commit()
+    except Exception:
+        pass
+    finally:
+        if con is not None:
+            try:
+                con.close()
+            except Exception:
+                pass
 
 
 def list_for_case(case_id: str, limit: int = 200) -> list[dict]:

@@ -12,7 +12,7 @@ import uuid
 from collections import Counter
 from datetime import datetime, timezone
 
-from db import connect, init_schema
+from db import connect, init_schema, upsert
 import audit
 
 
@@ -98,12 +98,16 @@ def remember(pattern: str, summary: str, outcome: str, corridor: str = "",
     case_id = case_id or str(uuid.uuid4())[:10]
     embedding_text = f"{pattern} {corridor} {risk_level} {summary} {outcome}"
     con = connect(row_factory=False)
-    con.execute(
-        """INSERT OR REPLACE INTO case_memory
-           (case_id, pattern, summary, outcome, corridor, risk_level, created_at, embedding_text)
-           VALUES (?,?,?,?,?,?,?,?)""",
-        (case_id, pattern, summary, outcome, corridor, risk_level, _now(), embedding_text),
-    )
+    upsert(con, "case_memory", "case_id", {
+        "case_id": case_id,
+        "pattern": pattern,
+        "summary": summary,
+        "outcome": outcome,
+        "corridor": corridor,
+        "risk_level": risk_level,
+        "created_at": _now(),
+        "embedding_text": embedding_text,
+    })
     con.commit()
     con.close()
     return case_id

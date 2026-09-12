@@ -291,38 +291,48 @@ def build():
 
 
 def write_db(accounts, txns):
-    if DB_PATH.exists():
+    from config import get_settings
+    if not get_settings().is_postgres and DB_PATH.exists():
         DB_PATH.unlink()
     con = connect(row_factory=False)
     init_schema(con)
     cur = con.cursor()
     cur.executemany(
-        "INSERT INTO accounts VALUES (:account_id,:name,:country,:opened_date,"
-        ":occupation,:stated_income_usd,:kyc_tier,:fraud_label)",
+        "INSERT INTO accounts (account_id,name,country,opened_date,occupation,"
+        "stated_income_usd,kyc_tier,fraud_label) VALUES (:account_id,:name,:country,"
+        ":opened_date,:occupation,:stated_income_usd,:kyc_tier,:fraud_label)",
         accounts,
     )
     cur.executemany(
-        "INSERT INTO devices VALUES (:device_id,:fingerprint,:first_seen,:os)", DEVICES
+        "INSERT INTO devices (device_id,fingerprint,first_seen,os) "
+        "VALUES (:device_id,:fingerprint,:first_seen,:os)", DEVICES
     )
     cur.executemany(
-        "INSERT INTO account_devices VALUES (:account_id,:device_id,:linked_at)", ACCOUNT_DEVICES
+        "INSERT INTO account_devices (account_id,device_id,linked_at) "
+        "VALUES (:account_id,:device_id,:linked_at)", ACCOUNT_DEVICES
     )
     cur.executemany(
-        "INSERT INTO beneficiaries VALUES (:beneficiary_id,:name,:country,:bank_hint)",
+        "INSERT INTO beneficiaries (beneficiary_id,name,country,bank_hint) "
+        "VALUES (:beneficiary_id,:name,:country,:bank_hint)",
         BENEFICIARIES,
     )
     cur.executemany(
-        "INSERT INTO account_beneficiaries VALUES (:account_id,:beneficiary_id,:added_at)",
+        "INSERT INTO account_beneficiaries (account_id,beneficiary_id,added_at) "
+        "VALUES (:account_id,:beneficiary_id,:added_at)",
         ACCOUNT_BENEFS,
     )
     cur.executemany(
-        "INSERT INTO sessions VALUES (:session_id,:account_id,:device_id,:started_at,"
+        "INSERT INTO sessions (session_id,account_id,device_id,started_at,"
+        "typing_deviation,navigation_velocity,bot_likelihood,copy_paste_risk,geo_mismatch) "
+        "VALUES (:session_id,:account_id,:device_id,:started_at,"
         ":typing_deviation,:navigation_velocity,:bot_likelihood,:copy_paste_risk,:geo_mismatch)",
         SESSIONS,
     )
     cur.executemany(
-        "INSERT INTO transactions VALUES (:txn_id,:sender_id,:receiver_id,:amount,:currency,"
-        ":corridor,:ts,:device_id,:session_id,:beneficiary_id,:purpose,:source_of_funds,:fraud_scenario)",
+        "INSERT INTO transactions (txn_id,sender_id,receiver_id,amount,currency,corridor,ts,"
+        "device_id,session_id,beneficiary_id,purpose,source_of_funds,fraud_scenario) "
+        "VALUES (:txn_id,:sender_id,:receiver_id,:amount,:currency,:corridor,:ts,"
+        ":device_id,:session_id,:beneficiary_id,:purpose,:source_of_funds,:fraud_scenario)",
         txns,
     )
     con.commit()
@@ -332,7 +342,14 @@ def write_db(accounts, txns):
 if __name__ == "__main__":
     accounts, txns = build()
     write_db(accounts, txns)
+    # Always materialize derived risk scores/alerts after regenerating the source data.
+    # This keeps a fresh demo database immediately runnable and makes evaluation reproducible.
+    from graph_features import score_all, write_scores
+    con = connect()
+    scores, _, _ = score_all(con)
+    flagged = write_scores(con, scores, txns)
+    con.close()
     print(
         f"accounts={len(accounts)} txns={len(txns)} devices={len(DEVICES)} "
-        f"sessions={len(SESSIONS)} beneficiaries={len(BENEFICIARIES)} -> {DB_PATH.name}"
+        f"sessions={len(SESSIONS)} beneficiaries={len(BENEFICIARIES)} flagged={flagged} -> {DB_PATH.name}"
     )

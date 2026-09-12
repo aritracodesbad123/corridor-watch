@@ -11,7 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Callable
 
-from db import connect, init_schema
+from db import connect, init_schema, upsert
 import audit
 
 STEPS: list[tuple[str, str]] = [
@@ -183,7 +183,7 @@ def deterministic_verdict(evidence: dict) -> dict:
     }
 
 
-def run_dag(txn_id: str) -> dict[str, Any]:
+def run_dag(txn_id: str, *, audit_events: bool = True) -> dict[str, Any]:
     """Execute all 12 steps; return evidence + deterministic verdict + trace."""
     init_schema()
     run_id = str(uuid.uuid4())[:12]
@@ -193,19 +193,22 @@ def run_dag(txn_id: str) -> dict[str, Any]:
 
     def step(name: str, description: str, fn: Callable[[], Any]):
         started = _now()
-        audit.log(txn_id, "dag_step_start", {"step": name, "description": description}, actor="dag")
+        if audit_events:
+            audit.log(txn_id, "dag_step_start", {"step": name, "description": description}, actor="dag")
         try:
             result = fn()
             entry = {"step": name, "description": description, "status": "ok",
                      "started_at": started, "finished_at": _now()}
             trace.append(entry)
-            audit.log(txn_id, "dag_step_complete", {"step": name, "preview": _preview(result)}, actor="dag")
+            if audit_events:
+                audit.log(txn_id, "dag_step_complete", {"step": name, "preview": _preview(result)}, actor="dag")
             return result
         except Exception as e:
             entry = {"step": name, "description": description, "status": "error",
                      "error": str(e), "started_at": started, "finished_at": _now()}
             trace.append(entry)
-            audit.log(txn_id, "dag_step_error", {"step": name, "error": str(e)}, actor="dag")
+            if audit_events:
+                audit.log(txn_id, "dag_step_error", {"step": name, "error": str(e)}, actor="dag")
             raise
 
     def _preview(obj) -> Any:
@@ -284,16 +287,20 @@ def run_dag(txn_id: str) -> dict[str, Any]:
     verdict = step("draft_deterministic_verdict", STEPS[11][1], lambda: deterministic_verdict(evidence))
     evidence["deterministic_verdict"] = verdict
 
-    con.execute(
-        """INSERT OR REPLACE INTO investigation_runs
-           (run_id, txn_id, started_at, finished_at, mode, status, dag_trace, verdict)
-           VALUES (?,?,?,?,?,?,?,?)""",
-        (run_id, txn_id, trace[0]["started_at"] if trace else _now(), _now(),
-         "deterministic_dag", "complete", json.dumps(trace), json.dumps(verdict)),
-    )
+    upsert(con, "investigation_runs", "run_id", {
+        "run_id": run_id,
+        "txn_id": txn_id,
+        "started_at": trace[0]["started_at"] if trace else _now(),
+        "finished_at": _now(),
+        "mode": "deterministic_dag",
+        "status": "complete",
+        "dag_trace": json.dumps(trace),
+        "verdict": json.dumps(verdict),
+    })
     con.commit()
     con.close()
-    audit.log(txn_id, "dag_complete", {"run_id": run_id, "verdict": verdict}, actor="dag")
+    if audit_events:
+        audit.log(txn_id, "dag_complete", {"run_id": run_id, "verdict": verdict}, actor="dag")
     return {"run_id": run_id, "trace": trace, "evidence": evidence, "verdict": verdict}
 
 

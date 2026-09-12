@@ -1,6 +1,10 @@
 # Corridor Watch — Comprehensive Technical Documentation
 
-**Corridor Watch** is an end-to-end cross-border payment fraud investigation console, explainability layer, and compliance AI reasoning engine built for JAPAC remittance corridors.
+**Corridor Watch** is a cloud-native financial-crime intelligence platform that detects suspicious transaction networks across accounts, institutions and cross-border corridors, converts confirmed investigations into reusable Crime Pattern DNA, and uses Gemini as an evidence-grounded investigation copilot while keeping consequential decisions human-authorized and auditable.
+
+> **The transaction is not the crime. The network is.**
+
+The current build includes a deterministic evaluation harness, idempotent ingest (Gemini stays off the hot path), and explicit RBAC so the AI layer can be judged on reliability, not only demo breadth.
 
 Graph anomaly detection is table stakes — Corridor Watch provides the reasoning, explainability, multimodal document intelligence, institutional case memory, regulatory filing, and model governance layer that sits on top of core banking transaction streams.
 
@@ -78,7 +82,7 @@ Graph anomaly detection is table stakes — Corridor Watch provides the reasonin
    - Operates independently without requiring an LLM.
 
 6. **Gemini Tool-Calling Reasoning Agent (`agent.py`)**:
-   - Tool-calling agent using Google Gemini (`gemini-3.8-flash` / `gemini-2.5-flash`).
+   - Tool-calling agent using Google Gemini (`gemini-3.6-flash` / `gemini-2.5-flash`).
    - Equipped with 4 investigation tools: `get_account_context`, `get_shared_devices`, `get_session_biometrics`, `get_network_neighborhood`.
    - Uses stateless tool-history tracking to preserve thought signatures across function calls.
 
@@ -147,18 +151,47 @@ Graph anomaly detection is table stakes — Corridor Watch provides the reasonin
 
 ---
 
-## 🔒 Security, Authentication & Role Simulation
+## 🧪 Evaluation & Reliability
 
-The system enforces request-header driven authentication:
-- `X-Analyst-ID`: Identifies the individual actor (e.g. `analyst_sarah`, `lead_michael`). Defaults to `analyst_demo`.
-- `X-Analyst-Role`: Enforces role-based permissions:
-  - `analyst` (Compliance Analyst): Alert triage, SoF checks, decision recording.
-  - `fiu_lead` (FIU Team Lead): High-risk case overrides, payment hold directives, FIU escalations.
-  - `mrm_auditor` (MRM Auditor): MRM draft reviews, red-team executions/resets, rule mining sign-offs.
+The repository now includes `evaluation.py` plus `tests/` so the core detector can be measured independently of Gemini availability. The benchmark uses the synthetic generator's `fraud_scenario` label as ground truth and reports:
 
----
+- precision / recall / F1 / false-positive rate
+- per-typology flag rate
+- named-pattern accuracy + confusion map
+- a CI-style quality gate
 
-## 📡 Complete API Reference (16 Endpoints)
+Run:
+
+```bash
+python -c "from evaluation import run_evaluation; import json; print(json.dumps(run_evaluation(), indent=2))"
+pytest -q
+```
+
+The evaluation harness disables DAG audit writes so benchmark runs do not pollute the case audit trail. The synthetic benchmark is intentionally treated as a **development benchmark**, not proof of production performance.
+
+## 🔒 Authentication
+
+The console is password-authenticated. There is no role dropdown.
+
+**Where to set usernames and passwords**
+
+1. Local: copy `credentials.example.json` to `credentials.json` in the repo root and edit the `users` array. `credentials.json` is gitignored.
+2. Alternative local: set `CORRIDOR_WATCH_USERS` in `.env` to the same JSON (or `CORRIDOR_WATCH_USERS_FILE=/absolute/path.json`).
+3. Cloud Run: Secret Manager secret `console-users`. First deploy creates it from `credentials.json` (or the example file). To rotate later:
+   ```bash
+   gcloud secrets versions add console-users --project corridor-watch-508420 --data-file=credentials.json
+   UPDATE_CONSOLE_USERS=1 ./scripts/deploy_cloud_run.sh corridor-watch-508420 asia-southeast1
+   ```
+
+Roles in that file:
+
+- `analyst` — queue, investigation, SoF, monitor/clear only
+- `fiu_lead` — high-risk dispositions, escalate/close, live stream
+- `mrm_auditor` — MRM draft, red-team, rule mining, audit acknowledge
+
+Optional automation still accepts `CORRIDOR_WATCH_API_KEYS` as `X-API-Key`. Header role spoofing is disabled on Cloud Run.
+
+## 📡 Complete API Reference
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -179,6 +212,14 @@ The system enforces request-header driven authentication:
 | **POST** | `/api/phase2/redteam` | Run adversarial red-team scenario injections |
 | **POST** | `/api/phase2/redteam/reset` | Roll back red-team test injections to baseline DB |
 | **GET** | `/api/phase2/rules/mine` | Mine candidate detection rules from analyst decisions |
+| **GET** | `/api/command-center` | Live TPS, investigations, corridors, ingest counters |
+| **GET** | `/api/corridors` | Corridor intelligence explorer |
+| **GET** | `/api/patterns` | Crime Pattern DNA library |
+| **GET** | `/api/metrics` | Application counters and latency percentiles |
+| **POST** | `/api/alerts/{id}/network-investigate` | Bounded graph + DNA + grounded report |
+| **POST** | `/api/ingest` | Idempotent single-event ingest (no Gemini) |
+| **POST** | `/api/ingest/batch` | Batched ingest |
+| **POST** | `/api/pubsub/push` | Pub/Sub push contract |
 
 ---
 
@@ -195,12 +236,34 @@ python graph_features.py
 
 # 3. (Optional) Set Gemini API Key
 export GEMINI_API_KEY="your_api_key_here"
-export GEMINI_MODEL="gemini-3.8-flash"  # or gemini-2.5-flash
+export GEMINI_MODEL="gemini-3.6-flash"  # or gemini-2.5-flash
 
 # 4. Launch FastAPI web server
 uvicorn main:app --reload --port 8080
-# Open http://localhost:8080 (or http://localhost:8081 if port 8081 is specified)
+# Open http://localhost:8080 — Command / Investigate / Corridors / Pattern DNA
+
+# 5. Optional: measure ingest throughput (reports achieved TPS only)
+python pubsub_load_generator.py --rate 500 --duration 5 --in-process
+python evaluate.py --mode both --rate 200 --duration 3
 ```
+
+### Platform environment
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `ENVIRONMENT` | `local` | Deployment label |
+| `DATABASE_URL` | empty (SQLite `fraud_demo.db`) | PostgreSQL / Cloud SQL URI |
+| `GOOGLE_CLOUD_PROJECT` | empty | Enables Pub/Sub publish |
+| `TRANSACTION_TOPIC` | `corridor-transactions` | Ingest topic |
+| `INVESTIGATION_TOPIC` | `corridor-investigations` | Investigation topic |
+| `GEMINI_MODEL` | `gemini-3.6-flash` | Investigator model |
+| `CORRIDOR_WATCH_INGEST_TOKEN` | empty | Optional ingest auth |
+| `RISK_THRESHOLD_LOW/MEDIUM/HIGH` | `25` / `40` / `75` | Configurable tiers |
+| `GRAPH_MAX_HOPS` | `3` | Bounded traversal |
+| `GRAPH_LOOKBACK_MINUTES` | `1440` | Graph window |
+| `MAX_INVESTIGATION_SIZE` | `200` | Node cap |
+
+See [docs/Corridor_Watch_Master_Implementation_Spec.md](docs/Corridor_Watch_Master_Implementation_Spec.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Cloud Run seeds an empty Cloud SQL database on first start; local SQLite is created by `python data_gen.py`.
 
 ---
 
@@ -223,12 +286,11 @@ Per [docs/GAP_AUDIT.md](file:///Users/aritrachakraborty/Desktop/corridor-watch/d
 
 ### Cloud Run (GCP)
 ```bash
-gcloud run deploy corridor-watch \
-  --source . \
-  --region asia-southeast1 \
-  --allow-unauthenticated \
-  --set-env-vars GEMINI_API_KEY=your_key
+export GEMINI_API_KEY="your_key"   # used only to create a Secret Manager secret
+./scripts/deploy_cloud_run.sh YOUR_PROJECT_ID asia-southeast1
 ```
+
+See [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md). The container seeds `fraud_demo.db` on first start if it is missing. Do not put the Gemini key in the image or in git.
 
 ### Azure Enterprise Deployment
 See [docs/AZURE_PORT.md](file:///Users/aritrachakraborty/Desktop/corridor-watch/docs/AZURE_PORT.md) and [CHANGE_REQUEST_LOG.md](file:///Users/aritrachakraborty/Desktop/corridor-watch/CHANGE_REQUEST_LOG.md) for swapping GCP Gemini $\rightarrow$ Azure OpenAI / AI Foundry Agent Service.
