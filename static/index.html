@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Corridor Watch — Investigation Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0F1419; --panel:#171C24; --panel2:#1C2430; --line:#2A3344;
+    --text:#E8ECF1; --muted:#8B95A8; --teal:#3FA796; --teal-dim:#1A3D38;
+    --amber:#E0A04A; --amber-dim:#4A3A1F; --red:#D36B55; --red-dim:#3A221C;
+    --green:#5BAF7A;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ink);color:var(--text);font-family:'Source Sans 3',sans-serif;font-size:13.5px}
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:#12171F}
+  header h1{font-size:16px;font-weight:700;margin:0;letter-spacing:.3px}
+  header .tag{color:var(--muted);font-size:11.5px;font-family:'IBM Plex Mono',monospace}
+  header .meta{display:flex;gap:10px;align-items:center}
+  .chip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:4px;color:var(--muted)}
+  .chip.on{border-color:var(--teal);color:var(--teal)}
+  .layout{display:grid;grid-template-columns:340px 1fr 320px;height:calc(100vh - 49px)}
+  .queue,.side{border-right:1px solid var(--line);overflow-y:auto;background:#12171F}
+  .side{border-right:none;border-left:1px solid var(--line)}
+  .section-h{padding:10px 14px;color:var(--muted);font-size:11px;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+  .row{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer}
+  .row:hover{background:#1A222E}
+  .row.active{background:#1A2A33;border-left:3px solid var(--teal);padding-left:11px}
+  .risk-bar{width:32px;height:32px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:12px;flex-shrink:0}
+  .risk-hi{background:var(--red-dim);color:var(--red)}
+  .risk-mid{background:var(--amber-dim);color:var(--amber)}
+  .risk-lo{background:var(--teal-dim);color:var(--teal)}
+  .row-corridor{font-family:'IBM Plex Mono',monospace;font-size:12px}
+  .row-sub{color:var(--muted);font-size:11.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pat{font-size:10.5px;color:var(--amber);font-family:'IBM Plex Mono',monospace;margin-top:2px}
+  .detail{padding:18px 22px;overflow-y:auto}
+  .empty{color:var(--muted);padding:48px 20px}
+  .case-id{font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11.5px}
+  .amount{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace;margin:4px 0}
+  .muted{color:var(--muted)}
+  .flow{display:flex;align-items:center;gap:12px;margin:14px 0;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+  .node{flex:1;min-width:0}
+  .node .id{font-family:'IBM Plex Mono',monospace;font-size:12px}
+  .node .age{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.35}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+  .card h3{margin:0 0 8px;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.3px;text-transform:uppercase}
+  .kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:2px 0}
+  .kv span:last-child{font-family:'IBM Plex Mono',monospace;color:var(--text);text-align:right}
+  button,.btn{background:var(--teal);color:#06201C;border:none;padding:9px 14px;border-radius:5px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:inherit}
+  button.secondary{background:transparent;color:var(--text);border:1px solid var(--line)}
+  button:disabled{background:#2A3344;color:var(--muted);cursor:wait}
+  button.danger{background:var(--red-dim);color:var(--red);border:1px solid #5A3228}
+  .btn-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .verdict{margin-top:12px;padding:14px;border-radius:6px;border:1px solid var(--line);background:var(--panel)}
+  .verdict.high{border-color:#5A3228}.verdict.medium{border-color:var(--amber-dim)}.verdict.low{border-color:var(--teal-dim)}
+  .pill{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:2px 8px;border-radius:3px;text-transform:uppercase}
+  .pill.high{background:var(--red-dim);color:var(--red)}
+  .pill.medium{background:var(--amber-dim);color:var(--amber)}
+  .pill.low{background:var(--teal-dim);color:var(--teal)}
+  .net{height:320px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden;margin:10px 0}
+  .net.tall{height:360px}
+  .net svg{width:100%;height:100%;display:block}
+  .viz-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-top:6px}
+  .viz-legend span{display:inline-flex;align-items:center;gap:6px}
+  .viz-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+  .flow-label{font-family:'IBM Plex Mono',monospace;font-size:10px;fill:#C9D0DC}
+  @keyframes dashflow{to{stroke-dashoffset:-24}}
+  .edge-flow{stroke-dasharray:6 6;animation:dashflow 1s linear infinite}
+  .edge-flow-hi{stroke-dasharray:8 6;animation:dashflow .7s linear infinite}
+  .map-ocean{fill:#141C28}
+  .map-land{fill:#1E2A3A;stroke:#2F3D52;stroke-width:0.6}
+  .dag{display:flex;flex-direction:column;gap:4px;max-height:280px;overflow:auto}
+  .dag-step{display:flex;gap:8px;align-items:flex-start;font-size:11.5px;padding:4px 0;border-bottom:1px solid #222A38}
+  .dag-n{font-family:'IBM Plex Mono',monospace;color:var(--teal);width:18px;flex-shrink:0}
+  .bar{height:6px;background:#243041;border-radius:3px;overflow:hidden;margin-top:4px}
+  .bar>i{display:block;height:100%;background:var(--amber)}
+  textarea,select,input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:5px;padding:8px;font-family:inherit;font-size:12.5px}
+  .audit{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);max-height:200px;overflow:auto;line-height:1.45}
+  .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin:0 -22px 14px;padding:0 22px}
+  .tab{padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent}
+  .tab.on{color:var(--text);border-bottom-color:var(--teal)}
+  .panel-block{display:none}.panel-block.on{display:block}
+  .side .card{margin:10px;border-radius:6px}
+  .side .btn-row{padding:0 10px 10px}
+  ul.tight{margin:6px 0;padding-left:16px} ul.tight li{margin:4px 0}
+  .flow-node{cursor:pointer}
+  .flow-node:hover rect{stroke-width:2.5;filter:brightness(1.15)}
+  .node-tooltip{position:fixed;pointer-events:none;background:#0B0F14;border:1px solid var(--line);
+    border-radius:6px;padding:9px 11px;font-family:'IBM Plex Mono',monospace;font-size:11px;
+    color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.5);z-index:1000;max-width:260px;
+    display:none;line-height:1.5}
+  .node-tooltip .tt-title{font-weight:700;color:var(--teal);margin-bottom:5px;font-size:12px}
+  .node-tooltip .tt-row{display:flex;justify-content:space-between;gap:14px;color:var(--muted)}
+  .node-tooltip .tt-row span:last-child{color:var(--text);text-align:right}
+  @media (max-width:1100px){
+    .layout{grid-template-columns:280px 1fr}
+    .side{display:none}
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Corridor Watch</h1>
+    <div class="tag">cross-border payment fraud investigation — synthetic data</div>
+  </div>
+  <div class="meta">
+    <span class="chip" id="gemini-chip">gemini: …</span>
+    <select id="user-role" style="width:auto;padding:4px 8px;font-size:11px">
+      <option value="analyst">Role: Compliance Analyst</option>
+      <option value="fiu_lead">Role: FIU Team Lead</option>
+      <option value="mrm_auditor">Role: MRM Auditor</option>
+    </select>
+    <button class="secondary" id="btn-export" type="button" disabled>Export case</button>
+    <button class="secondary" id="btn-mrm" type="button">MRM draft</button>
+    <button class="secondary" id="btn-mined-rules" type="button">Mined rules</button>
+    <button class="secondary" id="btn-redteam" type="button">Run red-team</button>
+    <button class="secondary" id="btn-redteam-reset" type="button">Reset dataset</button>
+  </div>
+</header>
+<div class="layout">
+  <div class="queue">
+    <div class="section-h"><span id="queue-count">Loading…</span><span id="pattern-filter-label"></span></div>
+    <div id="rows"></div>
+  </div>
+  <div class="detail" id="detail"><div class="empty">Select a flagged transaction to open the case.</div></div>
+  <div class="side" id="side">
+    <div class="section-h"><span>Case tools</span></div>
+    <div class="card"><h3>Phase 2</h3>
+      <p class="muted" style="margin:0 0 8px;font-size:12px">Analyst-facing drafts only — never automated decisions.</p>
+      <div class="btn-row" style="padding:0">
+        <button class="secondary" id="side-sof" type="button" disabled>SoF check</button>
+        <button class="secondary" id="side-mem" type="button" disabled>Precedents</button>
+      </div>
+      <div id="side-out" class="muted" style="font-size:12px"></div>
+    </div>
+    <div class="card"><h3>Audit trail</h3><div class="audit" id="side-audit">Open a case to load audit events.</div></div>
+  </div>
+</div>
+
+<div class="node-tooltip" id="node-tooltip"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
+<script>
+const API = "/api";
+  function authHeaders(extra={}){
+    const role = $("user-role")?.value || "analyst";
+    return {"X-Analyst-ID": `analyst_${role}`, "X-Analyst-Role": role, ...extra};
+  }
+let alerts = [];
+let current = null;
+let currentDetail = null;
+
+const $ = (id) => document.getElementById(id);
+
+async function health(){
+  try{
+    const h = await (await fetch(`${API}/health`)).json();
+    const chip = $("gemini-chip");
+    chip.textContent = h.gemini ? "gemini: ready" : "gemini: off (deterministic)";
+    chip.classList.toggle("on", !!h.gemini);
+  }catch(e){ $("gemini-chip").textContent = "api offline"; }
+}
+
+function riskClass(s){ return s>=80?'risk-hi':(s>=50?'risk-mid':'risk-lo'); }
+function pillClass(l){ return (l||'').toLowerCase(); }
+
+async function loadAlerts(){
+  const res = await fetch(`${API}/alerts`);
+  alerts = await res.json();
+  $("queue-count").textContent = `${alerts.length} alerts`;
+  $("rows").innerHTML = alerts.map(a => `
+    <div class="row" data-id="${a.txn_id}">
+      <div class="risk-bar ${riskClass(a.risk_score)}">${Math.round(a.risk_score)}</div>
+      <div style="min-width:0">
+        <div class="row-corridor">${a.corridor} · $${Number(a.amount).toLocaleString()}</div>
+        <div class="row-sub">${a.sender_id} → ${a.receiver_id}</div>
+        <div class="pat">${a.primary_pattern||''}</div>
+      </div>
+    </div>`).join("");
+  $("rows").querySelectorAll(".row").forEach(r => r.addEventListener("click", () => openCase(r.dataset.id)));
+}
+
+function fmtFeatures(ctx){
+  const f = ctx.risk_features||{};
+  if(f.account_age_days===undefined) return "external account";
+  return `age ${f.account_age_days}d · fan-in ${f.fan_in_count} · PT ${f.pass_through_ratio} · hold ${f.avg_hold_time_minutes}m · devices ${f.shared_device_count}`;
+}
+
+function sessionCard(sessions){
+  if(!sessions||!sessions.length) return `<div class="muted">No sessions</div>`;
+  const s = sessions[0];
+  return `
+    <div class="kv"><span>bot likelihood</span><span>${s.bot_likelihood}</span></div>
+    <div class="bar"><i style="width:${Math.min(100,s.bot_likelihood*100)}%"></i></div>
+    <div class="kv"><span>copy-paste risk</span><span>${s.copy_paste_risk}</span></div>
+    <div class="kv"><span>typing deviation</span><span>${s.typing_deviation}</span></div>
+    <div class="kv"><span>nav velocity</span><span>${s.navigation_velocity}</span></div>
+    <div class="kv"><span>geo mismatch</span><span>${s.geo_mismatch?'yes':'no'}</span></div>`;
+}
+
+function money(n){
+  const v = Number(n||0);
+  if(v >= 1000) return `$${(v/1000).toFixed(v>=10000?0:1)}k`;
+  return `$${Math.round(v)}`;
+}
+
+// ---- safe binary-to-text encoding for embedding JSON in HTML attributes ----
+function encodeNodeData(obj){
+  return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+}
+function decodeNodeData(str){
+  return JSON.parse(decodeURIComponent(escape(atob(str))));
+}
+
+function buildTooltipHtml(n){
+  const shown = new Set(["id","country","risk_score","focus","external","layer"]);
+  const title = n.id || "Account";
+  let rows = "";
+  const addRow = (label, val) => { rows += `<div class="tt-row"><span>${label}</span><span>${val}</span></div>`; };
+
+  addRow("country", n.country || "—");
+  addRow("risk score", n.risk_score ?? "—");
+  addRow("role", n.focus ? "focal account" : (n.external ? "external counterparty" : "related account"));
+  if(n.layer !== undefined) addRow("hop depth", n.layer);
+
+  // Any other numeric/string fields the backend attached to this node —
+  // shown generically so new risk features surface automatically.
+  Object.keys(n).forEach(k=>{
+    if(shown.has(k)) return;
+    const v = n[k];
+    if(v===null || v===undefined || typeof v==="object") return;
+    addRow(k.replace(/_/g," "), v);
+  });
+
+  return `<div class="tt-title">${title}</div>${rows}`;
+}
+
+function attachFlowTooltips(container){
+  const tip = $("node-tooltip");
+  if(!container || !tip) return;
+  container.querySelectorAll(".flow-node").forEach(g=>{
+    g.addEventListener("mouseenter", ()=>{
+      let info;
+      try{ info = decodeNodeData(g.dataset.node); }catch(e){ return; }
+      tip.innerHTML = buildTooltipHtml(info);
+      tip.style.display = "block";
+    });
+    g.addEventListener("mousemove", (e)=>{
+      const pad = 16;
+      let x = e.clientX + pad, y = e.clientY + pad;
+      if(x > window.innerWidth - 280) x = e.clientX - pad - 260;
+      if(y > window.innerHeight - 160) y = e.clientY - pad - 120;
+      tip.style.left = x + "px";
+      tip.style.top = y + "px";
+    });
+    g.addEventListener("mouseleave", ()=>{ tip.style.display = "none"; });
+  });
+}
+
+function renderMoneyFlowDag(net){
+  const dag = net.flow_dag || net;
+  const nodes = [...(dag.nodes||[])];
+  const edges = dag.edges||[];
+  if(!nodes.length) return `<div class="muted" style="padding:24px">No flow graph for this case.</div>`;
+
+  const W = 920, H = 340, padX = 70, padY = 36;
+  const maxLayer = Math.max(...nodes.map(n => n.layer||0), 1);
+  const byLayer = {};
+  nodes.forEach(n => {
+    const L = n.layer||0;
+    (byLayer[L] ||= []).push(n);
+  });
+  Object.values(byLayer).forEach(arr => arr.sort((a,b)=>(b.focus-a.focus)||(b.risk_score-a.risk_score)));
+
+  const positions = {};
+  Object.entries(byLayer).forEach(([L, arr])=>{
+    const layer = Number(L);
+    const x = padX + (layer / maxLayer) * (W - padX*2);
+    arr.forEach((n,i)=>{
+      const y = arr.length===1 ? H/2 : padY + (i/(arr.length-1))*(H-padY*2);
+      positions[n.id] = {x, y, n};
+    });
+  });
+
+  const defs = `
+    <defs>
+      <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#7A879C"/>
+      </marker>
+      <marker id="arrow-hi" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+        <path d="M0 0 L10 5 L0 10 z" fill="#E0A04A"/>
+      </marker>
+    </defs>`;
+
+  const edgeSvg = edges.map(e=>{
+    const a = positions[e.source], b = positions[e.target];
+    if(!a||!b) return "";
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const len = Math.hypot(dx,dy)||1;
+    const shrink = 18;
+    const x1 = a.x + dx/len*shrink, y1 = a.y + dy/len*shrink;
+    const x2 = b.x - dx/len*shrink, y2 = b.y - dy/len*shrink;
+    const midX = (x1+x2)/2, midY = (y1+y2)/2 - (e.highlight?10:4);
+    const stroke = e.highlight ? "#E0A04A" : "#4A5870";
+    const sw = e.highlight ? Math.min(5, 1.5 + Math.log10((e.amount||1)+1)) : Math.min(3.5, 1 + Math.log10((e.amount||1)+1)*0.7);
+    const cls = e.highlight ? "edge-flow-hi" : "edge-flow";
+    return `<path d="M${x1} ${y1} Q ${midX} ${midY} ${x2} ${y2}" fill="none" stroke="${stroke}" stroke-width="${sw}"
+              marker-end="url(#${e.highlight?'arrow-hi':'arrow'})" class="${cls}" opacity="${e.highlight?1:0.75}"/>
+      <text class="flow-label" x="${midX}" y="${midY-6}" text-anchor="middle">${money(e.amount)}</text>`;
+  }).join("");
+
+  const nodeSvg = nodes.map(n=>{
+    const p = positions[n.id]; if(!p) return "";
+    const risk = n.risk_score||0;
+    const fill = n.focus ? "#3FA796" : (risk>=70 ? "#8B3E32" : (n.external ? "#2A3344" : "#2F3F55"));
+    const stroke = n.focus ? "#7EE0D0" : "#6A7A90";
+    const label = (n.id||"").slice(0,8);
+    const sub = n.country || "?";
+    const nodeData = encodeNodeData(n);
+    return `<g class="flow-node" data-node="${nodeData}">
+      <rect x="${p.x-34}" y="${p.y-18}" rx="6" width="68" height="36" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
+      <text x="${p.x}" y="${p.y-2}" text-anchor="middle" fill="#E8ECF1" font-size="10" font-family="IBM Plex Mono">${label}</text>
+      <text x="${p.x}" y="${p.y+12}" text-anchor="middle" fill="#A8B2C2" font-size="9" font-family="IBM Plex Mono">${sub} · ${Math.round(risk)}</text>
+    </g>`;
+  }).join("");
+
+  const layerLabels = Object.keys(byLayer).map(L=>{
+    const x = padX + (Number(L)/maxLayer)*(W-padX*2);
+    return `<text x="${x}" y="16" text-anchor="middle" fill="#6B778A" font-size="10" font-family="IBM Plex Mono">hop ${L}</text>`;
+  }).join("");
+
+  return `<svg viewBox="0 0 ${W} ${H}">${defs}${layerLabels}${edgeSvg}${nodeSvg}</svg>`;
+}
+
+// ---------------------------------------------------------------------
+// Real-world corridor map (D3 geo + public world-atlas topology, cached)
+// ---------------------------------------------------------------------
+const WORLD_ATLAS_URL = "https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json";
+let _worldFeatures = null;
+
+async function getWorldFeatures(){
+  if(_worldFeatures) return _worldFeatures;
+  const topo = await (await fetch(WORLD_ATLAS_URL)).json();
+  _worldFeatures = topojson.feature(topo, topo.objects.countries).features;
+  return _worldFeatures;
+}
+
+function buildProjection(W, H){
+  const frame = {
+    type: "Polygon",
+    coordinates: [[[-120,-15],[150,-15],[150,50],[-120,50],[-120,-15]]]
+  };
+  const projection = d3.geoMercator();
+  projection.fitExtent([[24,24],[W-24,H-24]], frame);
+  return projection;
+}
+
+async function renderCorridorMap(geo){
+  const W = 920, H = 360;
+  let features = [];
+  try{
+    features = await getWorldFeatures();
+  }catch(e){
+    return `<svg viewBox="0 0 ${W} ${H}"><rect class="map-ocean" width="${W}" height="${H}"/>
+      <text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#8B95A8">Map data unavailable (offline?)</text></svg>`;
+  }
+
+  const projection = buildProjection(W, H);
+  const path = d3.geoPath(projection);
+
+  const landSvg = features.map(f => {
+    const d = path(f);
+    return d ? `<path class="map-land" d="${d}"/>` : "";
+  }).join("");
+
+  const countries = geo?.countries || [];
+  const flows = geo?.flows || [];
+  const maxAmt = Math.max(...flows.map(f=>f.amount||0), 1);
+
+  const arcSvg = flows.map(f=>{
+    const a = projection([f.source_lon, f.source_lat]);
+    const b = projection([f.target_lon, f.target_lat]);
+    if(!a || !b) return "";
+    const mx = (a[0]+b[0])/2;
+    const my = Math.min(a[1],b[1]) - 30 - (f.highlight?20:0) - Math.abs(a[0]-b[0])*0.08;
+    const sw = 1.2 + 4 * (f.amount/maxAmt);
+    const col = f.highlight ? "#E0A04A" : "#3FA796";
+    const cls = f.highlight ? "edge-flow-hi" : "edge-flow";
+    return `<path d="M${a[0]} ${a[1]} Q ${mx} ${my} ${b[0]} ${b[1]}" fill="none" stroke="${col}" stroke-width="${sw}"
+              opacity="0.9" class="${cls}"/>
+      <text class="flow-label" x="${mx}" y="${my+4}" text-anchor="middle">${f.source}→${f.target} ${money(f.amount)}</text>`;
+  }).join("");
+
+  const nodeSvg = countries.map(c=>{
+    const p = projection([c.lon, c.lat]);
+    if(!p) return "";
+    const r = c.focus ? 9 : 6;
+    const fill = c.focus ? "#E0A04A" : "#3FA796";
+    return `<g>
+      <circle cx="${p[0]}" cy="${p[1]}" r="${r+4}" fill="${fill}" opacity="0.2"/>
+      <circle cx="${p[0]}" cy="${p[1]}" r="${r}" fill="${fill}" stroke="#0F1419" stroke-width="1.5"/>
+      <text x="${p[0]}" y="${p[1]-12}" text-anchor="middle" fill="#E8ECF1" font-size="11" font-family="IBM Plex Mono" font-weight="600">${c.country}</text>
+      <text x="${p[0]}" y="${p[1]+22}" text-anchor="middle" fill="#8B95A8" font-size="9" font-family="IBM Plex Mono">${c.label}</text>
+    </g>`;
+  }).join("");
+
+  const ocean = `<rect class="map-ocean" width="${W}" height="${H}"/>`;
+
+  if(!countries.length){
+    return `<svg viewBox="0 0 ${W} ${H}">${ocean}${landSvg}
+      <text x="${W/2}" y="${H/2}" text-anchor="middle" fill="#8B95A8">No corridor geography for this case</text></svg>`;
+  }
+
+  return `<svg viewBox="0 0 ${W} ${H}">${ocean}${landSvg}${arcSvg}${nodeSvg}</svg>`;
+}
+
+function geoSummary(geo){
+  const flows = [...(geo?.flows||[])].sort((a,b)=>b.amount-a.amount);
+  if(!flows.length) return `<div class="muted">No cross-border arcs in neighborhood.</div>`;
+  return flows.slice(0,6).map(f=>`
+    <div class="kv"><span>${f.source} → ${f.target} · ${f.count} txns</span><span>${money(f.amount)}</span></div>
+  `).join("");
+}
+
+function patternBars(risk){
+  let ps = risk.pattern_scores||{};
+  if(typeof ps==="string"){ try{ps=JSON.parse(ps)}catch(e){ps={}} }
+  const entries = Object.entries(ps).sort((a,b)=>b[1]-a[1]);
+  if(!entries.length) return `<div class="muted">No pattern scores</div>`;
+  return entries.map(([k,v])=>`
+    <div class="kv"><span>${k}</span><span>${v}</span></div>
+    <div class="bar"><i style="width:${Math.min(100,v)}%"></i></div>`).join("");
+}
+
+async function openCase(txnId){
+  current = txnId;
+  document.querySelectorAll(".row").forEach(r=>r.classList.toggle("active", r.dataset.id===txnId));
+  $("detail").innerHTML = `<div class="empty">Loading case ${txnId}…</div>`;
+  $("side-sof").disabled = false; $("side-mem").disabled = false; $("side-out").innerHTML = "";
+  $("btn-export").disabled = false;
+  $("btn-export").onclick = () => window.open(`${API}/alerts/${txnId}/export`, "_blank");
+  const d = await (await fetch(`${API}/alerts/${txnId}`)).json();
+  currentDetail = d;
+  const t = d.transaction;
+  const sRisk = d.sender.risk_features||{};
+  const rRisk = d.receiver.risk_features||{};
+
+  $("detail").innerHTML = `
+    <div class="tabs">
+      <div class="tab on" data-tab="overview">Overview</div>
+      <div class="tab" data-tab="network">Money flow</div>
+      <div class="tab" data-tab="map">Corridor map</div>
+      <div class="tab" data-tab="behavior">Behavioral</div>
+      <div class="tab" data-tab="verdict">Verdict</div>
+      <div class="tab" data-tab="debate">AI Debate</div>
+      <div class="tab" data-tab="docverify">Doc Verifier</div>
+      <div class="tab" data-tab="whatif">What-If</div>
+      <div class="tab" data-tab="sar">SAR Filing</div>
+      <div class="tab" data-tab="decision">Decision</div>
+    </div>
+    <div class="panel-block on" id="tab-overview">
+      <div class="case-id">CASE ${t.txn_id} · ${t.primary_pattern||''} · scenario ${t.fraud_scenario||'—'}</div>
+      <div class="amount">$${Number(t.amount).toLocaleString()}</div>
+      <div class="muted">${t.corridor} · ${new Date(t.ts).toLocaleString()} · purpose: ${t.purpose||'—'} · SoF: ${t.source_of_funds||'—'}</div>
+      <div class="flow">
+        <div class="node"><div class="id">${t.sender_id}</div><div class="age">${fmtFeatures(d.sender)}</div></div>
+        <div class="muted">→</div>
+        <div class="node"><div class="id">${t.receiver_id}</div><div class="age">${fmtFeatures(d.receiver)}</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Sender patterns</h3>${patternBars(sRisk)}</div>
+        <div class="card"><h3>Receiver patterns</h3>${patternBars(rRisk)}</div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>Sender activity</h3>
+          ${(d.sender.recent_activity||[]).slice(0,5).map(a=>`<div class="kv"><span>${a.sender_id===t.sender_id?'to':'from'} ${a.sender_id===t.sender_id?a.receiver_id:a.sender_id}</span><span>$${a.amount}</span></div>`).join("")||'<div class="muted">none</div>'}
+        </div>
+        <div class="card"><h3>Receiver activity</h3>
+          ${(d.receiver.recent_activity||[]).slice(0,5).map(a=>`<div class="kv"><span>${a.sender_id===t.receiver_id?'to':'from'} ${a.sender_id===t.receiver_id?a.receiver_id:a.sender_id}</span><span>$${a.amount}</span></div>`).join("")||'<div class="muted">none</div>'}
+        </div>
+      </div>
+    </div>
+    <div class="panel-block" id="tab-network">
+      <div class="card">
+        <h3>Money movement DAG</h3>
+        <p class="muted" style="margin:0 0 6px">Accounts layered left→right by hop depth. Amber edge is this case; amounts on edges. Hover an account for details.</p>
+        <div class="net tall" id="flow-dag-view">${renderMoneyFlowDag(d.network)}</div>
+        <div class="viz-legend">
+          <span><i style="background:#3FA796"></i> focal account</span>
+          <span><i style="background:#8B3E32"></i> high risk</span>
+          <span><i style="background:#E0A04A"></i> focal transfer</span>
+          <span>${(d.network.nodes||[]).length} accounts · ${(d.network.edges||[]).length} transfers</span>
+        </div>
+      </div>
+      <div class="card" style="margin-top:12px"><h3>Investigation DAG (12 steps)</h3>
+        <div class="dag" id="dag-list">
+          ${(d.dag_steps||[]).map(s=>`<div class="dag-step"><div class="dag-n">${s.id}</div><div><b>${s.name}</b><div class="muted">${s.description}</div></div></div>`).join("")}
+        </div>
+      </div>
+    </div>
+    <div class="panel-block" id="tab-map">
+      <div class="card">
+        <h3>Corridor geography</h3>
+        <p class="muted" style="margin:0 0 6px">Where money is revolving for this case neighborhood — real map, country nodes, aggregated corridor arcs.</p>
+        <div class="net tall" id="geo-map-view"><div class="muted" style="padding:24px">Loading map…</div></div>
+        <div class="viz-legend">
+          <span><i style="background:#E0A04A"></i> country on focal path</span>
+          <span><i style="background:#3FA796"></i> related corridor country</span>
+          <span>arc width ∝ volume</span>
+        </div>
+      </div>
+      <div class="grid2" style="margin-top:12px">
+        <div class="card"><h3>Corridor volumes</h3>${geoSummary(d.network.geo||{})}</div>
+        <div class="card"><h3>Countries in play</h3>
+          ${((d.network.geo||{}).countries||[]).map(c=>`
+            <div class="kv"><span>${c.country} · ${c.label}${c.focus?' · focal':''}</span>
+            <span>in ${money(c.in_amount)} / out ${money(c.out_amount)}</span></div>`).join("") || '<div class="muted">none</div>'}
+        </div>
+      </div>
+    </div>
+    <div class="panel-block" id="tab-behavior">
+      <div class="grid2">
+        <div class="card"><h3>Sender biometrics</h3>${sessionCard(d.sender.sessions)}
+          <div class="kv" style="margin-top:8px"><span>behavioral risk</span><span>${sRisk.behavioral_risk??'—'}</span></div>
+        </div>
+        <div class="card"><h3>Receiver biometrics</h3>${sessionCard(d.receiver.sessions)}
+          <div class="kv" style="margin-top:8px"><span>behavioral risk</span><span>${rRisk.behavioral_risk??'—'}</span></div>
+        </div>
+      </div>
+      <div class="grid3">
+        <div class="card"><h3>Shared devices</h3>
+          <div class="kv"><span>sender</span><span>${sRisk.shared_device_count??0}</span></div>
+          <div class="kv"><span>receiver</span><span>${rRisk.shared_device_count??0}</span></div>
+        </div>
+        <div class="card"><h3>Shared beneficiaries</h3>
+          <div class="kv"><span>sender</span><span>${sRisk.shared_beneficiary_count??0}</span></div>
+          <div class="kv"><span>receiver</span><span>${rRisk.shared_beneficiary_count??0}</span></div>
+        </div>
+        <div class="card"><h3>Multi-hop depth</h3>
+          <div class="kv"><span>sender</span><span>${sRisk.multi_hop_chain_depth??0}</span></div>
+          <div class="kv"><span>receiver</span><span>${rRisk.multi_hop_chain_depth??0}</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="panel-block" id="tab-verdict">
+      <div class="btn-row">
+        <button id="btn-invest-auto" type="button">Run investigation (auto)</button>
+        <button class="secondary" id="btn-invest-det" type="button">Deterministic DAG only</button>
+        <button class="secondary" id="btn-invest-gem" type="button">Force Gemini</button>
+      </div>
+      <div id="verdict-slot"></div>
+      <div id="dag-trace-slot"></div>
+    </div>
+    <div class="panel-block" id="tab-debate">
+      <div class="card">
+        <h3>Adversarial AI Debate (Prosecutor vs Defense)</h3>
+        <p class="muted">Runs Prosecutor, Defense, and Chief Compliance Judge agents to evaluate alert objectivity.</p>
+        <div class="btn-row"><button id="btn-run-debate" type="button">Launch AI Debate</button></div>
+        <div id="debate-slot" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="panel-block" id="tab-docverify">
+      <div class="card">
+        <h3>Multimodal Document Verifier</h3>
+        <p class="muted">Extracts figures & stamps from uploaded invoices/bank statements and cross-checks with database evidence.</p>
+        <div class="btn-row"><button id="btn-verify-doc" type="button">Verify Document</button></div>
+        <div id="docverify-slot" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="panel-block" id="tab-whatif">
+      <div class="card">
+        <h3>Counterfactual "What-If" Sensitivity Simulator</h3>
+        <p class="muted">Test how score and risk patterns change under feature perturbations.</p>
+        <div class="grid2">
+          <div><label class="muted">Account Age (Days): <span id="val-age">180</span></label><input type="range" id="slider-age" min="1" max="730" value="180"/></div>
+          <div><label class="muted">Pass-Through Ratio: <span id="val-ptr">0.50</span></label><input type="range" id="slider-ptr" min="0" max="1.5" step="0.05" value="0.50"/></div>
+          <div><label class="muted">Avg Hold Time (Mins): <span id="val-hold">180</span></label><input type="range" id="slider-hold" min="5" max="1440" step="15" value="180"/></div>
+          <div><label class="muted">Shared Devices: <span id="val-dev">0</span></label><input type="range" id="slider-dev" min="0" max="10" value="0"/></div>
+        </div>
+        <div class="btn-row" style="margin-top:12px"><button id="btn-run-whatif" type="button">Simulate What-If</button></div>
+        <div id="whatif-slot" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="panel-block" id="tab-sar">
+      <div class="card">
+        <h3>Multi-Jurisdiction Regulatory Filing Generator (SAR / STR)</h3>
+        <p class="muted">Generates official regulatory narrative sections for FinCEN (US), MAS (Singapore), or AUSTRAC (Australia).</p>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+          <select id="sar-jurisdiction" style="width:220px">
+            <option value="fincen">FinCEN (US - Form 111 SAR)</option>
+            <option value="mas">MAS (Singapore - STR Form A)</option>
+            <option value="austrac">AUSTRAC (Australia - SMR Form B)</option>
+          </select>
+          <button id="btn-gen-sar" type="button">Generate SAR Narrative</button>
+        </div>
+        <div id="sar-slot" style="margin-top:12px"></div>
+      </div>
+    </div>
+    <div class="panel-block" id="tab-decision">
+      <div class="card">
+        <h3>Analyst decision</h3>
+        <p class="muted">Records override / disposition and writes to institutional case memory.</p>
+        <label class="muted">Decision</label>
+        <select id="decision-select">
+          <option>clear_false_positive</option>
+          <option>request_sof_docs</option>
+          <option>hold_payment</option>
+          <option>escalate_fiu</option>
+          <option>freeze_account</option>
+        </select>
+        <label class="muted" style="display:block;margin-top:8px">Notes</label>
+        <textarea id="decision-notes" rows="3" placeholder="Rationale for audit…"></textarea>
+        <div class="btn-row"><button id="btn-decide" type="button">Record decision</button></div>
+        <div id="decision-list"></div>
+      </div>
+    </div>
+  `;
+
+  $("detail").querySelectorAll(".tab").forEach(tab=>{
+    tab.addEventListener("click", ()=>{
+      $("detail").querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+      $("detail").querySelectorAll(".panel-block").forEach(x=>x.classList.remove("on"));
+      tab.classList.add("on");
+      $("tab-"+tab.dataset.tab).classList.add("on");
+    });
+  });
+
+  // Money-flow node hover tooltips
+  attachFlowTooltips($("flow-dag-view"));
+
+  // Real-world corridor map, loaded async (atlas cached after first fetch)
+  renderCorridorMap(d.network.geo||{}).then(svg=>{
+    const el = $("geo-map-view");
+    if(el) el.innerHTML = svg;
+  }).catch(err=>{
+    const el = $("geo-map-view");
+    if(el) el.innerHTML = `<div class="muted" style="padding:24px">Map failed to load: ${err.message}</div>`;
+  });
+
+  const runInvest = async (mode, force=true)=>{
+    const slot = $("verdict-slot");
+    slot.innerHTML = `<div class="muted">Running ${mode} investigation…</div>`;
+    try{
+      const res = await fetch(`${API}/alerts/${txnId}/investigate`, {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({mode, force})
+      });
+      const data = await res.json();
+      if(!res.ok) throw new Error(data.detail||res.statusText);
+      renderVerdict(data);
+      loadAudit(txnId);
+    }catch(err){
+      slot.innerHTML = `<div class="verdict high"><span class="pill high">error</span><p>${err.message}</p></div>`;
+    }
+  };
+  $("btn-invest-auto").onclick = ()=>runInvest("auto");
+  $("btn-invest-det").onclick = ()=>runInvest("deterministic");
+  $("btn-invest-gem").onclick = ()=>runInvest("gemini");
+
+  ["age","ptr","hold","dev"].forEach(k=>{
+    const s=$(`slider-${k}`), v=$(`val-${k}`);
+    if(s&&v) s.oninput=()=>{ v.textContent=s.value; };
+  });
+
+  if($("btn-run-debate")){
+    $("btn-run-debate").onclick = async ()=>{
+      if(!current) return;
+      const slot = $("debate-slot");
+      slot.innerHTML = `<div class="muted">Running 3-agent adversarial debate (Prosecutor vs Defense vs Judge)…</div>`;
+      try{
+        const res = await fetch(`${API}/alerts/${current}/debate`, {method:"POST"});
+        const data = await res.json();
+        slot.innerHTML = `
+          <div class="grid2">
+            <div class="card" style="border-color:var(--red-dim)">
+              <h3 style="color:var(--red)">Prosecutor Argument</h3>
+              <p>${data.prosecutor.prosecution_argument}</p>
+              <ul class="tight">${(data.prosecutor.key_incriminating_evidence||[]).map(e=>`<li>${e}</li>`).join("")}</ul>
+            </div>
+            <div class="card" style="border-color:var(--teal-dim)">
+              <h3 style="color:var(--teal)">Defense Explanation</h3>
+              <p>${data.defense.defense_argument}</p>
+              <ul class="tight">${(data.defense.key_mitigating_evidence||[]).map(e=>`<li>${e}</li>`).join("")}</ul>
+            </div>
+          </div>
+          <div class="verdict ${pillClass(data.judge.final_verdict)}" style="margin-top:12px">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+              <span class="pill ${pillClass(data.judge.final_verdict)}">Judge Verdict: ${data.judge.final_verdict} (Confidence: ${data.judge.confidence_score}%)</span>
+            </div>
+            <p><b>Synthesis:</b> ${data.judge.verdict_summary}</p>
+            <div class="muted"><b>Decisive Factor:</b> ${data.judge.key_decisive_factor}</div>
+            <div class="muted" style="margin-top:4px"><b>Remediation Directive:</b> ${data.judge.required_remediation}</div>
+          </div>`;
+        loadAudit(current);
+      }catch(e){ slot.innerHTML = `<div class="muted" style="color:var(--red)">Debate failed: ${e.message}</div>`; }
+    };
+  }
+
+  if($("btn-verify-doc")){
+    $("btn-verify-doc").onclick = async ()=>{
+      if(!current) return;
+      const slot = $("docverify-slot");
+      slot.innerHTML = `<div class="muted">Inspecting document figures with Multimodal OCR & DB verification…</div>`;
+      try{
+        const res = await fetch(`${API}/alerts/${current}/verify-document`, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({})
+        });
+        const data = await res.json();
+        const doc = data.extracted_document||{};
+        slot.innerHTML = `
+          <div class="verdict ${data.verification_status==='VERIFIED_MATCH'?'low':'high'}">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+              <span class="pill ${data.verification_status==='VERIFIED_MATCH'?'low':'high'}">${data.verification_status}</span>
+              <span class="case-id">Doc: ${doc.document_type||'Statement'} · Issuer: ${doc.issuer_name||'N/A'}</span>
+            </div>
+            <p>${data.verification_note}</p>
+            <div class="kv"><span>Wire Amount:</span><span>$${data.transaction_amount?.toLocaleString()}</span></div>
+            <div class="kv"><span>Document Amount:</span><span>$${doc.total_amount?.toLocaleString()}</span></div>
+            <div class="kv"><span>Discrepancy:</span><span>${data.discrepancy_percentage}%</span></div>
+            <div class="muted" style="margin-top:6px"><b>Authenticity Signals:</b> ${(doc.authenticity_indicators||[]).join(", ")||"Verified"}</div>
+            ${(doc.potential_red_flags||[]).length?`<div style="color:var(--red);margin-top:4px"><b>Red Flags:</b> ${doc.potential_red_flags.join(", ")}</div>`:''}
+          </div>`;
+        loadAudit(current);
+      }catch(e){ slot.innerHTML = `<div class="muted" style="color:var(--red)">Doc verification failed: ${e.message}</div>`; }
+    };
+  }
+
+  if($("btn-run-whatif")){
+    $("btn-run-whatif").onclick = async ()=>{
+      if(!current) return;
+      const slot = $("whatif-slot");
+      slot.innerHTML = `<div class="muted">Simulating feature sensitivity perturbation…</div>`;
+      try{
+        const body = {
+          account_age_days: parseInt($("slider-age").value),
+          pass_through_ratio: parseFloat($("slider-ptr").value),
+          avg_hold_time_minutes: parseFloat($("slider-hold").value),
+          shared_device_count: parseInt($("slider-dev").value)
+        };
+        const res = await fetch(`${API}/alerts/${current}/counterfactual`, {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        slot.innerHTML = `
+          <div class="grid2">
+            <div class="card"><h3>Baseline Score</h3><div class="amount">${data.baseline.risk_score}</div><div class="muted">Pattern: ${data.baseline.primary_pattern}</div></div>
+            <div class="card"><h3>Perturbed Score</h3><div class="amount" style="color:${data.score_delta<0?'var(--teal)':'var(--red)'}">${data.counterfactual.risk_score} (${data.score_delta > 0 ? '+' : ''}${data.score_delta})</div><div class="muted">Pattern: ${data.counterfactual.primary_pattern}</div></div>
+          </div>
+          <div class="card" style="margin-top:10px"><h3>Feature Sensitivity Ranking</h3>
+            ${(data.sensitivity_rankings||[]).map(s=>`
+              <div class="kv"><span>${s.feature} (${s.perturbation})</span><span style="color:${s.impact_delta<0?'var(--teal)':'var(--amber)'}">${s.impact_delta > 0 ? '+' : ''}${s.impact_delta} pts [${s.sensitivity}]</span></div>
+            `).join("")}
+          </div>`;
+        loadAudit(current);
+      }catch(e){ slot.innerHTML = `<div class="muted" style="color:var(--red)">Simulator failed: ${e.message}</div>`; }
+    };
+  }
+
+  if($("btn-gen-sar")){
+    $("btn-gen-sar").onclick = async ()=>{
+      if(!current) return;
+      const slot = $("sar-slot");
+      const jur = $("sar-jurisdiction").value;
+      slot.innerHTML = `<div class="muted">Drafting ${jur.toUpperCase()} regulatory narrative…</div>`;
+      try{
+        const res = await fetch(`${API}/alerts/${current}/sar?jurisdiction=${jur}`);
+        const data = await res.json();
+        slot.innerHTML = `
+          <div class="verdict low">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+              <span class="pill low">${data.jurisdiction}</span>
+              <span class="case-id">${data.filing_form} · mode ${data.mode}</span>
+            </div>
+            <textarea rows="10" style="font-family:monospace;font-size:11px" readonly>${data.full_narrative_text}</textarea>
+          </div>`;
+        loadAudit(current);
+      }catch(e){ slot.innerHTML = `<div class="muted" style="color:var(--red)">SAR generation failed: ${e.message}</div>`; }
+    };
+  }
+
+  if(d.cached_verdict){
+    renderVerdict({verdict:d.cached_verdict, cached:true});
+  }
+  renderDecisions(d.analyst_decisions||[]);
+  $("btn-decide").onclick = async ()=>{
+    const role = $("user-role").value;
+    const body = {
+      decision: $("decision-select").value,
+      notes: $("decision-notes").value,
+      analyst_id: `analyst_${role}`
+    };
+    await fetch(`${API}/alerts/${txnId}/decision`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Analyst-ID": `analyst_${role}`,
+        "X-Analyst-Role": role
+      },
+      body: JSON.stringify(body)
+    });
+    const refreshed = await (await fetch(`${API}/alerts/${txnId}`)).json();
+    renderDecisions(refreshed.analyst_decisions||[]);
+    loadAudit(txnId);
+  };
+  loadAudit(txnId);
+}
+
+function renderVerdict(data){
+  const v = data.verdict||{};
+  $("verdict-slot").innerHTML = `
+    <div class="verdict ${pillClass(v.risk_level)}">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <span class="pill ${pillClass(v.risk_level)}">${v.risk_level||'—'} · ${v.risk_score??'—'}</span>
+        <span class="case-id">${v.primary_pattern||''} · mode ${v.mode||''}${data.cached?' · cached':''}</span>
+      </div>
+      <p style="line-height:1.5;margin:0 0 8px">${v.rationale||''}</p>
+      <div class="muted"><b style="color:var(--text)">Action:</b> ${v.recommended_action||'—'}</div>
+      ${v.note?`<div class="muted" style="margin-top:6px">${v.note}</div>`:''}
+    </div>`;
+  if(data.dag && data.dag.trace){
+    $("dag-trace-slot").innerHTML = `<div class="card" style="margin-top:12px"><h3>DAG run ${data.dag.run_id}</h3>
+      <div class="dag">${data.dag.trace.map((s,i)=>`<div class="dag-step"><div class="dag-n">${i+1}</div>
+        <div><b>${s.step}</b> · ${s.status}<div class="muted">${s.description||''}</div></div></div>`).join("")}</div></div>`;
+  }
+}
+
+function renderDecisions(list){
+  const el = $("decision-list");
+  if(!el) return;
+  if(!list.length){ el.innerHTML = `<div class="muted" style="margin-top:8px">No decisions yet.</div>`; return; }
+  el.innerHTML = `<h3 style="margin:12px 0 6px;font-size:11px;color:var(--muted)">HISTORY</h3>` +
+    list.map(d=>`<div class="kv"><span>${d.decision}</span><span>${new Date(d.decided_at).toLocaleString()}</span></div>
+      <div class="muted" style="margin-bottom:6px">${d.notes||''}</div>`).join("");
+}
+
+async function loadAudit(txnId){
+  const rows = await (await fetch(`${API}/alerts/${txnId}/audit`)).json();
+  $("side-audit").innerHTML = rows.slice(-40).map(r=>
+    `<div>[${r.event_type}] ${r.actor} · ${new Date(r.ts).toLocaleTimeString()}</div>`
+  ).join("") || "No events yet.";
+}
+
+$("side-sof").onclick = async ()=>{
+  if(!current) return;
+  $("side-out").textContent = "Running SoF check…";
+  const explanation = currentDetail?.transaction?.source_of_funds || "";
+  const res = await fetch(`${API}/phase2/sof/${current}`, {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({explanation, use_llm:true})
+  });
+  const data = await res.json();
+  $("side-out").innerHTML = `<div><b>${data.plausibility}</b> · ${data.severity}</div>
+    <ul class="tight">${(data.inconsistencies||[]).map(i=>`<li>${i.code}: ${i.detail}</li>`).join("")||'<li>No inconsistencies</li>'}</ul>
+    ${data.draft_narrative?`<p>${data.draft_narrative}</p>`:''}`;
+  loadAudit(current);
+};
+
+$("side-mem").onclick = async ()=>{
+  if(!current) return;
+  $("side-out").textContent = "Retrieving precedents…";
+  const data = await (await fetch(`${API}/phase2/memory/${current}`)).json();
+  $("side-out").innerHTML = `<p>${data.summary}</p><ul class="tight">${
+    (data.precedents||[]).map(p=>`<li><b>${p.pattern}</b> (${p.similarity}) — ${p.outcome}<br><span class="muted">${p.summary}</span></li>`).join("")
+  }</ul>`;
+};
+
+$("btn-mrm").onclick = async ()=>{
+  const data = await (await fetch(`${API}/phase2/mrm`, {headers: authHeaders()})).json();
+  const w = window.open("","mrm");
+  w.document.write(`<pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;padding:24px">${
+    JSON.stringify(data,null,2).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))
+  }</pre>`);
+};
+
+$("btn-mined-rules").onclick = async ()=>{
+  const data = await (await fetch(`${API}/phase2/rules/mine`, {headers: authHeaders()})).json();
+  const w = window.open("","rules");
+  w.document.write(`<pre style="white-space:pre-wrap;font-family:ui-monospace,monospace;padding:24px">${
+    JSON.stringify(data,null,2).replace(/[<>&]/g, c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))
+  }</pre>`);
+};
+
+$("btn-redteam").onclick = async ()=>{
+  if(!confirm("Inject adversarial scenarios into the local DB and re-score?")) return;
+  $("btn-redteam").disabled = true; $("btn-redteam").textContent = "Red-teaming…";
+  try{
+    const data = await (await fetch(`${API}/phase2/redteam`, {
+      method:"POST", headers:authHeaders({"Content-Type":"application/json"}),
+      body: JSON.stringify({include_llm:false, max_scenarios:3})
+    })).json();
+    alert(`Red-team done: ${data.detected} detected / ${data.evaded} evaded of ${data.ran}`);
+    await loadAlerts();
+  }finally{
+    $("btn-redteam").disabled = false; $("btn-redteam").textContent = "Run red-team";
+  }
+};
+
+$("btn-redteam-reset").onclick = async ()=>{
+  if(!confirm("Wipe red-team test injections and restore dataset to clean synthetic baseline?")) return;
+  $("btn-redteam-reset").disabled = true; $("btn-redteam-reset").textContent = "Resetting…";
+  try{
+    const data = await (await fetch(`${API}/phase2/redteam/reset`, { method: "POST", headers: authHeaders() })).json();
+    alert(data.message || "Dataset reset to clean baseline.");
+    await loadAlerts();
+  }finally{
+    $("btn-redteam-reset").disabled = false; $("btn-redteam-reset").textContent = "Reset dataset";
+  }
+};
+
+health();
+loadAlerts();
+</script>
+</body>
+</html>
