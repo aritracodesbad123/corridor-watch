@@ -193,6 +193,16 @@ CREATE TABLE IF NOT EXISTS ingestion_events (
     source TEXT
 );
 
+CREATE TABLE IF NOT EXISTS outbox_events (
+    outbox_id TEXT PRIMARY KEY,
+    event_type TEXT,
+    payload TEXT,
+    created_at TEXT,
+    published_at TEXT,
+    attempts INTEGER,
+    last_error TEXT
+);
+
 CREATE TABLE IF NOT EXISTS investigation_queue (
     queue_id TEXT PRIMARY KEY,
     txn_id TEXT,
@@ -308,6 +318,8 @@ INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_queue_status ON investigation_queue(status)",
     "CREATE INDEX IF NOT EXISTS idx_queue_status_created ON investigation_queue(status, created_at)",
     "CREATE INDEX IF NOT EXISTS idx_pattern_matches_txn ON pattern_matches(txn_id)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_ingest_source_event ON ingestion_events(source_system, source_event_id) WHERE source_event_id IS NOT NULL",
+    "CREATE INDEX IF NOT EXISTS idx_outbox_unpublished ON outbox_events(published_at, created_at)",
 ]
 
 ACCOUNT_COLUMNS = {
@@ -359,10 +371,19 @@ QUEUE_COLUMNS = {
     "priority": "INTEGER",
     "attempt_count": "INTEGER",
     "claimed_at": "TEXT",
+    "started_at": "TEXT",
     "completed_at": "TEXT",
     "last_error": "TEXT",
     "next_attempt_at": "TEXT",
     "worker_id": "TEXT",
+}
+
+INGEST_EVENT_COLUMNS = {
+    "event_id": "TEXT",
+    "source_system": "TEXT",
+    "source_event_id": "TEXT",
+    "event_version": "INTEGER",
+    "occurred_at": "TEXT",
 }
 
 
@@ -668,6 +689,22 @@ def connect(row_factory: bool = True, purpose: str = "interactive") -> sqlite3.C
     return con
 
 
+def pool_status() -> dict:
+    """In-process pool occupancy. SQLite has no pool."""
+    if not get_settings().is_postgres:
+        return {"dialect": "sqlite", "utilization": 0.0, "size": 0, "max": 0, "overflow": 0}
+    cap = max(1, int(_PG_POOL.get("max") or 1) + int(_PG_POOL.get("max_overflow") or 0))
+    used = int(_PG_POOL.get("size") or 0) + int(_PG_POOL.get("overflow") or 0)
+    return {
+        "dialect": "postgres",
+        "size": int(_PG_POOL.get("size") or 0),
+        "max": int(_PG_POOL.get("max") or 0),
+        "overflow": int(_PG_POOL.get("overflow") or 0),
+        "max_overflow": int(_PG_POOL.get("max_overflow") or 0),
+        "utilization": round(used / cap, 4),
+    }
+
+
 def warmup_pool() -> int:
     """Open the ingest pool so the first Pub/Sub burst does not 503."""
     if not get_settings().is_postgres:
@@ -778,6 +815,7 @@ def init_schema(con: sqlite3.Connection | CompatConnection | None = None) -> Non
     _ensure_columns(con, "audit_log", AUDIT_COLUMNS)
     _ensure_columns(con, "flagged_transactions", FLAGGED_COLUMNS)
     _ensure_columns(con, "investigation_queue", QUEUE_COLUMNS)
+    _ensure_columns(con, "ingestion_events", INGEST_EVENT_COLUMNS)
     _ensure_columns(con, "crime_patterns", PATTERN_COLUMNS)
     _create_indexes(con)
     con.commit()

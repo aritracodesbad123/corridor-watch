@@ -27,6 +27,11 @@ class InvestigationReport(BaseModel):
     confidence: int = Field(ge=0, le=100)
     uncertainty: str = Field(default="", max_length=800)
     model_version: str = ""
+    model_provider: str = ""
+    prompt_version: str = ""
+    evidence_hash: str = ""
+    input_hash: str = ""
+    output_hash: str = ""
     pattern_versions: list[str] = Field(default_factory=list)
     gemini_used: bool = False
     grounded: bool = True

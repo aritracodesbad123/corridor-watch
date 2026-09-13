@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import time
 
 from config import get_settings
 from db import connect, init_schema, upsert
@@ -96,13 +97,20 @@ def process_queue_item(queue_id: str | None = None, txn_id: str | None = None, w
             use_gemini = agent.gemini_available()
         except Exception:
             use_gemini = False
+    from tracing import bind
+    bind(transaction_id=item["txn_id"], investigation_id=item["queue_id"], case_id=item["txn_id"])
+    started = time.perf_counter()
     try:
         mark_running(item["queue_id"], worker_id)
         result = build_investigation(item["txn_id"], use_gemini=use_gemini)
         mark_completed(item["queue_id"])
+        _set_case_phase(item["txn_id"], "HUMAN_REVIEW" if not result.get("gemini_error") else "EVIDENCE_READY")
     except Exception as exc:
+        METRICS.inc("investigations_failed_total")
         mark_failed(item["queue_id"], str(exc), retry=True)
         raise
+    finally:
+        METRICS.investigation_latency.add((time.perf_counter() - started) * 1000.0)
     result["queue_id"] = item["queue_id"]
     result["settings_note"] = (
         f"Gemini invoked only for HIGH/CRITICAL. Current tier={tier}. "
@@ -130,3 +138,33 @@ def _persist_case(txn: dict, network: dict, report: InvestigationReport, matches
     })
     con.commit()
     con.close()
+    import audit
+    audit.log(
+        txn["txn_id"],
+        "model_provenance",
+        {
+            "model_provider": report.model_provider,
+            "model_version": report.model_version,
+            "prompt_version": report.prompt_version,
+            "evidence_hash": report.evidence_hash,
+            "input_hash": report.input_hash,
+            "output_hash": report.output_hash,
+        },
+        model_version=report.model_version,
+    )
+
+
+def _set_case_phase(txn_id: str, status: str) -> None:
+    con = connect(row_factory=False)
+    con.execute("UPDATE investigations SET status=?, updated_at=? WHERE case_id=?", (status, utc_now(), txn_id))
+    con.commit()
+    con.close()
+
+
+def run_worker(*, worker_id: str = "investigator", idle_seconds: float = 1.0) -> None:
+    """CW_ROLE=investigation. Gemini stays off ingest."""
+    import time
+    while True:
+        result = process_queue_item(worker_id=worker_id)
+        if result.get("status") == "empty":
+            time.sleep(idle_seconds)

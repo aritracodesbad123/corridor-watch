@@ -26,6 +26,11 @@ class TransactionEvent(BaseModel):
     fraud_scenario: str = Field(default="normal", max_length=64)
     scenario_id: str = Field(default="", max_length=64)
     account_age_days: int | None = Field(default=None, ge=0, le=20000)
+    event_id: str = Field(default="", max_length=64)
+    source_system: str = Field(default="corridor-watch", max_length=64)
+    source_event_id: str = Field(default="", max_length=64)
+    event_version: int = Field(default=1, ge=1, le=1000)
+    occurred_at: str = Field(default="")
 
     @field_validator("timestamp")
     @classmethod
@@ -41,6 +46,16 @@ class TransactionEvent(BaseModel):
         src = self.origin_country or "??"
         dst = self.destination_country or "??"
         return f"{src}->{dst}"
+
+    def identity(self) -> dict:
+        source_event_id = self.source_event_id or self.txn_id
+        return {
+            "event_id": self.event_id or self.txn_id,
+            "source_system": self.source_system or "corridor-watch",
+            "source_event_id": source_event_id,
+            "event_version": self.event_version,
+            "occurred_at": self.occurred_at or self.timestamp,
+        }
 
     def as_row(self) -> dict:
         return {

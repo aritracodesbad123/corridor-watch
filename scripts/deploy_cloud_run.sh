@@ -97,6 +97,20 @@ if gcloud secrets describe "$DB_SECRET" --project "$PROJECT_ID" >/dev/null 2>&1;
   SECRET_FLAGS="${SECRET_FLAGS},DATABASE_URL=${DB_SECRET}:latest"
   CLOUDSQL_FLAGS+=(--add-cloudsql-instances="${PROJECT_ID}:${REGION}:${INSTANCE}")
 fi
+PII_SECRET="${PII_HMAC_SECRET:-pii-hmac-key}"
+if [[ -n "${CW_PII_HMAC_KEY:-}" ]]; then
+  if gcloud secrets describe "$PII_SECRET" --project "$PROJECT_ID" >/dev/null 2>&1; then
+    printf '%s' "$CW_PII_HMAC_KEY" | gcloud secrets versions add "$PII_SECRET" --project "$PROJECT_ID" --data-file=-
+  else
+    printf '%s' "$CW_PII_HMAC_KEY" | gcloud secrets create "$PII_SECRET" --project "$PROJECT_ID" --data-file=-
+  fi
+  gcloud secrets add-iam-policy-binding "$PII_SECRET" \
+    --project "$PROJECT_ID" \
+    --member="serviceAccount:${RUNTIME_SA}" \
+    --role="roles/secretmanager.secretAccessor" \
+    --quiet
+  SECRET_FLAGS="${SECRET_FLAGS},CW_PII_HMAC_KEY=${PII_SECRET}:latest"
+fi
 
 # Sized for Cloud SQL custom-2-7680 (~200 connections).
 # 10 replicas × (pool 8 + overflow 4) = 120 connections.

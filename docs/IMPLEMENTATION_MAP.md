@@ -7,7 +7,8 @@ Internal map of the repository after the master-spec evolution. Existing Phase 1
 | Module | Role |
 |---|---|
 | `main.py` | FastAPI surface (legacy alert APIs kept) |
-| `auth.py` | `analyst` / `fiu_lead` / `mrm_auditor` RBAC |
+| `auth.py` | `analyst` / `fiu_lead` / `mrm_auditor` RBAC; optional OIDC bearer + MFA step-up |
+| `privacy.py` | HMAC account tokens + untrusted document wrap for Gemini |
 | `db.py` | Connection + schema; SQLite local-only, PostgreSQL required on GCP |
 | `audit.py` | Append-only case audit |
 | `data_gen.py` | Seeded demo population (5 typologies) |
@@ -24,9 +25,10 @@ High-risk dispositions (`hold_payment`, `escalate_fiu`, `freeze_account`) remain
 | Package | Role |
 |---|---|
 | `config.py` | Environment configuration |
-| `metrics.py` | In-process counters / latency samples |
+| `metrics.py` | In-process counters, SLO snapshot, alert evaluation |
+| `tracing.py` | Request `trace_id` / `span_id` from W3C or Cloud Trace headers |
 | `risk/` | Cheap screening + configurable risk tiers |
-| `pubsub/` | Transaction schema, idempotent ingest, optional GCP publish |
+| `pubsub/` | Transaction schema, idempotent ingest, transactional outbox, optional GCP publish |
 | `synthetic/` | Multi-bank world + correlated fraud campaigns |
 | `graph/` | Bounded traversal, corridor intelligence, visibility / boundaries |
 | `intelligence/` | Synthetic external signals (RBAC, no raw customer data) |
@@ -40,20 +42,22 @@ High-risk dispositions (`hold_payment`, `escalate_fiu`, `freeze_account`) remain
 ```
 synthetic / Pub/Sub / HTTP ingest
         ↓
-validate + dedupe + persist
+validate + (source_system, source_event_id) dedupe
         ↓
 cheap risk screen → LOW | MEDIUM | HIGH | CRITICAL
         ↓
-metrics
+one DB transaction: ledger + investigation_queue + outbox_events
         ↓
-MEDIUM+ → PostgreSQL investigation_queue
-        ↓  (optional Pub/Sub fan-out; not the consumer)
+outbox drain → optional Pub/Sub notify (not the consumer)
+        ↓
+MEDIUM+ workers claim queue (QUEUED → CLAIMED → RUNNING → COMPLETED / RETRY / DEAD_LETTER)
+        ↓
 graph / DNA / optional Gemini
         ↓
 analyst UI → human decision → audit → pattern library
 ```
 
-The durable investigation queue is PostgreSQL. `INVESTIGATION_TOPIC` is a notification, not a second ingest pipeline.
+The durable investigation queue is PostgreSQL. Outbox rows are authoritative for notify retry. `INVESTIGATION_TOPIC` is a notification, not a second ingest pipeline. `CW_ROLE` can run `api`, `investigation`, or `outbox` processes.
 
 ## Local vs GCP
 
@@ -64,4 +68,4 @@ Ingest stages (`ingest_decode`, `ingest_validate`, `ingest_idempotency`, writes,
 
 ## Tests
 
-Baseline behavior stays in `tests/test_core.py`. Platform coverage is in `tests/test_platform.py` (auth, ingest idempotency, queue retry, GCP SQLite refusal, transaction baseline, DNA, grounded report, RBAC). Claims policy: [COMPETITION_CLAIMS.md](COMPETITION_CLAIMS.md).
+Baseline behavior stays in `tests/test_core.py`. Platform coverage is in `tests/test_platform.py` (auth, ingest idempotency, queue retry, GCP SQLite refusal, transaction baseline, DNA, grounded report, RBAC). Reliability coverage is in `tests/test_reliability.py` (source-event duplicates, outbox, backoff). Claims policy: [COMPETITION_CLAIMS.md](COMPETITION_CLAIMS.md). Production evidence: [load-test](../production/load-test-report.md), [DR](../production/disaster-recovery-report.md), [threat model](../production/security-threat-model.md), [AI validation](../production/ai-model-validation-report.md).

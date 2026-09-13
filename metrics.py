@@ -37,6 +37,7 @@ class MetricsRegistry:
         self._ingest_times: list[float] = []
         self.ingestion_latency = _Reservoir()
         self.gemini_latency = _Reservoir()
+        self.investigation_latency = _Reservoir()
         self.stages: dict[str, _Reservoir] = {
             "ingest_decode": _Reservoir(),
             "ingest_validate": _Reservoir(),
@@ -95,11 +96,91 @@ class MetricsRegistry:
                 "p95": self.gemini_latency.percentile(95),
                 "p99": self.gemini_latency.percentile(99),
             },
+            "investigation_latency_ms": {
+                "p50": self.investigation_latency.percentile(50),
+                "p95": self.investigation_latency.percentile(95),
+                "p99": self.investigation_latency.percentile(99),
+            },
             "ingest_stages_ms": {
                 name: {"p50": r.percentile(50), "p95": r.percentile(95), "p99": r.percentile(99)}
                 for name, r in self.stages.items()
             },
+            "slos": self.slo_status(),
         }
+
+    def slo_status(self) -> dict:
+        """Compare measured samples to promised targets. Targets, not claims of compliance."""
+        ingest_p95 = self.ingestion_latency.percentile(95)
+        gemini_p95 = self.gemini_latency.percentile(95)
+        inv_p95 = self.investigation_latency.percentile(95)
+        counters = dict(self._counters)
+        received = counters.get("transactions_received_total", 0)
+        failed = counters.get("transactions_failed_total", 0)
+        dupes = counters.get("transactions_duplicate_total", 0)
+        http_n = counters.get("http_requests_total", 0)
+        http_5xx = counters.get("http_5xx_total", 0)
+        completed = counters.get("investigations_completed_total", 0)
+        return {
+            "ingestion_accept_within_2s": {
+                "target": "99.9% of valid events accepted within 2s",
+                "p95_ms": ingest_p95,
+                "status": "ok" if ingest_p95 <= 2000 or received == 0 else "breach",
+            },
+            "investigation_within_10s": {
+                "target": "99% of deterministic investigations complete within 10s",
+                "p95_ms": inv_p95,
+                "status": "ok" if inv_p95 <= 10000 or completed == 0 else "breach",
+            },
+            "ai_fail_safe_within_30s": {
+                "target": "99% of Gemini calls complete or fail safely within 30s",
+                "p95_ms": gemini_p95,
+                "status": "ok" if gemini_p95 <= 30000 else "breach",
+            },
+            "api_availability": {
+                "target": "99.9% monthly API availability",
+                "session_5xx": http_5xx,
+                "session_requests": http_n,
+                "status": "ok" if http_n == 0 or (http_5xx / http_n) <= 0.001 else "breach",
+                "note": "session rate only — not a monthly measurement",
+            },
+            "ingest_error_rate": {
+                "failed": failed,
+                "received": received,
+                "duplicates": dupes,
+            },
+        }
+
+    def evaluate_alerts(
+        self,
+        *,
+        queue: dict | None = None,
+        pool: dict | None = None,
+        pubsub_backlog: float | None = None,
+    ) -> list[dict]:
+        """Threshold checks on measured samples. Empty list means nothing is firing."""
+        counters = dict(self._counters)
+        firing: list[dict] = []
+        if pubsub_backlog is not None and pubsub_backlog > 1000:
+            firing.append({"id": "pubsub_lag", "severity": "warning", "detail": f"backlog={int(pubsub_backlog)}"})
+        util = (pool or {}).get("utilization")
+        if util is not None and util > 0.8:
+            firing.append({"id": "db_pool", "severity": "warning", "detail": f"utilization={util}"})
+        reqs = counters.get("http_requests_total", 0)
+        err5 = counters.get("http_5xx_total", 0)
+        if reqs and (err5 / reqs) > 0.01:
+            firing.append({"id": "http_5xx", "severity": "critical", "detail": f"{err5}/{reqs}"})
+        started = counters.get("investigations_started_total", 0)
+        failed_inv = counters.get("investigations_failed_total", 0)
+        if started and (failed_inv / started) > 0.005:
+            firing.append({"id": "investigation_failures", "severity": "warning", "detail": f"{failed_inv}/{started}"})
+        dlq = int((queue or {}).get("DEAD_LETTER") or 0)
+        if dlq > 0:
+            firing.append({"id": "dlq", "severity": "critical", "detail": f"dead_letter={dlq}"})
+        gemini_n = counters.get("gemini_requests_total", 0)
+        gemini_fail = counters.get("gemini_failures_total", 0)
+        if gemini_n and (gemini_fail / gemini_n) > 0.05:
+            firing.append({"id": "gemini_errors", "severity": "warning", "detail": f"{gemini_fail}/{gemini_n}"})
+        return firing
 
 
 METRICS = MetricsRegistry()

@@ -38,3 +38,9 @@ The publisher holds the target. Consume is still SQL/connector-bound (503s when 
 Do not raise Cloud Run max instances, concurrency, and pool size together. Measure the matrix in [COMPETITION_CLAIMS.md](COMPETITION_CLAIMS.md) first. Timestamped generator output lands in `benchmarks/results/` (no secrets).
 
 The entrypoint exits if `ENVIRONMENT=gcp` and `DATABASE_URL` is not PostgreSQL.
+
+Backups: `./scripts/enable_sql_pitr.sh YOUR_PROJECT_ID` then `./scripts/dr_status.sh YOUR_PROJECT_ID`. Do not claim RPO/RTO until a restore is timed.
+
+Optional SSO: set `OIDC_ISSUER`, `OIDC_AUDIENCE`, and either Google Identity (`https://accounts.google.com`) or `OIDC_CLIENT_SECRET` for an HS256 IdP. Map emails with `OIDC_EMAIL_ROLES`. High-risk actions then require an MFA claim. Password login stays for the competition console.
+
+`CW_PII_HMAC_KEY` should live in Secret Manager (`pii-hmac-key`). It tokenizes account IDs before they reach Gemini. It is not a Cloud KMS client.

@@ -56,6 +56,10 @@ ROOT = Path(__file__).resolve().parent
 COOKIE_NAME = "cw_session"
 
 
+HIGH_RISK_DECISIONS = {"hold_payment", "escalate_fiu", "freeze_account"}
+HIGH_RISK_WORKFLOW = {"escalate"}
+
+
 @dataclass(frozen=True)
 class AuthContext:
     analyst_id: str
@@ -63,6 +67,7 @@ class AuthContext:
     mode: str
     display_name: str = ""
     permissions: tuple[str, ...] = ()
+    mfa: bool = False
 
 
 def _production_keys() -> dict[str, dict[str, str]]:
@@ -132,6 +137,112 @@ def issue_session(user: dict) -> str:
     return f"{body}.{sig}"
 
 
+def oidc_enabled() -> bool:
+    return bool(os.getenv("OIDC_ISSUER"))
+
+
+def _mfa_from_claims(claims: dict) -> bool:
+    if claims.get("mfa") is True:
+        return True
+    amr = claims.get("amr") or []
+    if isinstance(amr, str):
+        amr = [amr]
+    return any(str(item).lower() in {"mfa", "otp", "hwk", "pwd+mfa"} for item in amr)
+
+
+def _verify_hs256_jwt(token: str, secret: str, issuer: str, audience: str) -> dict:
+    parts = token.split(".")
+    if len(parts) != 3:
+        raise HTTPException(401, "invalid oidc token")
+    header_b64, payload_b64, sig = parts
+    expected = _b64url(hmac.new(secret.encode(), f"{header_b64}.{payload_b64}".encode(), hashlib.sha256).digest())
+    if not hmac.compare_digest(sig, expected):
+        raise HTTPException(401, "invalid oidc token")
+    try:
+        header = json.loads(_b64url_decode(header_b64))
+        claims = json.loads(_b64url_decode(payload_b64))
+    except (json.JSONDecodeError, ValueError) as exc:
+        raise HTTPException(401, "invalid oidc token") from exc
+    if header.get("alg") != "HS256":
+        raise HTTPException(401, "unsupported oidc alg")
+    if issuer and claims.get("iss") != issuer:
+        raise HTTPException(401, "oidc issuer mismatch")
+    aud = claims.get("aud")
+    if audience and aud not in (audience, [audience]):
+        raise HTTPException(401, "oidc audience mismatch")
+    if int(claims.get("exp") or 0) < int(time.time()):
+        raise HTTPException(401, "oidc token expired")
+    return claims
+
+
+def verify_oidc_token(token: str) -> dict:
+    issuer = os.getenv("OIDC_ISSUER", "")
+    audience = os.getenv("OIDC_AUDIENCE", "")
+    if "accounts.google.com" in issuer:
+        try:
+            from google.auth.transport import requests as greq
+            from google.oauth2 import id_token
+        except ImportError as exc:
+            raise HTTPException(401, "google-auth is required for Google OIDC") from exc
+        try:
+            return id_token.verify_oauth2_token(token, greq.Request(), audience=audience or None)
+        except Exception as exc:
+            raise HTTPException(401, "invalid oidc token") from exc
+    secret = os.getenv("OIDC_CLIENT_SECRET") or ""
+    if not secret:
+        raise HTTPException(401, "OIDC_CLIENT_SECRET is required for this issuer")
+    return _verify_hs256_jwt(token, secret, issuer, audience)
+
+
+def _from_oidc(token: str) -> AuthContext:
+    claims = verify_oidc_token(token)
+    email = str(claims.get("email") or claims.get("sub") or "").lower()
+    mapping = {}
+    raw_map = os.getenv("OIDC_EMAIL_ROLES") or ""
+    if raw_map:
+        try:
+            mapping = {str(k).lower(): v for k, v in json.loads(raw_map).items()}
+        except json.JSONDecodeError as exc:
+            raise HTTPException(500, "OIDC_EMAIL_ROLES must be valid JSON") from exc
+    role = mapping.get(email)
+    analyst_id = email or "oidc-user"
+    if not role:
+        for user in list_users():
+            aliases = {
+                str(user.get("email") or "").lower(),
+                str(user.get("username") or "").lower(),
+            }
+            if email and email in aliases:
+                role = user["role"]
+                analyst_id = user.get("analyst_id") or user["username"]
+                break
+    if not role:
+        claimed = claims.get("role") or ""
+        if claimed in ROLES:
+            role = claimed
+    if role not in ROLES:
+        raise HTTPException(403, "oidc identity is not mapped to a console role")
+    return AuthContext(
+        analyst_id=analyst_id,
+        role=role,
+        mode="oidc",
+        display_name=str(claims.get("name") or ROLE_LABELS.get(role, role)),
+        permissions=tuple(sorted(PERMISSIONS.get(role, set()))),
+        mfa=_mfa_from_claims(claims),
+    )
+
+
+def assert_step_up(ctx: AuthContext, action: str) -> None:
+    """High-risk actions need an MFA-backed SSO session when OIDC is configured."""
+    risky = action in HIGH_RISK_DECISIONS or action in HIGH_RISK_WORKFLOW
+    if not risky or not oidc_enabled():
+        return
+    if os.getenv("OIDC_REQUIRE_MFA", "1").lower() not in {"1", "true", "yes"}:
+        return
+    if ctx.mode != "oidc" or not ctx.mfa:
+        raise HTTPException(403, "MFA-backed SSO session required for this action")
+
+
 def parse_session(token: str | None) -> dict | None:
     if not token or "." not in token:
         return None
@@ -191,13 +302,14 @@ def get_auth_context(
             raise HTTPException(403, "invalid API key role mapping")
         return _from_payload({"analyst_id": analyst_id, "role": role, "display_name": ROLE_LABELS.get(role, role)}, "api_key")
 
-    token = None
+    bearer = None
     if authorization and authorization.lower().startswith("bearer "):
-        token = authorization.split(" ", 1)[1].strip()
-    token = token or cw_session
-    payload = parse_session(token)
+        bearer = authorization.split(" ", 1)[1].strip()
+    payload = parse_session(bearer or cw_session)
     if payload:
         return _from_payload(payload, "password")
+    if bearer and oidc_enabled():
+        return _from_oidc(bearer)
 
     allow_headers = os.getenv("ENVIRONMENT", "local") != "gcp"
     if allow_headers and (x_analyst_role or x_analyst_id):
@@ -231,4 +343,6 @@ def public_me(ctx: AuthContext) -> dict:
         "display_name": ctx.display_name or ROLE_LABELS.get(ctx.role, ctx.role),
         "permissions": sorted(PERMISSIONS.get(ctx.role, set())),
         "mode": ctx.mode,
+        "mfa": ctx.mfa,
+        "oidc": oidc_enabled(),
     }

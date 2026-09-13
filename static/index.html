@@ -396,7 +396,7 @@
   </div>
   <div class="sidenav-foot">
     <div id="system-chip">System online</div>
-    <div class="ver">v1.8.0</div>
+    <div class="ver">v1.11.0</div>
   </div>
 </aside>
 <div class="app-main">
@@ -431,6 +431,7 @@
     <div class="grid2" style="margin-top:12px">
       <div class="card"><h3>Active corridors</h3><div id="command-corridors" class="muted">Loading…</div></div>
       <div class="card"><h3>Ingest / investigation</h3><div id="command-ingest" class="muted">Loading…</div></div>
+      <div class="card"><h3>SLOs / alerts</h3><div id="command-slo" class="muted">Loading…</div></div>
     </div>
     <div class="grid2" style="margin-top:12px">
       <div class="card"><h3>Partial network — middle bank</h3><div id="command-middle" class="muted">Loading…</div></div>
@@ -1736,6 +1737,17 @@ async function loadCommand(light=false){
       <div class="kv"><span>institutions in view</span><span>${(d.institutions||[]).length}</span></div>
       <div class="kv"><span>home bank</span><span>${esc(d.network_visibility?.home_institution||"BANK_SG")}</span></div>
       <div class="muted" style="margin-top:8px">${esc(d.observability_note||"")}</div>`;
+    if($("command-slo")){
+      const slos = d.slos || {};
+      const alerts = d.alerts || [];
+      const sloRows = Object.entries(slos).filter(([,v])=>v && v.target).map(([k,v])=>
+        `<div class="kv"><span>${esc(k)}</span><span>${esc(v.status||"—")} · ${esc(v.p95_ms!=null?("p95 "+v.p95_ms+"ms"):v.note||v.target)}</span></div>`
+      ).join("");
+      const alertRows = alerts.length
+        ? alerts.map(a=>`<div class="kv"><span>${esc(a.severity||"")} ${esc(a.id||"")}</span><span>${esc(a.detail||"")}</span></div>`).join("")
+        : `<div class="kv"><span>firing</span><span>none</span></div>`;
+      $("command-slo").innerHTML = sloRows + alertRows;
+    }
     const show = d.showcase || {};
     if(!d.light && $("command-showcase") && d.showcase){
       $("command-showcase").innerHTML = `

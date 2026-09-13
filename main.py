@@ -16,9 +16,11 @@ from auth import (
     COOKIE_NAME,
     AuthContext,
     PERMISSIONS,
+    assert_step_up,
     authenticate,
     get_auth_context,
     issue_session,
+    oidc_enabled,
     public_me,
     require,
 )
@@ -58,7 +60,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Corridor Watch", version="1.8.0", lifespan=lifespan)
+app = FastAPI(title="Corridor Watch", version="1.11.0", lifespan=lifespan)
 _allowed_origins = [o.strip() for o in os.getenv("CORRIDOR_WATCH_ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware, allow_origins=_allowed_origins, allow_methods=["GET", "POST"], allow_headers=["*"]
@@ -72,8 +74,20 @@ async def database_busy_handler(_request, _exc):
 
 @app.middleware("http")
 async def no_cache_console(request, call_next):
-    response = await call_next(request)
+    from tracing import start_request
+    ctx = start_request(request.headers)
     path = request.url.path
+    if path.startswith("/api/"):
+        METRICS.inc("http_requests_total")
+    try:
+        response = await call_next(request)
+    except Exception:
+        if path.startswith("/api/"):
+            METRICS.inc("http_5xx_total")
+        raise
+    if path.startswith("/api/") and response.status_code >= 500:
+        METRICS.inc("http_5xx_total")
+    response.headers["X-Trace-Id"] = ctx.get("trace_id") or ""
     if path in {"/", "/index.html"} or path.endswith(".html"):
         response.headers["Cache-Control"] = "no-store, max-age=0"
         response.headers["Pragma"] = "no-cache"
@@ -179,7 +193,11 @@ def health():
         "ok": not sqlite_on_gcp,
         "gemini": agent.gemini_available(),
         "gemini_backend": agent.gemini_backend(),
-        "auth_mode": "api_key" if os.getenv("CORRIDOR_WATCH_API_KEYS") else "password",
+        "auth_mode": (
+            "api_key" if os.getenv("CORRIDOR_WATCH_API_KEYS")
+            else "oidc" if oidc_enabled()
+            else "password"
+        ),
         "environment": settings.environment,
         "database": settings.dialect,
         "sqlite_forbidden_on_gcp": sqlite_on_gcp,
@@ -341,6 +359,7 @@ def alert_audit(txn_id: str, auth: AuthContext = Depends(require("audit:case")))
 def analyst_decision(
     txn_id: str,
     body: DecisionRequest,
+    request: Request,
     auth: AuthContext = Depends(require("decision:write")),
 ):
     con = connect()
@@ -355,18 +374,26 @@ def analyst_decision(
     if body.decision in {"hold_payment", "escalate_fiu", "freeze_account"} and auth.role == "analyst":
         con.close()
         raise HTTPException(403, "FIU Lead authorization required")
+    try:
+        assert_step_up(auth, body.decision)
+    except HTTPException:
+        con.close()
+        raise
     con.execute(
         "INSERT INTO analyst_decisions (txn_id, decided_at, decision, notes, analyst_id) VALUES (?,?,?,?,?)",
         (txn_id, ts, body.decision, body.notes, analyst_id),
     )
     con.commit()
     con.close()
-    audit.log(
+    audit.log_authz(
         txn_id,
-        "analyst_decision",
-        {"decision": body.decision, "notes": body.notes, "analyst_id": analyst_id, "role": auth.role},
         actor=analyst_id,
         role=auth.role,
+        action=body.decision,
+        old_state="",
+        new_state=body.decision,
+        reason=body.notes,
+        source_ip=(request.client.host if request and request.client else ""),
     )
     try:
         phase2_memory.remember_from_decision(txn_id, body.decision, body.notes)
@@ -663,6 +690,7 @@ def workflow_action(
     }[body.action]
     if needed not in PERMISSIONS.get(auth.role, set()):
         raise HTTPException(403, f"role '{auth.role}' cannot {body.action}")
+    assert_step_up(auth, body.action)
     try:
         return workflow.apply_action(
             txn_id, body.action, actor=auth.analyst_id, role=auth.role, notes=body.notes
@@ -675,7 +703,27 @@ def workflow_action(
 
 @app.get("/api/metrics")
 def metrics_snapshot(auth: AuthContext = Depends(require("command:read"))):
-    return METRICS.snapshot()
+    from db import pool_status
+    from tracing import current
+    snap = METRICS.snapshot()
+    queue = {}
+    backlog = None
+    try:
+        from investigations.queue import counts as queue_counts
+        queue = queue_counts()
+    except Exception:
+        pass
+    try:
+        from observability import platform_signals
+        backlog = platform_signals().get("pubsub_backlog")
+    except Exception:
+        pass
+    pool = pool_status()
+    snap["alerts"] = METRICS.evaluate_alerts(queue=queue, pool=pool, pubsub_backlog=backlog)
+    snap["db_pool"] = pool
+    snap["queue"] = queue
+    snap["trace"] = current()
+    return snap
 
 
 @app.get("/api/ledger-stats")
@@ -750,6 +798,7 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
             "p95_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p95"),
             "p99_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p99"),
             "ingest_stages_ms": snap.get("ingest_stages_ms"),
+            "slos": snap.get("slos"),
             "environment": settings.environment,
             "database": settings.dialect,
             "gemini": agent.gemini_available(),
@@ -771,6 +820,8 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
         "p95_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p95"),
         "p99_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p99"),
         "ingest_stages_ms": snap.get("ingest_stages_ms"),
+        "slos": snap.get("slos"),
+        "alerts": METRICS.evaluate_alerts(),
         "active_investigations": pending,
         "investigation_cases": cases,
         "high_risk_cases": high,
@@ -807,10 +858,15 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
         backlog = signals.get("pubsub_backlog")
         if backlog is None:
             backlog = wiring.get("backlog")
+        from db import pool_status
+        q = queue_counts()
+        pool = pool_status()
         payload.update({
             "active_corridors": corridors,
             "suspicious_networks": compression,
-            "queue": queue_counts(),
+            "queue": q,
+            "alerts": METRICS.evaluate_alerts(queue=q, pool=pool, pubsub_backlog=backlog),
+            "db_pool": pool,
             "pattern_dna": library_snapshot(),
             "scale_evidence": _scale_evidence(scorecard, snap, signals, wiring),
             "pubsub": wiring,

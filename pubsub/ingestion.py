@@ -43,18 +43,32 @@ def ingest_transaction(
 ) -> dict[str, Any]:
     started = time.perf_counter()
     METRICS.inc("transactions_received_total")
+    from tracing import bind, current
+    bind(transaction_id=event.txn_id)
     _ensure_schema()
     message_id = message_id or event.txn_id
     own = con is None
     if own:
         con = connect(purpose="ingest")
 
+    ident = event.identity()
+    seen = con.execute(
+        "SELECT message_id FROM ingestion_events WHERE source_system=? AND source_event_id=?",
+        (ident["source_system"], ident["source_event_id"]),
+    ).fetchone()
     t0 = time.perf_counter()
-    inserted_event = insert_or_ignore(
+    inserted_event = False if seen else insert_or_ignore(
         con,
         "ingestion_events",
-        ("message_id", "txn_id", "received_at", "source"),
-        (message_id, event.txn_id, utc_now(), source),
+        (
+            "message_id", "txn_id", "received_at", "source",
+            "event_id", "source_system", "source_event_id", "event_version", "occurred_at",
+        ),
+        (
+            message_id, event.txn_id, utc_now(), source,
+            ident["event_id"], ident["source_system"], ident["source_event_id"],
+            ident["event_version"], ident["occurred_at"],
+        ),
         "message_id",
     )
     METRICS.observe("ingest_idempotency", (time.perf_counter() - t0) * 1000.0)
@@ -68,6 +82,7 @@ def ingest_transaction(
             "message_id": message_id,
             "txn_id": event.txn_id,
             "duplicate": True,
+            "trace_id": current().get("trace_id") or "",
         }
 
     t0 = time.perf_counter()
@@ -99,6 +114,7 @@ def ingest_transaction(
                 "message_id": message_id,
                 "txn_id": event.txn_id,
                 "duplicate": True,
+                "trace_id": current().get("trace_id") or "",
             }
         if screen.tier in {RiskTier.MEDIUM, RiskTier.HIGH, RiskTier.CRITICAL}:
             from investigations.queue import enqueue
@@ -112,6 +128,16 @@ def ingest_transaction(
             )
             queued = True
             _maybe_flag(con, event, screen)
+            from pubsub.outbox import enqueue as outbox_enqueue
+            outbox_enqueue(con, event_type="investigation_queued", payload={
+                "queue_id": queue_id,
+                "txn_id": event.txn_id,
+                "risk_tier": screen.tier.value,
+                "durable_store": "investigation_queue",
+                "event_id": ident["event_id"],
+                "source_system": ident["source_system"],
+                "source_event_id": ident["source_event_id"],
+            })
             METRICS.observe("ingest_queue_write", (time.perf_counter() - t0) * 1000.0)
             METRICS.inc("suspicious_transactions_total")
             METRICS.inc("investigations_started_total")
@@ -125,16 +151,11 @@ def ingest_transaction(
 
     if own:
         con.close()
-    if queued and queue_id:
+    if queued and queue_id and commit:
         t0 = time.perf_counter()
         try:
-            from pubsub.publisher import notify_investigation
-            notify_investigation({
-                "queue_id": queue_id,
-                "txn_id": event.txn_id,
-                "risk_tier": screen.tier.value,
-                "durable_store": "investigation_queue",
-            })
+            from pubsub.outbox import drain
+            drain(limit=8)
         except Exception:
             pass
         METRICS.observe("ingest_publish", (time.perf_counter() - t0) * 1000.0)
@@ -152,6 +173,10 @@ def ingest_transaction(
         "queue_id": queue_id,
         "duplicate": False,
         "gemini_invoked": False,
+        "event_id": ident["event_id"],
+        "source_system": ident["source_system"],
+        "source_event_id": ident["source_event_id"],
+        "trace_id": current().get("trace_id") or "",
     }
 
 
@@ -184,6 +209,11 @@ def ingest_batch(events: list[tuple[TransactionEvent, str | None]], *, source: s
         con.commit()
     finally:
         con.close()
+    try:
+        from pubsub.outbox import drain
+        drain(limit=40)
+    except Exception:
+        pass
     return {
         "accepted": accepted,
         "duplicates": duplicates,

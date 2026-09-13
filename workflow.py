@@ -64,10 +64,13 @@ def set_state(txn_id: str, state: str, *, actor: str, role: str, notes: str = ""
         raise ValueError(f"unknown workflow state {state}")
     init_schema()
     con = connect()
-    exists = con.execute("SELECT 1 FROM flagged_transactions WHERE txn_id=?", (txn_id,)).fetchone()
-    if not exists:
+    current = con.execute(
+        "SELECT workflow_state FROM flagged_transactions WHERE txn_id=?", (txn_id,)
+    ).fetchone()
+    if not current:
         con.close()
         raise ValueError("alert not found")
+    old_state = current["workflow_state"] or "open"
     con.execute(
         "UPDATE flagged_transactions SET workflow_state=? WHERE txn_id=?",
         (state, txn_id),
@@ -81,12 +84,14 @@ def set_state(txn_id: str, state: str, *, actor: str, role: str, notes: str = ""
         pass
     con.commit()
     con.close()
-    audit.log(
+    audit.log_authz(
         txn_id,
-        "workflow_transition",
-        {"action": action or state, "workflow_state": state, "notes": notes},
         actor=actor,
         role=role,
+        action=action or state,
+        old_state=old_state,
+        new_state=state,
+        reason=notes,
     )
     return {"txn_id": txn_id, "workflow_state": state, "action": action or state, "notes": notes}
 

@@ -11,6 +11,35 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
+def log_authz(
+    case_id: str,
+    *,
+    actor: str,
+    role: str,
+    action: str,
+    old_state: str = "",
+    new_state: str = "",
+    reason: str = "",
+    source_ip: str = "",
+) -> None:
+    log(
+        case_id,
+        "authorization",
+        {
+            "who": actor,
+            "what": action,
+            "when": _now(),
+            "case": case_id,
+            "old_state": old_state,
+            "new_state": new_state,
+            "reason": reason,
+            "ip": source_ip,
+        },
+        actor=actor,
+        role=role,
+    )
+
+
 def log(
     case_id: str,
     event_type: str,
@@ -33,6 +62,13 @@ def log(
                 payload.setdefault("model_version", model_version)
             if pattern_version:
                 payload.setdefault("pattern_version", pattern_version)
+            try:
+                from tracing import current
+                tid = current().get("trace_id")
+                if tid:
+                    payload.setdefault("trace_id", tid)
+            except Exception:
+                pass
             detail = json.dumps(payload, default=str)
         try:
             con.execute(

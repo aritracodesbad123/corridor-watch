@@ -50,5 +50,16 @@ seeded = seed_showcase()
 middle = seed_middle_bank()
 print(f"showcase={seeded['campaign_id']} hero={seeded['hero_txn_id']} middle={middle['hero_txn_id']}")
 PY
+ROLE="${CW_ROLE:-api}"
 PORT="${PORT:-8080}"
-exec uvicorn main:app --host 0.0.0.0 --port "$PORT"
+case "$ROLE" in
+  investigation)
+    exec python -c "from investigations.service import run_worker; run_worker()"
+    ;;
+  outbox)
+    exec python -c "from pubsub.outbox import run_worker; run_worker()"
+    ;;
+  *)
+    exec uvicorn main:app --host 0.0.0.0 --port "$PORT"
+    ;;
+esac

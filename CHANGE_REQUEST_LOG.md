@@ -18,6 +18,10 @@
 | **CR-014** | Analyst console | Viewport-locked Investigations layout: independent queue scroll, horizontal case-pane scroll, corridor-map and Explorer graph zoom/pan. | **Completed** | v1.6.1 |
 | **CR-015** | Competition proof | Ingest stage timings + upserts, GCP SQLite refusal, durable queue claim/retry, transaction-only baseline, Command Center impact/scale panel, Pattern DNA explainability, claims policy. | **Completed** | v1.7.0 |
 | **CR-016** | Partial visibility | Observed/external/inferred/unknown graph states, network visibility score, synthetic intelligence, middle-bank demo, cross-institution Pattern DNA. | **Completed** | v1.8.0 |
+| **CR-017** | Operational reliability | Transactional outbox, source-event idempotency, queue backoff/DLQ, optional worker split, untrusted SoF wrapping, measured SLO snapshot. | **Completed** | v1.9.0 |
+| **CR-018** | Production security | Optional OIDC bearer, MFA step-up for high-risk actions, authz audit, PII tokens at the Gemini boundary, grounding gate + model provenance. | **Completed** | v1.10.0 |
+| **CR-019** | Operations | Request traces, measured SLO + in-process alerts, Command Center SLO card, Cloud SQL PITR/DR status scripts. | **Completed** | v1.11.0 |
+| **CR-020** | Production evidence | Four `production/` reports: measured load paths, DR procedure without invented RPO, threat model mapped to tests, AI validation on synthetic + grounding gates. | **Completed** | v1.11.0 |
 
 ---
 
@@ -63,3 +67,19 @@
 ### CR-016: Cross-institution partial visibility
 - **Modules**: `graph/visibility.py`, `intelligence/`, `synthetic/middle_bank.py`, `investigations/`, `static/index.html`
 - **Capability**: Distinguish observed, external, inferred, and unknown network areas. Visibility is not guilt. Synthetic intelligence can resolve a boundary without inventing Bank D.
+
+### CR-017: Operational reliability
+- **Modules**: `pubsub/outbox.py`, `pubsub/ingestion.py`, `investigations/queue.py`, `metrics.py`, `scripts/cloud_run_entrypoint.sh`
+- **Capability**: Persist ingest + queue + outbox in one commit. Deduplicate on `(source_system, source_event_id)`. Retry with backoff then `DEAD_LETTER`. `CW_ROLE=api|investigation|outbox` splits workers without changing the default Cloud Run API service. Gemini stays off ingest. 5,000 TPS remains a TARGET.
+
+### CR-018: Production security
+- **Modules**: `auth.py`, `privacy.py`, `audit.py`, `agent.py`, `workflow.py`
+- **Capability**: Accept an IdP JWT when `OIDC_ISSUER` is set. High-risk decisions and workflow escalate require MFA on that session. Authorization events are append-only. Gemini sees tokenized account IDs and untrusted document text. Invented evidence IDs fail the grounding gate.
+
+### CR-019: Operations
+- **Modules**: `tracing.py`, `metrics.py`, `static/index.html`, `scripts/dr_status.sh`, `scripts/enable_sql_pitr.sh`
+- **Capability**: Correlate requests with `X-Trace-Id` / W3C `traceparent`. `/api/metrics` evaluates SLOs and fires in-process alerts (DLQ, pool, 5xx, Gemini errors). DR scripts inspect or enable Cloud SQL PITR. RPO/RTO stay TARGET until a restore is measured.
+
+### CR-020: Production evidence
+- **Modules**: `production/load-test-report.md`, `production/disaster-recovery-report.md`, `production/security-threat-model.md`, `production/ai-model-validation-report.md`
+- **Capability**: Present only measured ingest (5.65 TPS Pub/Sub consume; 1,912 TPS is in-process). Keep 5,000 TPS, RPO/RTO, and Gemini agreement rates as TARGET. Map security and AI controls to existing tests.

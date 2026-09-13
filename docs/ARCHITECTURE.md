@@ -16,8 +16,10 @@ validate + idempotent persist     (no Gemini)
         ↓
 cheap_screen → LOW / MEDIUM / HIGH / CRITICAL
         ↓
-MEDIUM+ rows land in PostgreSQL investigation_queue
-        ↓  (optional fan-out message on corridor-investigations)
+one commit: ledger + investigation_queue + outbox_events
+        ↓
+outbox worker / in-request drain → optional corridor-investigations notify
+        ↓
 bounded graph + DNA match
         ↓
 Gemini copilot (HIGH/CRITICAL or analyst-requested only)
@@ -30,7 +32,7 @@ Crime Pattern DNA library
 Graphs distinguish **observed / external / inferred / unknown**. Visibility is a coverage score, not guilt. Gemini must not invent missing institutions. Synthetic intelligence is an optional overlay; ingest stays cheap.
 
 The durable investigation queue is **PostgreSQL**, not a second Pub/Sub consumer.
-`INVESTIGATION_TOPIC` is a best-effort notification after the row is committed.
+`outbox_events` is written in the same ingest transaction. `INVESTIGATION_TOPIC` is a best-effort notification after commit; unpublished outbox rows retry.
 
 In-process and HTTP batch ingest are local/dev measurement paths. They are not the Cloud Run scale path.
 
@@ -57,7 +59,8 @@ The Investigations layout is viewport-locked. The left queue scrolls on its own.
 ## Human control
 
 `hold_payment`, `escalate_fiu`, and `freeze_account` still require `fiu_lead`.
-Gemini may only recommend a disposition.
+When `OIDC_ISSUER` is set they also require an MFA-backed SSO session.
+Gemini may only recommend a disposition. The model sees tokenized account IDs, not customer names.
 
 ## Benchmarks
 
@@ -67,5 +70,7 @@ Gemini may only recommend a disposition.
 
 Report only measured `achieved_tps`. Do not present a target rate as a result.
 in_process ≠ HTTP ≠ Pub/Sub → Cloud Run.
+
+`/api/metrics` includes measured SLO status and in-process alerts. Requests carry `X-Trace-Id`. Cloud SQL PITR is enabled with `scripts/enable_sql_pitr.sh`; `scripts/dr_status.sh` reads backup state. RPO/RTO are TARGET until a restore game day.
 
 See [COMPETITION_CLAIMS.md](COMPETITION_CLAIMS.md). 5,000 TPS is a **TARGET**, not a verified result.

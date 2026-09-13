@@ -28,7 +28,9 @@ Statuses:
 
 ## Measured ingest (do not invent numbers)
 
-Latest recorded Pub/Sub → Cloud Run → Cloud SQL results live in `GET /api/command-center` (`scorecard.ingest`) and `benchmarks/results/`.
+Evidence pack (Sprint 4): [load-test](../production/load-test-report.md), [DR](../production/disaster-recovery-report.md), [threat model](../production/security-threat-model.md), [AI validation](../production/ai-model-validation-report.md).
+
+Latest recorded Pub/Sub → Cloud Run → Cloud SQL results live in `GET /api/command-center` (`scorecard.ingest`), `production/load-test-report.md`, and `benchmarks/results/`.
 
 Canonical command:
 

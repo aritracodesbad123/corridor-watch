@@ -1,6 +1,9 @@
 """Common evidence representation with stable IDs."""
 from __future__ import annotations
 
+import hashlib
+import json
+
 from investigations.schemas import EvidenceItem, InvestigationReport
 
 
@@ -271,6 +274,14 @@ def deterministic_report(
             "Deterministic synthesis only unless Gemini later rewrites this report."
         ),
         model_version="deterministic-v1",
+        model_provider="none",
+        prompt_version="investigator-v8",
+        evidence_hash=hashlib.sha256(
+            json.dumps([e.model_dump() for e in evidence], sort_keys=True, default=str).encode()
+        ).hexdigest()[:16],
+        output_hash=hashlib.sha256(
+            f"{hypothesis}|{disposition}|{confidence}".encode()
+        ).hexdigest()[:16],
         pattern_versions=[f"{m['pattern_id']}@v{m.get('version', 1)}" for m in matches],
         gemini_used=False,
         grounded=True,
