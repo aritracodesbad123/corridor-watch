@@ -90,11 +90,10 @@ Graph anomaly detection is table stakes — Corridor Watch provides the reasonin
    - Logs every step, tool invocation, model prompt/response, analyst decision, and system event to `audit_log`.
 
 8. **Analyst Investigation Console (`static/index.html`)**:
-   - Real-time investigation interface featuring:
-     - Triage queue sorted by risk score.
-     - Interactive Money Flow DAG view (layered left-to-right by hop depth).
-     - D3.js + TopoJSON real-world JAPAC geographic corridor map.
-     - Case details, session biometrics, verdict cards, and decision recording.
+   - Password-authenticated workspace with Home, Corridor Explorer, Investigations, and Pattern DNA.
+   - Investigations layout stays in the viewport: the triage queue scrolls on its own; the case pane scrolls horizontally so tabs, feature cards, and the money-flow DAG stay in frame.
+   - Corridor geography and Explorer graph support zoom in / zoom out / reset, scroll-wheel zoom, and drag-to-pan.
+   - Interactive Money Flow DAG (layered left-to-right by hop depth), D3 + TopoJSON corridor map, verdict cards, and decision recording.
 
 ---
 
@@ -242,7 +241,7 @@ export GEMINI_MODEL="gemini-3.6-flash"  # or gemini-2.5-flash
 
 # 4. Launch FastAPI web server
 uvicorn main:app --reload --port 8080
-# Open http://localhost:8080 — Command / Investigate / Corridors / Pattern DNA
+# Open http://localhost:8080 — Home / Corridor Explorer / Investigations / Pattern DNA
 
 # 5. Optional: measure ingest throughput (reports achieved TPS only)
 python pubsub_load_generator.py --rate 500 --duration 5 --in-process
@@ -266,6 +265,7 @@ python evaluate.py --mode both --rate 200 --duration 3
 | `GRAPH_MAX_HOPS` | `3` | Bounded traversal |
 | `GRAPH_LOOKBACK_MINUTES` | `1440` | Graph window |
 | `MAX_INVESTIGATION_SIZE` | `200` | Node cap |
+| `CW_PG_POOL_MAX` / `CW_PG_OVERFLOW` / `CW_INGEST_SLOTS` | `8` / `4` / `8` | Cloud SQL pool (ingest stays off the interactive overflow) |
 
 See [docs/Corridor_Watch_Master_Implementation_Spec.md](docs/Corridor_Watch_Master_Implementation_Spec.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Cloud Run seeds an empty Cloud SQL database on first start; local SQLite is created by `python data_gen.py`.
 
@@ -273,7 +273,7 @@ See [docs/Corridor_Watch_Master_Implementation_Spec.md](docs/Corridor_Watch_Mast
 
 ## 📋 Operational Workarounds for Out-of-Scope Gaps
 
-Per [docs/GAP_AUDIT.md](file:///Users/aritrachakraborty/Desktop/corridor-watch/docs/GAP_AUDIT.md), core banking middleware integrations are intentionally out-of-scope for this POC. The platform provides documented workarounds:
+Per [docs/GAP_AUDIT.md](docs/GAP_AUDIT.md), core banking middleware integrations are intentionally out-of-scope for this POC. The platform provides documented workarounds:
 
 1. **Automated Payment Hold/Release Execution**:
    - *Workaround*: Verdicts return explicit `recommended_action` directives (e.g., `"Hold payment, escalate to FIU case queue"`). Compliance officers review the verdict and execute the hold signal in core banking message middleware (SWIFT / ISO 20022).
@@ -297,4 +297,4 @@ export GEMINI_API_KEY="your_key"   # used only to create a Secret Manager secret
 See [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md). Default Cloud SQL is 2 vCPU / 7.5 GiB. Default Cloud Run deploy is 2 CPU / 2Gi / min 2 / max 10 / concurrency 16. Report only measured `achieved_tps`. The container seeds `fraud_demo.db` on first start if it is missing. Do not put the Gemini key in the image or in git.
 
 ### Azure Enterprise Deployment
-See [docs/AZURE_PORT.md](file:///Users/aritrachakraborty/Desktop/corridor-watch/docs/AZURE_PORT.md) and [CHANGE_REQUEST_LOG.md](file:///Users/aritrachakraborty/Desktop/corridor-watch/CHANGE_REQUEST_LOG.md) for swapping GCP Gemini $\rightarrow$ Azure OpenAI / AI Foundry Agent Service.
+See [docs/AZURE_PORT.md](docs/AZURE_PORT.md) and [CHANGE_REQUEST_LOG.md](CHANGE_REQUEST_LOG.md) for swapping GCP Gemini $\rightarrow$ Azure OpenAI / AI Foundry Agent Service.

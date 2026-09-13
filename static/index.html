@@ -39,7 +39,7 @@
   .app-view{display:none;flex:1;min-height:0;overflow:auto}
   .app-view.on{display:block}
   .app-view.layout{display:none}
-  .app-view.layout.on{display:grid}
+  .app-view.layout.on{display:grid;overflow:hidden}
   .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:18px 22px}
   .stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px}
   .stat .n{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:700}
@@ -49,10 +49,12 @@
   .pad{padding:18px 22px}
   .chip{font-family:'IBM Plex Mono',monospace;font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:4px;color:var(--muted)}
   .chip.on{border-color:var(--teal);color:var(--teal)}
-  .layout{display:grid;grid-template-columns:320px 1fr 300px;height:calc(100vh - 64px)}
-  .queue,.side{border-right:1px solid var(--line);overflow-y:auto;background:#fff}
-  .side{border-right:none;border-left:1px solid var(--line)}
-  .section-h{padding:10px 14px;color:var(--muted);font-size:11px;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--line);display:flex;justify-content:space-between}
+  .layout{display:grid;grid-template-columns:320px minmax(0,1fr) 300px;height:auto;min-height:0}
+  .queue,.side{border-right:1px solid var(--line);background:#fff;min-height:0;overflow:hidden}
+  .queue{display:flex;flex-direction:column}
+  .queue #rows{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden}
+  .side{border-right:none;border-left:1px solid var(--line);overflow-y:auto}
+  .section-h{padding:10px 14px;color:var(--muted);font-size:11px;letter-spacing:.4px;text-transform:uppercase;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;flex-shrink:0}
   .row{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);cursor:pointer}
   .row:hover{background:#F8FAFC}
   .row.active{background:var(--teal-dim);border-left:3px solid var(--teal);padding-left:11px}
@@ -63,17 +65,17 @@
   .row-corridor{font-family:'IBM Plex Mono',monospace;font-size:12px}
   .row-sub{color:var(--muted);font-size:11.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .pat{font-size:10.5px;color:var(--amber);font-family:'IBM Plex Mono',monospace;margin-top:2px}
-  .detail{padding:18px 22px;overflow-y:auto}
+  .detail{padding:18px 22px;overflow:auto;min-width:0}
   .empty{color:var(--muted);padding:48px 20px}
   .case-id{font-family:'IBM Plex Mono',monospace;color:var(--muted);font-size:11.5px}
   .amount{font-size:26px;font-weight:700;font-family:'IBM Plex Mono',monospace;margin:4px 0}
   .muted{color:var(--muted)}
-  .flow{display:flex;align-items:center;gap:12px;margin:14px 0;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:6px}
+  .flow{display:flex;align-items:center;gap:12px;margin:14px 0;padding:14px;background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow-x:auto}
   .node{flex:1;min-width:0}
   .node .id{font-family:'IBM Plex Mono',monospace;font-size:12px}
   .node .age{color:var(--muted);font-size:11px;margin-top:3px;line-height:1.35}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
-  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:12px 0}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(220px,1fr));gap:12px;margin:12px 0}
+  .grid3{display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:10px;margin:12px 0}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
   .card h3{margin:0 0 8px;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.3px;text-transform:uppercase}
   .kv{display:flex;justify-content:space-between;gap:8px;font-size:12px;padding:2px 0}
@@ -82,16 +84,24 @@
   button.secondary{background:#fff;color:var(--text);border:1px solid var(--line)}
   button:disabled{background:#E2E8F0;color:var(--muted);cursor:wait}
   button.danger{background:var(--red-dim);color:var(--red);border:1px solid #5A3228}
-  .btn-row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .btn-row{display:flex;flex-wrap:nowrap;gap:8px;margin:10px 0;overflow-x:auto}
   .verdict{margin-top:12px;padding:14px;border-radius:6px;border:1px solid var(--line);background:var(--panel)}
   .verdict.high{border-color:#5A3228}.verdict.medium{border-color:var(--amber-dim)}.verdict.low{border-color:var(--teal-dim)}
   .pill{font-family:'IBM Plex Mono',monospace;font-size:10.5px;padding:2px 8px;border-radius:3px;text-transform:uppercase}
   .pill.high{background:var(--red-dim);color:var(--red)}
   .pill.medium{background:var(--amber-dim);color:var(--amber)}
   .pill.low{background:var(--teal-dim);color:var(--teal)}
-  .net{height:320px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;position:relative;overflow:hidden;margin:10px 0}
+  .net{height:320px;background:var(--panel2);border:1px solid var(--line);border-radius:6px;position:relative;overflow:auto;margin:10px 0}
   .net.tall{height:360px}
-  .net svg{width:100%;height:100%;display:block}
+  .net svg{min-width:720px;height:100%;display:block}
+  .map-stage{position:relative;margin:10px 0}
+  .map-stage .net{margin:0;overflow:hidden}
+  .map-stage .net{cursor:grab}
+  .map-stage .net:active{cursor:grabbing}
+  .map-stage .net svg{min-width:0;width:100%;height:100%;transform-origin:center center}
+  .map-zoom-bar{position:absolute;top:10px;right:10px;z-index:3;display:flex;gap:4px}
+  .map-zoom-btn{background:#fff;color:var(--text);border:1px solid var(--line);border-radius:6px;padding:4px 8px;min-width:32px;font-size:14px;line-height:1;box-shadow:0 1px 2px rgba(15,23,42,.08)}
+  .map-zoom-btn:hover{background:var(--teal-dim);color:var(--teal)}
   .viz-legend{display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-top:6px}
   .viz-legend span{display:inline-flex;align-items:center;gap:6px}
   .viz-legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
@@ -108,8 +118,8 @@
   .bar>i{display:block;height:100%;background:var(--amber)}
   textarea,select,input[type=text],input[type=file]{width:100%;background:#fff;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:8px;font-family:inherit;font-size:12.5px}
   .audit{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--muted);max-height:200px;overflow:auto;line-height:1.45}
-  .tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin:0 -22px 14px;padding:0 22px}
-  .tab{padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent}
+  .tabs{display:flex;flex-wrap:nowrap;gap:0;border-bottom:1px solid var(--line);margin:0 -22px 14px;padding:0 22px;overflow-x:auto;overflow-y:hidden}
+  .tab{padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;flex-shrink:0;white-space:nowrap}
   .tab.on{color:var(--text);border-bottom-color:var(--teal)}
   .panel-block{display:none}.panel-block.on{display:block}
   .side .card{margin:10px;border-radius:6px}
@@ -128,7 +138,7 @@
     .layout{grid-template-columns:280px 1fr}
     .side{display:none}
   }
-  .queue-tools{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);background:#fff}
+  .queue-tools{display:flex;gap:6px;padding:8px 10px;border-bottom:1px solid var(--line);background:#fff;flex-shrink:0}
   .queue-tools select{width:auto;flex:1;padding:5px 6px;font-size:11px}
   body.locked .app-shell{display:none}
   .login-mask{
@@ -192,7 +202,8 @@
     .login-globe{width:70%;right:-10%;bottom:-20%}
     .login-hero-inner{padding:28px 24px}
   }
-  .app-shell{display:grid;grid-template-columns:232px 1fr;min-height:100vh}
+  body:not(.locked){height:100vh;overflow:hidden}
+  .app-shell{display:grid;grid-template-columns:232px 1fr;height:100vh;min-height:0;overflow:hidden}
   .sidenav{background:var(--navy);color:#E2E8F0;display:flex;flex-direction:column;padding:18px 14px}
   .sidenav-brand{display:flex;gap:10px;align-items:center;padding:6px 8px 22px}
   .sidenav-brand b{display:block;font-size:12px;letter-spacing:.08em}
@@ -206,7 +217,8 @@
   .sidenav .view-nav button:hover{background:rgba(255,255,255,.06);color:#fff}
   .sidenav-foot{margin-top:auto;padding:10px 12px;border-radius:10px;background:#0B1B33;color:#86EFAC;font-size:12px}
   .sidenav-foot .ver{color:#64748B;margin-top:6px;font-size:11px}
-  .app-main{display:flex;flex-direction:column;min-width:0;background:var(--ink)}
+  .app-main{display:flex;flex-direction:column;min-width:0;min-height:0;height:100%;overflow:hidden;background:var(--ink)}
+  .topbar{flex-shrink:0}
   .top-search{flex:1;max-width:520px;position:relative}
   .top-search input{padding-left:36px;background:#F8FAFC}
   .top-search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#94A3B8}
@@ -224,8 +236,8 @@
   .seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
   .seg button{border:0;border-radius:0;background:#fff;color:var(--muted);padding:6px 10px}
   .seg button.on{background:var(--teal-dim);color:var(--teal)}
-  #explorer-graph{height:360px;border:1px solid var(--line);border-radius:10px;background:#fff}
-  #explorer-graph svg{width:100%;height:100%}
+  #explorer-graph{height:360px;border:1px solid var(--line);border-radius:10px;background:#fff;overflow:hidden}
+  #explorer-graph svg{width:100%;height:100%;min-width:0}
   .entity-k{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:12px}
   .entity-k span:last-child{font-weight:600;text-align:right}
   .ind{display:flex;gap:8px;align-items:flex-start;margin:8px 0;color:#B45309;font-size:12px}
@@ -436,9 +448,16 @@
           <b>Entity network graph</b>
           <div class="muted">Visualize relationships and trace money flow, device links, and common attributes.</div>
         </div>
-        <div class="seg">
-          <button type="button" class="on" id="btn-explorer-graph">Graph</button>
-          <button type="button" id="btn-explorer-table">Table</button>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="map-zoom-bar" style="position:static">
+            <button type="button" class="map-zoom-btn" id="btn-explorer-zoom-in" aria-label="Zoom in">+</button>
+            <button type="button" class="map-zoom-btn" id="btn-explorer-zoom-out" aria-label="Zoom out">−</button>
+            <button type="button" class="map-zoom-btn" id="btn-explorer-zoom-reset" aria-label="Reset zoom">reset</button>
+          </div>
+          <div class="seg">
+            <button type="button" class="on" id="btn-explorer-graph">Graph</button>
+            <button type="button" id="btn-explorer-table">Table</button>
+          </div>
         </div>
       </div>
       <div id="explorer-graph"></div>
@@ -635,6 +654,46 @@ function sessionCard(sessions){
     <div class="kv"><span>typing deviation</span><span>${s.typing_deviation}</span></div>
     <div class="kv"><span>nav velocity</span><span>${s.navigation_velocity}</span></div>
     <div class="kv"><span>geo mismatch</span><span>${s.geo_mismatch?'yes':'no'}</span></div>`;
+}
+
+function attachMapZoom(viewportId){
+  const el = $(viewportId);
+  if(!el) return;
+  const svg = el.querySelector("svg");
+  if(!svg) return;
+  let scale = 1, x = 0, y = 0, dragging = false, last = null;
+  const apply = ()=>{
+    svg.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+  };
+  const stage = el.closest(".map-stage") || el.parentElement;
+  stage.querySelectorAll("[data-map-zoom]").forEach(btn=>{
+    btn.onclick = ()=>{
+      const act = btn.dataset.mapZoom;
+      if(act === "in") scale = Math.min(4, scale * 1.25);
+      else if(act === "out") scale = Math.max(0.6, scale / 1.25);
+      else { scale = 1; x = 0; y = 0; }
+      apply();
+    };
+  });
+  el.onwheel = (e)=>{
+    e.preventDefault();
+    scale = e.deltaY < 0 ? Math.min(4, scale * 1.1) : Math.max(0.6, scale / 1.1);
+    apply();
+  };
+  el.onpointerdown = (e)=>{
+    if(e.button !== 0) return;
+    dragging = true;
+    last = {x: e.clientX, y: e.clientY};
+    el.setPointerCapture(e.pointerId);
+  };
+  el.onpointermove = (e)=>{
+    if(!dragging || !last) return;
+    x += e.clientX - last.x;
+    y += e.clientY - last.y;
+    last = {x: e.clientX, y: e.clientY};
+    apply();
+  };
+  el.onpointerup = ()=>{ dragging = false; last = null; };
 }
 
 function money(n){
@@ -922,7 +981,7 @@ async function openCase(txnId){
     <div class="panel-block" id="tab-network">
       <div class="card">
         <h3>Money movement DAG</h3>
-        <p class="muted" style="margin:0 0 6px">Accounts layered left→right by hop depth. Amber edge is this case; amounts on edges. Hover an account for details.</p>
+        <p class="muted" style="margin:0 0 6px">Accounts layered left→right by hop depth. Amber edge is this case; amounts on edges. Hover an account for details. Scroll sideways if hops run past the frame.</p>
         <div class="net tall" id="flow-dag-view">${renderMoneyFlowDag(d.network)}</div>
         <div class="viz-legend">
           <span><i style="background:#3FA796"></i> focal account</span>
@@ -940,8 +999,15 @@ async function openCase(txnId){
     <div class="panel-block" id="tab-map">
       <div class="card">
         <h3>Corridor geography</h3>
-        <p class="muted" style="margin:0 0 6px">Where money is revolving for this case neighborhood — real map, country nodes, aggregated corridor arcs.</p>
-        <div class="net tall" id="geo-map-view"><div class="muted" style="padding:24px">Loading map…</div></div>
+        <p class="muted" style="margin:0 0 6px">Where money is revolving for this case neighborhood — real map, country nodes, aggregated corridor arcs. Use + / − or the scroll wheel to zoom; drag to pan.</p>
+        <div class="map-stage">
+          <div class="map-zoom-bar">
+            <button type="button" class="map-zoom-btn" data-map-zoom="in" aria-label="Zoom in">+</button>
+            <button type="button" class="map-zoom-btn" data-map-zoom="out" aria-label="Zoom out">−</button>
+            <button type="button" class="map-zoom-btn" data-map-zoom="reset" aria-label="Reset zoom">reset</button>
+          </div>
+          <div class="net tall" id="geo-map-view"><div class="muted" style="padding:24px">Loading map…</div></div>
+        </div>
         <div class="viz-legend">
           <span><i style="background:#E0A04A"></i> country on focal path</span>
           <span><i style="background:#3FA796"></i> related corridor country</span>
@@ -1086,7 +1152,10 @@ async function openCase(txnId){
   // Real-world corridor map, loaded async (atlas cached after first fetch)
   renderCorridorMap(d.network.geo||{}).then(svg=>{
     const el = $("geo-map-view");
-    if(el) el.innerHTML = svg;
+    if(el){
+      el.innerHTML = svg;
+      attachMapZoom("geo-map-view");
+    }
   }).catch(err=>{
     const el = $("geo-map-view");
     if(el) el.innerHTML = `<div class="muted" style="padding:24px">Map failed to load: ${err.message}</div>`;
@@ -1656,18 +1725,24 @@ function renderExplorerGraph(net){
   });
   const W = el.clientWidth || 640, H = el.clientHeight || 360;
   const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`);
+  const root = svg.append("g");
   const color = d => d.kind==="location" ? "#8B5CF6" : (Number(d.risk_score||0)>=80 ? "#EF4444" : (d.focus ? "#EF4444" : "#3B82F6"));
   const sim = d3.forceSimulation(nodes)
     .force("link", d3.forceLink(links).id(d=>d.id).distance(90))
     .force("charge", d3.forceManyBody().strength(-180))
     .force("center", d3.forceCenter(W/2, H/2));
-  const link = svg.append("g").attr("stroke","#CBD5E1").selectAll("line").data(links).enter().append("line")
+  const link = root.append("g").attr("stroke","#CBD5E1").selectAll("line").data(links).enter().append("line")
     .attr("stroke-width", d => d.highlight ? 2.2 : 1)
     .attr("stroke", d => d.highlight ? "#F59E0B" : "#CBD5E1");
-  const node = svg.append("g").selectAll("g").data(nodes).enter().append("g").style("cursor","pointer");
+  const node = root.append("g").selectAll("g").data(nodes).enter().append("g").style("cursor","pointer");
   node.append("circle").attr("r", d => d.focus ? 14 : 9).attr("fill", color);
   node.append("text").text(d => d.id).attr("x", 12).attr("y", 4).attr("fill","#334155").attr("font-size", 10);
   node.on("click", (_, d)=>{ renderExplorerEntity(d, net); });
+  const zoom = d3.zoom().scaleExtent([0.4, 4]).on("zoom", (ev)=> root.attr("transform", ev.transform));
+  svg.call(zoom);
+  if($("btn-explorer-zoom-in")) $("btn-explorer-zoom-in").onclick = ()=> svg.transition().duration(180).call(zoom.scaleBy, 1.25);
+  if($("btn-explorer-zoom-out")) $("btn-explorer-zoom-out").onclick = ()=> svg.transition().duration(180).call(zoom.scaleBy, 0.8);
+  if($("btn-explorer-zoom-reset")) $("btn-explorer-zoom-reset").onclick = ()=> svg.transition().duration(180).call(zoom.transform, d3.zoomIdentity);
   sim.on("tick", ()=>{
     link.attr("x1", d=>d.source.x).attr("y1", d=>d.source.y).attr("x2", d=>d.target.x).attr("y2", d=>d.target.y);
     node.attr("transform", d => `translate(${d.x},${d.y})`);

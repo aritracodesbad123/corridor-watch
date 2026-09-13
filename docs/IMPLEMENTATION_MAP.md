@@ -15,7 +15,7 @@ Internal map of the repository after the master-spec evolution. Existing Phase 1
 | `investigation_dag.py` | 12-step deterministic DAG |
 | `agent.py` | Gemini tool-calling + fallback verdict |
 | `phase2_*.py`, `agent_debate.py`, `multimodal_sof.py`, `counterfactual.py`, `sar_generator.py`, `rule_miner.py` | Judgment / demo suite |
-| `static/index.html` | Analyst console |
+| `static/index.html` | Analyst console (Home / Explorer / Investigations / Pattern DNA; queue and case panes scroll in-viewport; map zoom) |
 
 High-risk dispositions (`hold_payment`, `escalate_fiu`, `freeze_account`) remain FIU-lead only. Gemini never executes those actions.
 

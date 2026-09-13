@@ -15,6 +15,7 @@
 | **CR-011** | Self-Evolving Rule Miner | Mine high-precision candidate decision rules from historical analyst dispositions with precision/recall metrics. | **Completed** | v1.3.0 |
 | **CR-012** | Platform evolution | Config, SQLite/PostgreSQL abstraction, Pub/Sub ingest, multi-bank synthetic world, Crime Pattern DNA, grounded Gemini report, command/corridor/pattern UI. | **Completed** | v1.5.0 |
 | **CR-013** | Scale proof | Multi-instance Cloud Run, Cloud SQL `db-custom-2-7680`, Pub/Sub load-test with ledger measurement. Publisher held 200–1000 TPS; consume remained SQL-bound. Not a 5,000 TPS claim. | **Completed (measured)** | v1.6.0 |
+| **CR-014** | Analyst console | Viewport-locked Investigations layout: independent queue scroll, horizontal case-pane scroll, corridor-map and Explorer graph zoom/pan. | **Completed** | v1.6.1 |
 
 ---
 
@@ -44,3 +45,11 @@
 - **Module**: `rule_miner.py`
 - **Endpoint**: `GET /api/phase2/rules/mine`
 - **Capability**: Analyzes historical analyst dispositions against scored feature sets to discover candidate rules with precision/recall metrics.
+
+### CR-013: Scale proof
+- **Modules**: `scripts/scale_cloud_sql.sh`, `scripts/deploy_cloud_run.sh`, `pubsub_load_generator.py`, `db.py`
+- **Capability**: Raises Cloud SQL off `db-f1-micro`, sizes Cloud Run against a real connection budget, and records ledger-measured Pub/Sub ingest. Report only `achieved_tps`. Do not treat `--in-process` or HTTP batch as Cloud Run scale proof.
+
+### CR-014: Console viewport and map zoom
+- **Module**: `static/index.html`
+- **Capability**: Investigations queue scrolls independently of page length. The case pane (tabs, feature cards, money-flow DAG) scrolls horizontally when content is wider than the frame. Corridor geography and Corridor Explorer graph support zoom in / zoom out / reset, wheel zoom, and drag-to-pan.

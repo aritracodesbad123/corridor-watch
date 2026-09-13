@@ -43,6 +43,11 @@ In-process and HTTP batch ingest are local/dev measurement paths. They are not t
 Ingest (`pubsub/ingestion.py`, `/api/ingest`, `/api/pubsub/push`) never calls Gemini.
 If Gemini is down, screening and case creation continue.
 
+## Analyst console
+
+`static/index.html` is a four-view workspace: Home, Corridor Explorer, Investigations, Pattern DNA.
+The Investigations layout is viewport-locked. The left queue scrolls on its own. The case pane scrolls horizontally so tabs, feature cards, and the money-flow DAG stay in frame. Corridor geography and the Explorer graph support zoom and pan.
+
 ## Human control
 
 `hold_payment`, `escalate_fiu`, and `freeze_account` still require `fiu_lead`.
