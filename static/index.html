@@ -1562,6 +1562,7 @@ async function loadCommand(light=false){
       <div class="kv"><span>stream published</span><span>${d.live_stream?.accepted||0}</span></div>
       <div class="kv"><span>stream flagged</span><span>${d.live_stream?.queued_for_investigation||0}</span></div>
       <div class="kv"><span>pubsub</span><span>${d.pubsub?.wired ? "WIRED · "+esc(d.pubsub.topic)+" → "+esc(d.pubsub.subscription) : (d.environment==="local" ? "local in-process — open the Cloud Run URL for live Pub/Sub" : esc(d.pubsub?.error||"not confirmed"))}</span></div>
+      <div class="kv"><span>investigation path</span><span>${esc(d.investigation_path||d.pubsub?.investigation_path||"PostgreSQL investigation_queue")}</span></div>
       <div class="muted" style="margin-top:8px">${esc(d.observability_note||"")}</div>`;
     const show = d.showcase || {};
     if(!d.light && $("command-showcase") && d.showcase){
@@ -1585,8 +1586,13 @@ async function loadCommand(light=false){
         <div class="kv"><span>false-positive rate</span><span>${det.false_positive_rate??sc.false_positives?.benchmark_false_positive_rate??"—"}</span></div>
         <div class="kv"><span>analyst clear-rate</span><span>${sc.false_positives?.analyst_clear_rate??"—"}</span></div>
         <div class="kv"><span>compression</span><span>${comp.flagged_transactions||0} flags → ${comp.network_investigations||0} networks (${comp.compression_ratio||"—"}x)</span></div>
+        <div class="kv"><span>load-test mode</span><span>${esc(ingestBench.mode||"—")}</span></div>
         <div class="kv"><span>measured ingest TPS</span><span>${ingestBench.achieved_tps??"—"} of ${ingestBench.requested_rate??"—"} requested</span></div>
-        <div class="muted" style="margin-top:6px">${esc((ingestBench.note||sc.false_positives?.note)||"Numbers are measured, not claimed.")}</div>`;
+        <div class="kv"><span>publish TPS</span><span>${ingestBench.achieved_publish_tps??"—"}</span></div>
+        <div class="kv"><span>ledger processed</span><span>${ingestBench.processed_from_ledger??"—"}</span></div>
+        <div class="kv"><span>Pub/Sub backlog</span><span>${ingestBench.pubsub_backlog_start??"—"} → ${ingestBench.pubsub_backlog_end??"—"}</span></div>
+        <div class="kv"><span>Cloud Run instances</span><span>${ingestBench.cloud_run_instances??d.cloud_run_instances??"—"}</span></div>
+        <div class="muted" style="margin-top:6px">${esc((ingestBench.note||sc.false_positives?.note)||"Numbers are measured, not claimed. in_process ≠ HTTP ≠ Pub/Sub.")}</div>`;
     }
     applyStreamChip(d.live_stream);
   }catch(e){

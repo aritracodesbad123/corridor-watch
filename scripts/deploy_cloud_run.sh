@@ -96,19 +96,27 @@ if gcloud secrets describe "$DB_SECRET" --project "$PROJECT_ID" >/dev/null 2>&1;
   CLOUDSQL_FLAGS+=(--add-cloudsql-instances="${PROJECT_ID}:${REGION}:${INSTANCE}")
 fi
 
-echo "Deploying $SERVICE to Cloud Run ($REGION)…"
+# Sized for Cloud SQL custom-2-7680 (~200 connections).
+# 10 replicas × (pool 8 + overflow 4) = 120 connections.
+CPU="${CW_CPU:-2}"
+MEMORY="${CW_MEMORY:-2Gi}"
+MIN_INSTANCES="${CW_MIN_INSTANCES:-2}"
+MAX_INSTANCES="${CW_MAX_INSTANCES:-10}"
+CONCURRENCY="${CW_CONCURRENCY:-16}"
+echo "Deploying $SERVICE to Cloud Run ($REGION) cpu=${CPU} mem=${MEMORY} min=${MIN_INSTANCES} max=${MAX_INSTANCES} concurrency=${CONCURRENCY}…"
 gcloud run deploy "$SERVICE" \
   --source "$ROOT" \
   --project "$PROJECT_ID" \
   --region "$REGION" \
   --allow-unauthenticated \
-  --memory 1Gi \
-  --cpu 1 \
+  --memory "$MEMORY" \
+  --cpu "$CPU" \
   --timeout 300 \
-  --min-instances 1 \
-  --max-instances 1 \
+  --min-instances "$MIN_INSTANCES" \
+  --max-instances "$MAX_INSTANCES" \
+  --concurrency "$CONCURRENCY" \
   --no-cpu-throttling \
-  --set-env-vars "ENVIRONMENT=gcp,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},REGION=${REGION},GEMINI_BACKEND=vertex,VERTEX_LOCATION=global,GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.6-flash},TRANSACTION_TOPIC=corridor-transactions,INVESTIGATION_TOPIC=corridor-investigations,PUBSUB_PUSH_SUBSCRIPTION=corridor-transactions-push" \
+  --set-env-vars "ENVIRONMENT=gcp,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},REGION=${REGION},GEMINI_BACKEND=vertex,VERTEX_LOCATION=global,GEMINI_MODEL=${GEMINI_MODEL:-gemini-3.6-flash},TRANSACTION_TOPIC=corridor-transactions,INVESTIGATION_TOPIC=corridor-investigations,PUBSUB_PUSH_SUBSCRIPTION=corridor-transactions-push,CW_PG_POOL_MAX=${CW_PG_POOL_MAX:-8},CW_PG_OVERFLOW=${CW_PG_OVERFLOW:-4},CW_INGEST_SLOTS=${CW_INGEST_SLOTS:-8},CW_SKIP_INVESTIGATION_NOTIFY=${CW_SKIP_INVESTIGATION_NOTIFY:-true}" \
   --set-secrets "$SECRET_FLAGS" \
   "${CLOUDSQL_FLAGS[@]}"
 

@@ -116,6 +116,17 @@ def ingest_transaction(
 
     if own:
         con.close()
+    if queued and queue_id:
+        try:
+            from pubsub.publisher import notify_investigation
+            notify_investigation({
+                "queue_id": queue_id,
+                "txn_id": event.txn_id,
+                "risk_tier": screen.tier.value,
+                "durable_store": "investigation_queue",
+            })
+        except Exception:
+            pass
     METRICS.inc("transactions_processed_total")
     METRICS.ingestion_latency.add((time.perf_counter() - started) * 1000.0)
     return {

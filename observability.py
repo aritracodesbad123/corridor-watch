@@ -48,16 +48,30 @@ def _metric_latest(project: str, token: str, metric_type: str, extra_filter: str
     except Exception:
         return None
     series = payload.get("timeSeries") or []
-    if not series:
+    latest = None
+    total = 0.0
+    found = False
+    for entry in series:
+        points = entry.get("points") or []
+        if not points:
+            continue
+        value = (points[0].get("value") or {})
+        parsed = None
+        for key in ("int64Value", "doubleValue"):
+            if value.get(key) is not None:
+                parsed = float(value[key])
+                break
+        if parsed is None:
+            continue
+        found = True
+        total += parsed
+        if latest is None:
+            latest = parsed
+    if not found:
         return None
-    points = series[0].get("points") or []
-    if not points:
-        return None
-    value = (points[0].get("value") or {})
-    for key in ("int64Value", "doubleValue"):
-        if value.get(key) is not None:
-            return float(value[key])
-    return None
+    if metric_type.endswith("instance_count"):
+        return total
+    return latest
 
 
 def platform_signals() -> dict:

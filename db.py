@@ -446,9 +446,9 @@ _PG_POOL: dict[str, Any] = {
     "lock": None,
     "idle": None,
     "size": 0,
-    "max": 8,
+    "max": int(os.getenv("CW_PG_POOL_MAX", "8")),
     "overflow": 0,
-    "max_overflow": 4,
+    "max_overflow": int(os.getenv("CW_PG_OVERFLOW", "4")),
     "ingest_sem": None,
 }
 _SCHEMA_READY_FOR: str | None = None
@@ -467,7 +467,7 @@ def _pg_pool_init() -> None:
         from queue import Queue
         _PG_POOL["lock"] = threading.Lock()
         _PG_POOL["idle"] = Queue()
-        _PG_POOL["ingest_sem"] = threading.BoundedSemaphore(3)
+        _PG_POOL["ingest_sem"] = threading.BoundedSemaphore(int(os.getenv("CW_INGEST_SLOTS", "8")))
 
 
 def _release_ingest_slot() -> None:
@@ -579,10 +579,11 @@ def _connect_postgres(row_factory: bool, purpose: str = "interactive") -> Compat
     if not interactive:
         _pg_pool_init()
         sem = _PG_POOL["ingest_sem"]
-        if not sem.acquire(timeout=2.0):
+        wait = float(os.getenv("CW_INGEST_WAIT", "2"))
+        if not sem.acquire(timeout=wait):
             raise DatabaseBusy("database busy")
         try:
-            con = _checkout_postgres(row_factory, wait=2.0, allow_overflow=False)
+            con = _checkout_postgres(row_factory, wait=wait, allow_overflow=False)
         except Exception:
             _release_ingest_slot()
             raise
@@ -609,6 +610,24 @@ def connect(row_factory: bool = True, purpose: str = "interactive") -> sqlite3.C
     if row_factory:
         con.row_factory = sqlite3.Row
     return con
+
+
+def warmup_pool() -> int:
+    """Open the ingest pool so the first Pub/Sub burst does not 503."""
+    if not get_settings().is_postgres:
+        return 0
+    n = max(1, int(_PG_POOL.get("max") or int(os.getenv("CW_PG_POOL_MAX", "8"))))
+    held = []
+    try:
+        for _ in range(n):
+            held.append(connect(purpose="ingest"))
+    finally:
+        for con in held:
+            try:
+                con.close()
+            except Exception:
+                pass
+    return len(held)
 
 
 def dialect() -> str:

@@ -213,6 +213,8 @@ Optional automation still accepts `CORRIDOR_WATCH_API_KEYS` as `X-API-Key`. Head
 | **POST** | `/api/phase2/redteam/reset` | Roll back red-team test injections to baseline DB |
 | **GET** | `/api/phase2/rules/mine` | Mine candidate detection rules from analyst decisions |
 | **GET** | `/api/command-center` | Live TPS, investigations, corridors, ingest counters |
+| **GET** | `/api/ledger-stats` | Durable ingest/queue counts for load tests (not per-instance memory) |
+| **POST** | `/api/benchmarks` | Persist a measured ingest/detection/compression report |
 | **GET** | `/api/corridors` | Corridor intelligence explorer |
 | **GET** | `/api/patterns` | Crime Pattern DNA library |
 | **GET** | `/api/metrics` | Application counters and latency percentiles |
@@ -245,6 +247,8 @@ uvicorn main:app --reload --port 8080
 # 5. Optional: measure ingest throughput (reports achieved TPS only)
 python pubsub_load_generator.py --rate 500 --duration 5 --in-process
 python evaluate.py --mode both --rate 200 --duration 3
+# Live GCP path (not equivalent to --in-process):
+# python pubsub_load_generator.py --pubsub --pretty --persist --project PROJECT --rate 1000 --duration 20 --command-url URL --token TOKEN
 ```
 
 ### Platform environment
@@ -255,7 +259,7 @@ python evaluate.py --mode both --rate 200 --duration 3
 | `DATABASE_URL` | empty (SQLite `fraud_demo.db`) | PostgreSQL / Cloud SQL URI |
 | `GOOGLE_CLOUD_PROJECT` | empty | Enables Pub/Sub publish |
 | `TRANSACTION_TOPIC` | `corridor-transactions` | Ingest topic |
-| `INVESTIGATION_TOPIC` | `corridor-investigations` | Investigation topic |
+| `INVESTIGATION_TOPIC` | `corridor-investigations` | Optional fan-out after a PostgreSQL queue insert |
 | `GEMINI_MODEL` | `gemini-3.6-flash` | Investigator model |
 | `CORRIDOR_WATCH_INGEST_TOKEN` | empty | Optional ingest auth |
 | `RISK_THRESHOLD_LOW/MEDIUM/HIGH` | `25` / `40` / `75` | Configurable tiers |
@@ -290,7 +294,7 @@ export GEMINI_API_KEY="your_key"   # used only to create a Secret Manager secret
 ./scripts/deploy_cloud_run.sh YOUR_PROJECT_ID asia-southeast1
 ```
 
-See [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md). The container seeds `fraud_demo.db` on first start if it is missing. Do not put the Gemini key in the image or in git.
+See [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md). Default Cloud SQL is 2 vCPU / 7.5 GiB. Default Cloud Run deploy is 2 CPU / 2Gi / min 2 / max 10 / concurrency 16. Report only measured `achieved_tps`. The container seeds `fraud_demo.db` on first start if it is missing. Do not put the Gemini key in the image or in git.
 
 ### Azure Enterprise Deployment
 See [docs/AZURE_PORT.md](file:///Users/aritrachakraborty/Desktop/corridor-watch/docs/AZURE_PORT.md) and [CHANGE_REQUEST_LOG.md](file:///Users/aritrachakraborty/Desktop/corridor-watch/CHANGE_REQUEST_LOG.md) for swapping GCP Gemini $\rightarrow$ Azure OpenAI / AI Foundry Agent Service.

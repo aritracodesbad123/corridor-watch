@@ -6,14 +6,18 @@ Corridor Watch is now two cooperating layers:
 2. **Network intelligence platform** — ingest → cheap screen → investigation queue → bounded graph → Crime Pattern DNA → evidence-grounded Gemini → human decision → reusable pattern.
 
 ```
-synthetic / Pub/Sub / HTTP ingest
+synthetic generator
+        ↓
+Google Pub/Sub (corridor-transactions)
+        ↓
+push subscription → Cloud Run /api/pubsub/push
         ↓
 validate + idempotent persist     (no Gemini)
         ↓
-LOW / MEDIUM / HIGH / CRITICAL
+cheap_screen → LOW / MEDIUM / HIGH / CRITICAL
         ↓
-MEDIUM+ investigation queue
-        ↓
+MEDIUM+ rows land in PostgreSQL investigation_queue
+        ↓  (optional fan-out message on corridor-investigations)
 bounded graph + DNA match
         ↓
 Gemini copilot (HIGH/CRITICAL or analyst-requested only)
@@ -22,6 +26,11 @@ human decision + audit
         ↓
 Crime Pattern DNA library
 ```
+
+The durable investigation queue is **PostgreSQL**, not a second Pub/Sub consumer.
+`INVESTIGATION_TOPIC` is a best-effort notification after the row is committed.
+
+In-process and HTTP batch ingest are local/dev measurement paths. They are not the Cloud Run scale path.
 
 ## Persistence
 
@@ -41,7 +50,9 @@ Gemini may only recommend a disposition.
 
 ## Benchmarks
 
-`python pubsub_load_generator.py --rate 500 --duration 5 --in-process`
+`python pubsub_load_generator.py --rate 500 --duration 5 --in-process`  # local process only
+`python pubsub_load_generator.py --pubsub --rate 1000 --duration 20 --command-url URL --token TOKEN`
 `python evaluate.py --mode both --rate 200 --duration 3`
 
 Report only measured `achieved_tps`. Do not present a target rate as a result.
+in_process ≠ HTTP ≠ Pub/Sub → Cloud Run.

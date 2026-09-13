@@ -25,7 +25,7 @@ from auth import (
 import agent
 import audit
 from config import get_settings
-from db import DatabaseBusy, connect, init_schema
+from db import DatabaseBusy, connect, init_schema, warmup_pool
 from graph_features import network_subgraph
 from investigation_dag import step_catalog
 from metrics import METRICS
@@ -51,6 +51,7 @@ async def lifespan(_app: FastAPI):
     seed_banks()
     seed_library()
     seed_showcase()
+    warmup_pool()
     yield
 
 
@@ -135,6 +136,11 @@ class IngestBatchRequest(BaseModel):
 class LoginRequest(BaseModel):
     username: str = Field(min_length=1, max_length=80)
     password: str = Field(min_length=1, max_length=200)
+
+
+class BenchmarkRequest(BaseModel):
+    kind: str = "ingest"
+    payload: dict
 
 
 class WorkflowRequest(BaseModel):
@@ -651,6 +657,42 @@ def metrics_snapshot(auth: AuthContext = Depends(require("command:read"))):
     return METRICS.snapshot()
 
 
+@app.get("/api/ledger-stats")
+def ledger_stats(since: str | None = None, auth: AuthContext = Depends(require("command:read"))):
+    """Ledger counts for load tests. Prefer this over per-instance memory metrics."""
+    con = connect()
+    try:
+        events = con.execute("SELECT COUNT(*) AS c FROM ingestion_events").fetchone()["c"]
+        txns = con.execute("SELECT COUNT(*) AS c FROM transactions").fetchone()["c"]
+        flagged = con.execute("SELECT COUNT(*) AS c FROM flagged_transactions").fetchone()["c"]
+        queued = con.execute("SELECT COUNT(*) AS c FROM investigation_queue").fetchone()["c"]
+        since_events = None
+        if since:
+            since_events = con.execute(
+                "SELECT COUNT(*) AS c FROM ingestion_events WHERE received_at>=?",
+                (since,),
+            ).fetchone()["c"]
+    finally:
+        con.close()
+    return {
+        "ingestion_events": int(events),
+        "transactions": int(txns),
+        "flagged_transactions": int(flagged),
+        "investigation_queue": int(queued),
+        "since": since,
+        "since_ingestion_events": int(since_events) if since_events is not None else None,
+        "investigation_path": "pubsub_transactions → Cloud Run → PostgreSQL investigation_queue",
+    }
+
+
+@app.post("/api/benchmarks")
+def store_benchmark(body: BenchmarkRequest, auth: AuthContext = Depends(require("simulate:run"))):
+    if body.kind not in {"ingest", "detection", "compression"}:
+        raise HTTPException(400, "kind must be ingest, detection, or compression")
+    evaluation.persist_benchmark(body.kind, body.payload)
+    return {"ok": True, "kind": body.kind, "recorded_at": body.payload.get("measured_at")}
+
+
 @app.get("/api/command-center")
 def command_center(light: bool = False, auth: AuthContext = Depends(require("command:read"))):
     from graph.corridor import corridor_intelligence, investigation_compression
@@ -678,12 +720,15 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
             "uptime_seconds": snap["uptime_seconds"],
             "ingestion": snap["counters"],
             "ingestion_latency_ms": snap["ingestion_latency_ms"],
+            "p50_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p50"),
             "p95_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p95"),
+            "p99_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p99"),
             "environment": settings.environment,
             "database": settings.dialect,
             "gemini": agent.gemini_available(),
             "live_stream": _stream_status(),
             "workflow": {},
+            "investigation_path": "pubsub_transactions → Cloud Run → PostgreSQL investigation_queue",
             "light": True,
             "observability_note": "database busy, retry",
         }
@@ -695,7 +740,9 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
         "uptime_seconds": snap["uptime_seconds"],
         "ingestion": snap["counters"],
         "ingestion_latency_ms": snap["ingestion_latency_ms"],
+        "p50_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p50"),
         "p95_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p95"),
+        "p99_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p99"),
         "active_investigations": pending,
         "investigation_cases": cases,
         "high_risk_cases": high,
@@ -705,6 +752,7 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
         "gemini": agent.gemini_available(),
         "live_stream": _stream_status(),
         "workflow": wf,
+        "investigation_path": "pubsub_transactions → Cloud Run → PostgreSQL investigation_queue",
         "light": light,
     }
     if light:

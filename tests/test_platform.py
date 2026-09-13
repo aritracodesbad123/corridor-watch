@@ -169,6 +169,8 @@ def test_command_center_requires_auth_role():
     assert "live_tps" in body
     assert body["pubsub_backlog"] is None
     assert body["pubsub"]["wired"] is False
+    assert "PostgreSQL investigation_queue" in body["investigation_path"]
+    assert body["pubsub"]["investigation_topic_role"].startswith("optional fan-out")
 
 
 def test_ingest_http_validates_and_dedupes(isolated_db, monkeypatch):
@@ -416,3 +418,52 @@ def test_investigate_survives_sparse_case(isolated_db):
     body = res.json()
     assert body["verdict"]["mode"] == "deterministic"
     assert body["dag"]["trace"]
+
+
+def test_notify_failure_does_not_break_ingest(isolated_db, monkeypatch):
+    def boom(_payload):
+        raise RuntimeError("pubsub down")
+
+    monkeypatch.setattr("pubsub.publisher.notify_investigation", boom)
+    result = ingest_transaction(
+        _event(txn_id="T-NOTIFY-1", amount=15000, account_age_days=1),
+        message_id="m-notify",
+    )
+    assert result["duplicate"] is False
+    assert result["queued_for_investigation"] is True
+    con = connect()
+    row = con.execute("SELECT txn_id FROM investigation_queue WHERE txn_id='T-NOTIFY-1'").fetchone()
+    con.close()
+    assert row is not None
+
+
+def test_ledger_stats_and_benchmark_persist(isolated_db, monkeypatch):
+    import db as dbmod
+    monkeypatch.setattr("db.DB_PATH", dbmod.DB_PATH)
+    ingest_transaction(
+        _event(txn_id="T-LEDGER-1", amount=15000, account_age_days=1),
+        message_id="m-ledger",
+    )
+    from main import app
+    client = TestClient(app)
+    stats = client.get("/api/ledger-stats", headers={"X-Analyst-Role": "analyst"})
+    assert stats.status_code == 200
+    body = stats.json()
+    assert body["ingestion_events"] >= 1
+    assert body["investigation_queue"] >= 1
+    assert "PostgreSQL investigation_queue" in body["investigation_path"]
+    denied = client.post(
+        "/api/benchmarks",
+        headers={"X-Analyst-Role": "analyst"},
+        json={"kind": "ingest", "payload": {"achieved_tps": 12.5, "mode": "in_process"}},
+    )
+    assert denied.status_code == 403
+    saved = client.post(
+        "/api/benchmarks",
+        headers={"X-Analyst-Role": "fiu_lead"},
+        json={"kind": "ingest", "payload": {"achieved_tps": 12.5, "mode": "in_process"}},
+    )
+    assert saved.status_code == 200
+    card = client.get("/api/command-center?light=1", headers={"X-Analyst-Role": "analyst"})
+    assert card.status_code == 200
+    assert "PostgreSQL investigation_queue" in card.json()["investigation_path"]

@@ -9,6 +9,7 @@ from config import get_settings
 from pubsub.schemas import TransactionEvent
 
 _wiring_cache: dict = {"ts": 0.0, "value": None}
+_PUBLISHER = None
 
 
 def use_gcp_pubsub() -> bool:
@@ -35,14 +36,20 @@ def publish_local(events: Iterable[TransactionEvent], *, ingest_url: str, token:
         return json.loads(resp.read().decode("utf-8"))
 
 
+def _publisher():
+    global _PUBLISHER
+    if _PUBLISHER is None:
+        from google.cloud import pubsub_v1
+        _PUBLISHER = pubsub_v1.PublisherClient()
+    return _PUBLISHER
+
+
 def publish_gcp(events: Iterable[TransactionEvent]) -> int:
     """Batched Pub/Sub publish. Requires GOOGLE_CLOUD_PROJECT and ADC."""
     settings = get_settings()
     if not settings.google_cloud_project:
         raise RuntimeError("GOOGLE_CLOUD_PROJECT is not set")
-    from google.cloud import pubsub_v1
-
-    publisher = pubsub_v1.PublisherClient()
+    publisher = _publisher()
     topic_path = publisher.topic_path(settings.google_cloud_project, settings.transaction_topic)
     futures = []
     for ev in events:
@@ -51,6 +58,26 @@ def publish_gcp(events: Iterable[TransactionEvent]) -> int:
     for fut in futures:
         fut.result(timeout=30)
     return len(futures)
+
+
+def notify_investigation(payload: dict) -> None:
+    """Best-effort fan-out. Durable work stays in PostgreSQL investigation_queue.
+
+    Never blocks ingest. Do not treat this as a second consumer pipeline.
+    """
+    import os
+
+    if os.getenv("CW_SKIP_INVESTIGATION_NOTIFY", "").lower() in {"1", "true", "yes"}:
+        return
+    settings = get_settings()
+    if settings.environment != "gcp" or not settings.google_cloud_project:
+        return
+    try:
+        publisher = _publisher()
+        topic_path = publisher.topic_path(settings.google_cloud_project, settings.investigation_topic)
+        publisher.publish(topic_path, json.dumps(payload).encode("utf-8"))
+    except Exception:
+        return
 
 
 def describe_wiring() -> dict:
@@ -65,6 +92,8 @@ def describe_wiring() -> dict:
         "project": settings.google_cloud_project or None,
         "topic": settings.transaction_topic,
         "investigation_topic": settings.investigation_topic,
+        "investigation_path": "pubsub_transactions → Cloud Run → PostgreSQL investigation_queue",
+        "investigation_topic_role": "optional fan-out signal; not the consumer pipeline",
         "subscription": settings.pubsub_push_subscription,
         "push_endpoint": None,
         "backlog": None,

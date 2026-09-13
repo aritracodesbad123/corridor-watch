@@ -17,7 +17,8 @@ if ! gcloud sql instances describe "$INSTANCE" --project "$PROJECT_ID" >/dev/nul
   gcloud sql instances create "$INSTANCE" \
     --project "$PROJECT_ID" \
     --database-version=POSTGRES_15 \
-    --tier=db-f1-micro \
+    --cpu=2 \
+    --memory=7680MB \
     --region "$REGION" \
     --storage-size=10GB \
     --availability-type=ZONAL \

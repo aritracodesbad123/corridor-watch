@@ -31,7 +31,7 @@ High-risk dispositions (`hold_payment`, `escalate_fiu`, `freeze_account`) remain
 | `graph/` | Bounded traversal + corridor intelligence |
 | `patterns/` | Crime Pattern DNA schema, extract, match, store |
 | `investigations/` | Evidence IDs, grounded report model, investigation service |
-| `pubsub_load_generator.py` | Batched publisher / TPS benchmark |
+| `pubsub_load_generator.py` | Three-mode load test: in-process, HTTP, Pub/Sub → Cloud Run |
 | `evaluate.py` | Detection + ingest evaluation CLI |
 
 ## Request path (Gemini stays off the hot path)
@@ -45,10 +45,14 @@ cheap risk screen → LOW | MEDIUM | HIGH | CRITICAL
         ↓
 metrics
         ↓
-MEDIUM+ → investigation queue (graph / DNA / optional Gemini)
+MEDIUM+ → PostgreSQL investigation_queue
+        ↓  (optional Pub/Sub fan-out; not the consumer)
+graph / DNA / optional Gemini
         ↓
 analyst UI → human decision → audit → pattern library
 ```
+
+The durable investigation queue is PostgreSQL. `INVESTIGATION_TOPIC` is a notification, not a second ingest pipeline.
 
 ## Local vs GCP
 

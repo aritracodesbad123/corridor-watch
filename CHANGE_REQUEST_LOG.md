@@ -14,6 +14,7 @@
 | **CR-010** | SAR Narrative Generator | Multi-jurisdiction regulatory filing narrative generator for FinCEN (US), MAS (Singapore), and AUSTRAC (Australia). | **Completed** | v1.3.0 |
 | **CR-011** | Self-Evolving Rule Miner | Mine high-precision candidate decision rules from historical analyst dispositions with precision/recall metrics. | **Completed** | v1.3.0 |
 | **CR-012** | Platform evolution | Config, SQLite/PostgreSQL abstraction, Pub/Sub ingest, multi-bank synthetic world, Crime Pattern DNA, grounded Gemini report, command/corridor/pattern UI. | **Completed** | v1.5.0 |
+| **CR-013** | Scale proof | Multi-instance Cloud Run, Cloud SQL `db-custom-2-7680`, Pub/Sub load-test with ledger measurement. Publisher held 200–1000 TPS; consume remained SQL-bound. Not a 5,000 TPS claim. | **Completed (measured)** | v1.6.0 |
 
 ---
 
