@@ -35,6 +35,9 @@ def _row_to_pattern(row: dict) -> CrimePatternDNA:
         created_by=row.get("created_by") or "system",
         active=bool(row.get("active", 1)),
         confirmed_cases=int(row.get("confirmed_cases") or 0),
+        institutional_scope=row.get("institutional_scope") or (
+            "CROSS_INSTITUTION" if row.get("pattern_id") in {"CW-005", "CW-006", "CW-007"} else "LOCAL"
+        ),
     )
 
 
@@ -82,6 +85,7 @@ def _write(con, pattern: CrimePatternDNA) -> None:
         "created_by": pattern.created_by,
         "active": 1 if pattern.active else 0,
         "confirmed_cases": pattern.confirmed_cases,
+        "institutional_scope": pattern.institutional_scope,
     })
 
 

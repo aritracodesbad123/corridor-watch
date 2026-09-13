@@ -28,7 +28,8 @@ High-risk dispositions (`hold_payment`, `escalate_fiu`, `freeze_account`) remain
 | `risk/` | Cheap screening + configurable risk tiers |
 | `pubsub/` | Transaction schema, idempotent ingest, optional GCP publish |
 | `synthetic/` | Multi-bank world + correlated fraud campaigns |
-| `graph/` | Bounded traversal + corridor intelligence |
+| `graph/` | Bounded traversal, corridor intelligence, visibility / boundaries |
+| `intelligence/` | Synthetic external signals (RBAC, no raw customer data) |
 | `patterns/` | Crime Pattern DNA schema, extract, match, store |
 | `investigations/` | Evidence IDs, grounded report, durable queue claim/retry |
 | `pubsub_load_generator.py` | Three-mode load test: in-process, HTTP, Pub/Sub → Cloud Run |

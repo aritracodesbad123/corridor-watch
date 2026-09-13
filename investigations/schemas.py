@@ -30,3 +30,7 @@ class InvestigationReport(BaseModel):
     pattern_versions: list[str] = Field(default_factory=list)
     gemini_used: bool = False
     grounded: bool = True
+    network_visibility_score: float | None = Field(default=None, ge=0, le=1)
+    unknown_areas: list[str] = Field(default_factory=list, max_length=12)
+    visibility_counts: dict = Field(default_factory=dict)
+    external_intelligence_ids: list[str] = Field(default_factory=list, max_length=12)

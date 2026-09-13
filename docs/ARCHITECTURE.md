@@ -27,6 +27,8 @@ human decision + audit
 Crime Pattern DNA library
 ```
 
+Graphs distinguish **observed / external / inferred / unknown**. Visibility is a coverage score, not guilt. Gemini must not invent missing institutions. Synthetic intelligence is an optional overlay; ingest stays cheap.
+
 The durable investigation queue is **PostgreSQL**, not a second Pub/Sub consumer.
 `INVESTIGATION_TOPIC` is a best-effort notification after the row is committed.
 

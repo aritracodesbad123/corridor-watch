@@ -36,6 +36,9 @@
   .dna-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px}
   .row.showcase{background:#ECFDF5}
   .row.showcase .pat{color:var(--teal)}
+  .row.middle-bank{background:#FFF7ED;border-left:3px solid #C4A36A}
+  .row.middle-bank .pat{color:#8B3E32}
+  .vis-badge{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;background:#FFF7ED;color:#8B3E32;font-size:10px;letter-spacing:.04em}
   .app-view{display:none;flex:1;min-height:0;overflow:auto}
   .app-view.on{display:block}
   .app-view.layout{display:none}
@@ -386,14 +389,14 @@
     <div><b>CORRIDOR WATCH</b><span>Smarter Investigations. Safer Corridors.</span></div>
   </div>
   <div class="view-nav">
-    <button type="button" data-view="command" id="nav-command">Home</button>
-    <button type="button" class="on" data-view="corridors" id="nav-corridors">Corridor Explorer</button>
+    <button type="button" class="on" data-view="command" id="nav-command">Home</button>
+    <button type="button" data-view="corridors" id="nav-corridors">Corridor Explorer</button>
     <button type="button" data-view="investigate" id="nav-investigate">Investigations</button>
     <button type="button" data-view="patterns" id="nav-patterns">Pattern DNA</button>
   </div>
   <div class="sidenav-foot">
     <div id="system-chip">System online</div>
-    <div class="ver">v1.6.0</div>
+    <div class="ver">v1.8.0</div>
   </div>
 </aside>
 <div class="app-main">
@@ -417,7 +420,7 @@
     <button class="secondary role-mrm" id="btn-redteam-reset" type="button">Reset dataset</button>
   </div>
 </header>
-<div class="app-view" id="view-command">
+<div class="app-view on" id="view-command">
   <div class="page-head"><h2>Home</h2><p>Detect → Investigate → Confirm → Pattern DNA. Measured numbers only.</p></div>
   <div class="stats" id="command-stats"></div>
   <div class="pad">
@@ -430,12 +433,16 @@
       <div class="card"><h3>Ingest / investigation</h3><div id="command-ingest" class="muted">Loading…</div></div>
     </div>
     <div class="grid2" style="margin-top:12px">
+      <div class="card"><h3>Partial network — middle bank</h3><div id="command-middle" class="muted">Loading…</div></div>
       <div class="card"><h3>Lotus Ring</h3><div id="command-showcase" class="muted">Loading…</div></div>
+    </div>
+    <div class="grid2" style="margin-top:12px">
       <div class="card"><h3>Measured scorecard</h3><div id="command-scorecard" class="muted">Loading…</div></div>
+      <div class="card"><h3>Network visibility</h3><div id="command-visibility" class="muted">Open the middle-bank case to see observed vs unknown hops.</div></div>
     </div>
   </div>
 </div>
-<div class="app-view on" id="view-corridors">
+<div class="app-view" id="view-corridors">
   <div class="page-head">
     <h2>Corridor Explorer</h2>
     <p>Explore connections, uncover hidden flows, and investigate suspicious activity across the financial corridor.</p>
@@ -475,6 +482,8 @@
         <span><i class="legend-dot" style="background:#F59E0B"></i>Transaction</span>
         <span><i class="legend-dot" style="background:#8B5CF6"></i>Location</span>
         <span><i class="legend-dot" style="background:#EF4444"></i>Risk</span>
+        <span><i class="legend-dot" style="background:#C4A36A"></i>External intel</span>
+        <span><i class="legend-dot" style="background:#94A3B8"></i>Unknown hop</span>
       </div>
     </div>
     <div class="card" id="explorer-entity">
@@ -631,15 +640,21 @@ async function loadAlerts(){
   const keep = current;
   $("queue-count").textContent = `${alerts.length} alert${alerts.length===1?"":"s"}`;
   $("rows").innerHTML = alerts.map(a => `
-    <div class="row ${a.txn_id===keep?'active':''} ${a.showcase?'showcase':''}" data-id="${a.txn_id}">
+    <div class="row ${a.txn_id===keep?'active':''} ${a.showcase==='middle_bank'?'middle-bank':(a.showcase?'showcase':'')}" data-id="${a.txn_id}">
       <div class="risk-bar ${riskClass(a.risk_score)}">${Math.round(a.risk_score)}</div>
       <div style="min-width:0">
         <div class="row-corridor">${a.corridor} · $${Number(a.amount).toLocaleString()}</div>
         <div class="row-sub">${a.sender_id} → ${a.receiver_id}</div>
-        <div class="pat">${a.showcase?'LOTUS RING · ':''}${a.primary_pattern||''} · ${a.workflow_state||'open'}</div>
+        <div class="pat">${showcaseLabel(a.showcase)}${a.primary_pattern||''} · ${a.workflow_state||'open'}</div>
       </div>
     </div>`).join("");
   $("rows").querySelectorAll(".row").forEach(r => r.addEventListener("click", () => openCase(r.dataset.id)));
+}
+
+function showcaseLabel(flag){
+  if(flag==="middle_bank") return "MIDDLE BANK · PARTIAL · ";
+  if(flag==="lotus_ring" || flag) return "LOTUS RING · ";
+  return "";
 }
 
 function fmtFeatures(ctx){
@@ -814,13 +829,15 @@ function renderMoneyFlowDag(net){
   const nodeSvg = nodes.map(n=>{
     const p = positions[n.id]; if(!p) return "";
     const risk = n.risk_score||0;
-    const fill = n.focus ? "#3FA796" : (risk>=70 ? "#8B3E32" : (n.external ? "#2A3344" : "#2F3F55"));
-    const stroke = n.focus ? "#7EE0D0" : "#6A7A90";
+    const vis = n.visibility || (n.external ? "observed" : "observed");
+    const fill = n.focus ? "#3FA796" : (vis==="external" ? "#3A4E6A" : vis==="inferred" ? "#5A4A2A" : vis==="unknown" ? "#2A2A2A" : (risk>=70 ? "#8B3E32" : "#2F3F55"));
+    const stroke = n.focus ? "#7EE0D0" : (vis==="unknown" || vis==="inferred" ? "#C4A36A" : "#6A7A90");
+    const dash = (vis==="unknown" || vis==="inferred") ? "4 3" : "";
     const label = (n.id||"").slice(0,8);
     const sub = n.country || "?";
     const nodeData = encodeNodeData(n);
     return `<g class="flow-node" data-node="${nodeData}">
-      <rect x="${p.x-34}" y="${p.y-18}" rx="6" width="68" height="36" fill="${fill}" stroke="${stroke}" stroke-width="1.5"/>
+      <rect x="${p.x-34}" y="${p.y-18}" rx="6" width="68" height="36" fill="${fill}" stroke="${stroke}" stroke-width="1.5" ${dash?`stroke-dasharray="${dash}"`:""}/>
       <text x="${p.x}" y="${p.y-2}" text-anchor="middle" fill="#E8ECF1" font-size="10" font-family="IBM Plex Mono">${label}</text>
       <text x="${p.x}" y="${p.y+12}" text-anchor="middle" fill="#A8B2C2" font-size="9" font-family="IBM Plex Mono">${sub} · ${Math.round(risk)}</text>
     </g>`;
@@ -961,7 +978,10 @@ async function openCase(txnId){
       <div class="tab" data-tab="decision">Workflow</div>
     </div>
     <div class="panel-block on" id="tab-overview">
-      <div class="case-id">CASE ${t.txn_id} · ${t.primary_pattern||''} · ${t.workflow_state||d.workflow_state||'open'}${t.showcase?' · LOTUS RING':''}</div>
+      <div class="case-id">CASE ${t.txn_id} · ${t.primary_pattern||''} · ${t.workflow_state||d.workflow_state||'open'}${t.showcase==='middle_bank'?' · MIDDLE BANK':(t.showcase?' · LOTUS RING':'')}
+        ${(d.visibility||d.network?.visibility)?.network_visibility_pct!=null?`<span class="vis-badge">VISIBILITY ${(d.visibility||d.network.visibility).network_visibility_pct}% · NOT GUILT</span>`:''}
+        ${t.showcase==='middle_bank'||d.network?.partial_network?'<span class="vis-badge">PARTIAL NETWORK OBSERVED</span>':''}
+      </div>
       <div class="amount">$${Number(t.amount).toLocaleString()}</div>
       <div class="muted">${t.corridor} · ${new Date(t.ts).toLocaleString()} · purpose: ${t.purpose||'—'} · SoF: ${t.source_of_funds||'—'}</div>
       <div class="flow">
@@ -969,6 +989,7 @@ async function openCase(txnId){
         <div class="muted">→</div>
         <div class="node"><div class="id">${t.receiver_id}</div><div class="age">${fmtFeatures(d.receiver)}</div></div>
       </div>
+      ${renderVisibilityPanel(d)}
       ${renderPatternDna(d.pattern_matches||[])}
       <div class="grid2">
         <div class="card"><h3>Sender patterns</h3>${patternBars(sRisk)}</div>
@@ -989,8 +1010,10 @@ async function openCase(txnId){
         <p class="muted" style="margin:0 0 6px">Accounts layered left→right by hop depth. Amber edge is this case; amounts on edges. Hover an account for details. Scroll sideways if hops run past the frame.</p>
         <div class="net tall" id="flow-dag-view">${renderMoneyFlowDag(d.network)}</div>
         <div class="viz-legend">
-          <span><i style="background:#3FA796"></i> focal account</span>
-          <span><i style="background:#8B3E32"></i> high risk</span>
+          <span><i style="background:#3FA796"></i> focal / observed</span>
+          <span><i style="background:#3A4E6A"></i> external intel</span>
+          <span><i style="background:#5A4A2A"></i> inferred</span>
+          <span><i style="background:#2A2A2A"></i> unknown boundary</span>
           <span><i style="background:#E0A04A"></i> focal transfer</span>
           <span>${(d.network.nodes||[]).length} accounts · ${(d.network.edges||[]).length} transfers</span>
         </div>
@@ -1445,6 +1468,17 @@ async function openCase(txnId){
     renderDecisions(refreshed.analyst_decisions||[]);
     loadAudit(txnId);
   };
+  if($("btn-sim-intel")){
+    $("btn-sim-intel").onclick = async ()=>{
+      const res = await fetch(`${API}/intelligence/simulate`, {method:"POST", headers:authHeaders()});
+      const payload = await res.json().catch(()=>({}));
+      if(!res.ok){
+        alert(payload.detail || "Intelligence apply failed");
+        return;
+      }
+      openCase(txnId);
+    };
+  }
   loadAudit(txnId);
 }
 
@@ -1572,6 +1606,33 @@ function focusEvidence(id){
   if(card) card.scrollIntoView({behavior:"smooth", block:"center"});
 }
 
+function renderVisibilityPanel(d){
+  const vis = d.visibility || d.network?.visibility || {};
+  const pct = vis.network_visibility_pct ?? (vis.network_visibility_score!=null ? Math.round(vis.network_visibility_score*100) : null);
+  const obs = vis.observed || {};
+  const ext = vis.external || {};
+  const inf = vis.inferred || {};
+  const unk = vis.unknown || {};
+  const bounds = d.boundaries || d.network?.boundaries || [];
+  const intel = can("intelligence:write")
+    ? `<div class="btn-row" style="padding:8px 0 0"><button type="button" id="btn-sim-intel">Apply synthetic intelligence</button></div>`
+    : "";
+  return `<div class="card" style="margin-top:12px">
+    <h3>Network visibility</h3>
+    <div class="kv"><span>Coverage</span><span>${pct==null?"—":pct}% — not a guilt score</span></div>
+    <div style="height:8px;background:#1c2430;border-radius:4px;margin:8px 0 12px;overflow:hidden">
+      <div style="height:100%;width:${pct||0}%;background:#3FA796"></div>
+    </div>
+    <div class="kv"><span>Observed</span><span>${obs.nodes??0} nodes · ${obs.edges??0} edges</span></div>
+    <div class="kv"><span>External</span><span>${ext.nodes??0} nodes · ${ext.edges??0} edges</span></div>
+    <div class="kv"><span>Inferred</span><span>${inf.nodes??0} nodes · ${inf.edges??0} edges</span></div>
+    <div class="kv"><span>Unknown boundaries</span><span>${unk.boundaries??bounds.length??0}</span></div>
+    ${(bounds||[]).slice(0,6).map(b=>`<div class="muted">${esc(b.boundary_id||"")} · ${esc(b.direction||"")} · ${esc(b.description||"")}</div>`).join("")}
+    <div class="muted" style="margin-top:8px">PARTIAL NETWORK OBSERVED when unknown hops remain. Incomplete visibility does not lower risk.</div>
+    ${intel}
+  </div>`;
+}
+
 function renderPatternDna(matches){
   if(!matches || !matches.length){
     return `<div class="card" style="margin-top:12px"><h3>Pattern DNA</h3><div class="muted">No library match on this network yet.</div></div>`;
@@ -1671,6 +1732,9 @@ async function loadCommand(light=false){
       <div class="kv"><span>stream flagged</span><span>${d.live_stream?.queued_for_investigation||0}</span></div>
       <div class="kv"><span>pubsub</span><span>${d.pubsub?.wired ? "WIRED · "+esc(d.pubsub.topic)+" → "+esc(d.pubsub.subscription) : (d.environment==="local" ? "local in-process — open the Cloud Run URL for live Pub/Sub" : esc(d.pubsub?.error||"not confirmed"))}</span></div>
       <div class="kv"><span>investigation path</span><span>${esc(d.investigation_path||d.pubsub?.investigation_path||"PostgreSQL investigation_queue")}</span></div>
+      <div class="kv"><span>network visibility</span><span>${d.network_visibility?.network_visibility_pct??"—"}% · ${d.network_visibility?.partial_network?"partial":"complete"}</span></div>
+      <div class="kv"><span>institutions in view</span><span>${(d.institutions||[]).length}</span></div>
+      <div class="kv"><span>home bank</span><span>${esc(d.network_visibility?.home_institution||"BANK_SG")}</span></div>
       <div class="muted" style="margin-top:8px">${esc(d.observability_note||"")}</div>`;
     const show = d.showcase || {};
     if(!d.light && $("command-showcase") && d.showcase){
@@ -1683,6 +1747,29 @@ async function loadCommand(light=false){
         showView("investigate");
         if(show.hero_txn_id) openCase(show.hero_txn_id);
       };
+    }
+    const mid = d.middle_bank || {};
+    if($("command-middle")){
+      $("command-middle").innerHTML = `
+        <div class="kv"><span>Home institution</span><span>${esc(mid.home_institution||"BANK_SG")}</span></div>
+        <div class="kv"><span>Observed path</span><span>${esc(mid.observed_path||"BANK_IN → BANK_SG → BANK_PH")}</span></div>
+        <div class="kv"><span>Unresolved</span><span>${esc((mid.unknown||[]).join(" · ")||"Bank D / off-ramp")}</span></div>
+        <p>${esc(mid.visibility_note||"PARTIAL NETWORK OBSERVED")}</p>
+        <div class="btn-row" style="padding:8px 0 0"><button type="button" id="btn-open-middle">Open CW-MID-02</button></div>`;
+      if($("btn-open-middle")) $("btn-open-middle").onclick = ()=>{
+        showView("investigate");
+        openCase(mid.hero_txn_id || "CW-MID-02");
+      };
+    }
+    const nv = d.network_visibility || {};
+    if($("command-visibility")){
+      const pct = nv.network_visibility_pct;
+      const bar = pct==null ? "" : `<div style="height:8px;background:#1c2430;border-radius:4px;margin:8px 0"><div style="height:100%;width:${pct}%;background:#3FA796"></div></div>`;
+      $("command-visibility").innerHTML = `
+        <div class="kv"><span>Coverage</span><span>${pct==null?"Measured after full Home load — not a guilt score":pct+"% — not a guilt score"}</span></div>
+        ${bar}
+        <div class="kv"><span>Unknown boundaries</span><span>${nv.unknown?.boundaries??"—"}</span></div>
+        <div class="muted">${esc(nv.note||mid.visibility_note||"Observed hops only. Downstream beyond BANK_PH is unresolved.")}</div>`;
     }
     const sc = d.scorecard || {};
     const det = sc.detection?.metrics || {};
@@ -1756,6 +1843,7 @@ function renderExplorerEntity(node, net){
     <div class="entity-k"><span>Pattern</span><span>${esc(node.pattern||"—")}</span></div>
     <h3 style="margin-top:14px">Key indicators</h3>
     ${node.focus ? `<div class="ind">Focal account on this corridor network</div>` : ""}
+    ${node.visibility ? `<div class="ind">Visibility: ${esc(node.visibility)}${node.visibility==="unknown"?" — unresolved hop, not an accusation":""}</div>` : ""}
     ${node.external ? `<div class="ind">External / unregistered counterparty</div>` : ""}
     ${score>=75 ? `<div class="ind">High-risk score on this entity</div>` : ""}
     <button type="button" id="btn-explorer-open" style="width:100%;margin-top:14px">View full investigation →</button>`;
@@ -1787,7 +1875,13 @@ function renderExplorerGraph(net){
   const W = el.clientWidth || 640, H = el.clientHeight || 360;
   const svg = d3.select(el).append("svg").attr("viewBox", `0 0 ${W} ${H}`);
   const root = svg.append("g");
-  const color = d => d.kind==="location" ? "#8B5CF6" : (Number(d.risk_score||0)>=80 ? "#EF4444" : (d.focus ? "#EF4444" : "#3B82F6"));
+  const color = d => {
+    if(d.visibility==="unknown" || d.kind==="unknown_entity") return "#94A3B8";
+    if(d.visibility==="external") return "#C4A36A";
+    if(d.kind==="location") return "#8B5CF6";
+    if(Number(d.risk_score||0)>=80 || d.focus) return "#EF4444";
+    return "#3B82F6";
+  };
   const sim = d3.forceSimulation(nodes)
     .force("link", d3.forceLink(links).id(d=>d.id).distance(90))
     .force("charge", d3.forceManyBody().strength(-180))
@@ -1857,10 +1951,13 @@ async function loadCorridors(){
   if($("explorer-timeline")){
     $("explorer-timeline").innerHTML = recent.map(a=>`<li><span>${esc((a.ts||"").replace("T"," ").slice(0,16))}</span><span>${esc(a.txn_id)}</span></li>`).join("") || `<li class="muted">No timeline yet</li>`;
   }
-  let hero = "CW-LOTUS-04";
+  let hero = "CW-MID-02";
   const hit = (alerts||[]).find(a => a.txn_id.toLowerCase()===q || (a.sender_id||"").toLowerCase()===q || (a.receiver_id||"").toLowerCase()===q);
+  const mid = (alerts||[]).find(a=>a.showcase==="middle_bank");
+  const show = (alerts||[]).find(a=>a.showcase);
   if(hit) hero = hit.txn_id;
-  else if((alerts||[]).find(a=>a.showcase)) hero = (alerts||[]).find(a=>a.showcase).txn_id;
+  else if(mid) hero = mid.txn_id;
+  else if(show) hero = show.txn_id;
   try{
     const net = await readJson(await fetch(`${API}/alerts/${encodeURIComponent(hero)}/network`, {headers: authHeaders()}), "network unavailable");
     net.hero_txn_id = hero;
@@ -1958,7 +2055,7 @@ async function tickLive(){
 
 async function bootConsole(){
   applyRoleChrome();
-  showView("corridors");
+  showView("command");
   await health();
   await loadAlerts();
   loadCommand(true);

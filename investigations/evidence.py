@@ -57,6 +57,46 @@ def build_evidence_items(txn: dict, network: dict, risk: dict | None, matches: l
             source="graph_feature",
             source_ref=str(risk.get("account_id") or ""),
         ))
+    visibility = (network or {}).get("visibility") or {}
+    if visibility:
+        items.append(EvidenceItem(
+            evidence_id="E-VIS",
+            type="network_visibility",
+            description=(
+                f"Network visibility {visibility.get('network_visibility_pct')}% "
+                f"(observed {visibility.get('observed', {}).get('nodes', 0)} nodes; "
+                f"unknown boundaries {visibility.get('unknown', {}).get('boundaries', 0)}). "
+                "This is coverage, not guilt."
+            ),
+            source="visibility",
+            source_ref=(network or {}).get("network_id") or "",
+            confidence=float(visibility.get("network_visibility_score") or 0),
+        ))
+    for boundary in ((network or {}).get("boundaries") or [])[:6]:
+        items.append(EvidenceItem(
+            evidence_id=boundary.get("boundary_id") or "BOUNDARY-00",
+            type="institutional_boundary",
+            description=boundary.get("description") or "Institutional boundary",
+            source="visibility",
+            source_ref=boundary.get("account_id") or "",
+            confidence=0.4,
+        ))
+    try:
+        from intelligence.repository import list_signals
+        for sig in list_signals(20)[:4]:
+            items.append(EvidenceItem(
+                evidence_id=sig.get("intelligence_id") or "EXT-00",
+                type="external_intelligence",
+                description=(
+                    f"{sig.get('signal_type')} from {sig.get('source_institution')} "
+                    f"on {sig.get('entity_reference')} (synthetic reference only)"
+                ),
+                source="external_intelligence",
+                source_ref=sig.get("entity_reference") or "",
+                confidence=float(sig.get("confidence") or 0.5),
+            ))
+    except Exception:
+        pass
     for match in matches[:5]:
         items.append(EvidenceItem(
             evidence_id=f"E-{match['pattern_id']}",
@@ -176,11 +216,20 @@ def deterministic_report(
     ]
     if not matches:
         alts.append("Insufficient network overlap with known Crime Pattern DNA — treat hypothesis as provisional.")
+    vis = (network or {}).get("visibility") or {}
     next_checks = [
         "Confirm account opening documents and beneficial ownership for the mule/sink candidate.",
         "Request source-of-funds artefacts and compare amounts to stated income.",
         "Ask the originating institution whether the shared device or beneficiary is already blocked.",
     ]
+    if vis.get("unknown", {}).get("boundaries"):
+        next_checks.append("Request authorized external intelligence for unresolved downstream / upstream boundaries.")
+    unknown_areas = [
+        f"{b.get('boundary_id')}: {b.get('description')}"
+        for b in ((network or {}).get("boundaries") or [])
+        if b.get("visibility") in {"unknown", "external"}
+    ][:8]
+    ext_ids = [e.evidence_id for e in evidence if str(e.evidence_id).startswith("INT-") or str(e.evidence_id).startswith("EXT-")]
     summary = (
         f"Bounded network around {txn.get('txn_id')} contains {((network or {}).get('features') or {}).get('txn_count', 0)} "
         f"related transfers on {txn.get('corridor')}. "
@@ -225,4 +274,13 @@ def deterministic_report(
         pattern_versions=[f"{m['pattern_id']}@v{m.get('version', 1)}" for m in matches],
         gemini_used=False,
         grounded=True,
+        network_visibility_score=vis.get("network_visibility_score"),
+        unknown_areas=unknown_areas,
+        visibility_counts={
+            "observed": vis.get("observed") or {},
+            "external": vis.get("external") or {},
+            "inferred": vis.get("inferred") or {},
+            "unknown": vis.get("unknown") or {},
+        },
+        external_intelligence_ids=ext_ids,
     )

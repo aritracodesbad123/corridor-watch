@@ -21,6 +21,7 @@ class CrimePatternDNA(BaseModel):
     created_by: str = "system"
     active: bool = True
     confirmed_cases: int = 0
+    institutional_scope: str = "LOCAL"
 
     def all_signals(self) -> set[str]:
         return set(
@@ -103,6 +104,7 @@ SEED_PATTERNS = [
         graph_signature="hop_count>=3",
         temporal_signature="hours<=24",
         corridor_signature="multi_country",
+        institutional_scope="CROSS_INSTITUTION",
     ),
     CrimePatternDNA(
         pattern_id="CW-006",
@@ -117,5 +119,21 @@ SEED_PATTERNS = [
         graph_signature="institution_count>=3",
         temporal_signature="hours<=12",
         corridor_signature="provider_exit",
+        institutional_scope="CROSS_INSTITUTION",
+    ),
+    CrimePatternDNA(
+        pattern_id="CW-007",
+        name="feeder_mule_intermediary_exit",
+        description="Feeder into a young mule, through an intermediary bank, toward an unresolved exit. Partial topology is enough to match.",
+        entry_signals=["new_account", "incoming_spike"],
+        movement_signals=["high_pass_through", "rapid_fanout"],
+        relationship_signals=["shared_device"],
+        geography_signals=["cross_border", "cross_institution"],
+        timing_signals=["short_hold_period"],
+        exit_signals=["overseas_exit"],
+        graph_signature="feeder->mule->intermediary->exit",
+        temporal_signature="hold_minutes<60",
+        corridor_signature="cross_institution",
+        institutional_scope="CROSS_INSTITUTION",
     ),
 ]

@@ -22,6 +22,7 @@ PERMISSIONS = {
         "alerts:read", "investigate", "decision:write", "sof:run", "memory:read",
         "debate:run", "document:verify", "counterfactual:run", "sar:draft", "audit:case",
         "command:read", "corridors:read", "patterns:read", "simulate:read",
+        "intelligence:read",
         "workflow:review", "workflow:refer",
     },
     "fiu_lead": {
@@ -30,6 +31,7 @@ PERMISSIONS = {
         "sar:draft", "audit:case", "audit:recent",
         "command:read", "corridors:read", "patterns:read", "patterns:write",
         "simulate:read", "simulate:run",
+        "intelligence:read", "intelligence:write",
         "workflow:review", "workflow:escalate", "workflow:close",
     },
     "mrm_auditor": {
@@ -38,6 +40,7 @@ PERMISSIONS = {
         "redteam:run", "redteam:reset", "rules:mine",
         "command:read", "corridors:read", "patterns:read",
         "simulate:read", "simulate:run",
+        "intelligence:read",
         "workflow:audit",
     },
 }

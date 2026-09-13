@@ -20,6 +20,7 @@ from config import get_settings
 from db import connect, init_schema
 from patterns.repository import seed_library
 from synthetic.showcase import seed_showcase
+from synthetic.middle_bank import seed_middle_bank
 from synthetic.world import seed_banks
 
 init_schema()
@@ -46,7 +47,8 @@ if count < 1:
 seed_banks()
 seed_library()
 seeded = seed_showcase()
-print(f"showcase={seeded['campaign_id']} hero={seeded['hero_txn_id']}")
+middle = seed_middle_bank()
+print(f"showcase={seeded['campaign_id']} hero={seeded['hero_txn_id']} middle={middle['hero_txn_id']}")
 PY
 PORT="${PORT:-8080}"
 exec uvicorn main:app --host 0.0.0.0 --port "$PORT"

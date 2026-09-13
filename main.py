@@ -42,6 +42,7 @@ import rule_miner
 import evaluation
 from patterns.repository import seed_library, measured_library
 from synthetic.showcase import describe_showcase, seed_showcase
+from synthetic.middle_bank import describe_middle_bank, seed_middle_bank
 from synthetic.world import seed_banks
 import workflow
 
@@ -52,11 +53,12 @@ async def lifespan(_app: FastAPI):
     seed_banks()
     seed_library()
     seed_showcase()
+    seed_middle_bank()
     warmup_pool()
     yield
 
 
-app = FastAPI(title="Corridor Watch", version="1.6.0", lifespan=lifespan)
+app = FastAPI(title="Corridor Watch", version="1.8.0", lifespan=lifespan)
 _allowed_origins = [o.strip() for o in os.getenv("CORRIDOR_WATCH_ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware, allow_origins=_allowed_origins, allow_methods=["GET", "POST"], allow_headers=["*"]
@@ -231,6 +233,10 @@ def list_alerts(
 ):
     if sort not in {"newest", "oldest", "risk"}:
         raise HTTPException(400, "sort must be newest, oldest, or risk")
+    try:
+        seed_middle_bank()
+    except Exception:
+        pass
     con = connect()
     rows = [dict(r) for r in con.execute(
         "SELECT txn_id, sender_id, receiver_id, amount, corridor, ts, risk_score, "
@@ -243,6 +249,7 @@ def list_alerts(
         rows = [r for r in rows if (r.get("corridor") or "") == corridor]
     pinned = [r for r in rows if r.get("showcase")]
     rest = [r for r in rows if not r.get("showcase")]
+    pinned.sort(key=lambda r: (0 if r.get("showcase") == "middle_bank" else 1, str(r.get("txn_id") or "")))
     if sort == "risk":
         rest.sort(key=lambda r: float(r.get("risk_score") or 0), reverse=True)
     else:
@@ -288,6 +295,9 @@ def alert_detail(txn_id: str, auth: AuthContext = Depends(require("alerts:read")
         "workflow_state": txn.get("workflow_state") or "open",
         "showcase": describe_showcase() if txn.get("showcase") else None,
         "pattern_matches": matches,
+        "visibility": (network or {}).get("visibility"),
+        "boundaries": (network or {}).get("boundaries") or [],
+        "institutions": (network or {}).get("institutions") or [],
     }
 
 
@@ -707,6 +717,10 @@ def store_benchmark(body: BenchmarkRequest, auth: AuthContext = Depends(require(
 @app.get("/api/command-center")
 def command_center(light: bool = False, auth: AuthContext = Depends(require("command:read"))):
     from graph.corridor import corridor_intelligence, investigation_compression
+    try:
+        seed_middle_bank()
+    except Exception:
+        pass
 
     flagged = high = pending = cases = 0
     wf = {}
@@ -768,6 +782,7 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
         "workflow": wf,
         "investigation_path": "pubsub_transactions → Cloud Run → PostgreSQL investigation_queue",
         "light": light,
+        "middle_bank": describe_middle_bank(),
     }
     if light:
         return payload
@@ -804,6 +819,9 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
             "observability_source": signals.get("source"),
             "observability_note": note,
             "showcase": describe_showcase(),
+            "middle_bank": describe_middle_bank(),
+            "network_visibility": _visibility_snapshot(),
+            "institutions": _institution_snapshot(),
             "scorecard": scorecard,
         })
     except Exception as exc:
@@ -886,6 +904,125 @@ def network_investigate(txn_id: str, auth: AuthContext = Depends(require("invest
 def claim_investigations(limit: int = 1, auth: AuthContext = Depends(require("investigate"))):
     from investigations.queue import claim_next
     return {"claimed": claim_next(auth.analyst_id, limit=max(1, min(limit, 10)))}
+
+
+def _investigation_network(txn_id: str) -> dict:
+    from graph.investigator import bounded_network
+    from investigations.service import load_txn
+    return bounded_network(load_txn(txn_id))
+
+
+@app.get("/api/investigations/{txn_id}/visibility")
+def investigation_visibility(txn_id: str, auth: AuthContext = Depends(require("investigate"))):
+    try:
+        network = _investigation_network(txn_id)
+    except ValueError as e:
+        raise HTTPException(404, str(e)) from e
+    vis = network.get("visibility") or {}
+    return {
+        "txn_id": txn_id,
+        "risk_score": None,
+        **vis,
+        "home_institution": network.get("home_institution"),
+        "partial_network": network.get("partial_network"),
+        "note": "Visibility is coverage of the visible network, not confidence of guilt.",
+    }
+
+
+@app.get("/api/investigations/{txn_id}/network")
+def investigation_network(txn_id: str, auth: AuthContext = Depends(require("investigate"))):
+    try:
+        return _investigation_network(txn_id)
+    except ValueError as e:
+        raise HTTPException(404, str(e)) from e
+
+
+@app.get("/api/investigations/{txn_id}/boundaries")
+def investigation_boundaries(txn_id: str, auth: AuthContext = Depends(require("investigate"))):
+    try:
+        network = _investigation_network(txn_id)
+    except ValueError as e:
+        raise HTTPException(404, str(e)) from e
+    return {
+        "txn_id": txn_id,
+        "boundaries": network.get("boundaries") or [],
+        "unknown_nodes": [n for n in network.get("nodes") or [] if n.get("visibility") == "unknown"],
+    }
+
+
+@app.get("/api/institutions")
+def institutions(auth: AuthContext = Depends(require("corridors:read"))):
+    from graph.institutions import list_institutions
+    return list_institutions()
+
+
+@app.get("/api/institutions/{institution_id}/network")
+def institution_graph(institution_id: str, auth: AuthContext = Depends(require("corridors:read"))):
+    from graph.institutions import institution_network
+    payload = institution_network(institution_id)
+    if not payload.get("found"):
+        raise HTTPException(404, "institution not found")
+    return payload
+
+
+@app.get("/api/intelligence")
+def intelligence_list(auth: AuthContext = Depends(require("intelligence:read"))):
+    from intelligence.repository import list_signals
+    return list_signals()
+
+
+@app.post("/api/intelligence/signal")
+def intelligence_ingest(body: dict, auth: AuthContext = Depends(require("intelligence:write"))):
+    from intelligence.provider import ingest_signal
+    try:
+        saved = ingest_signal(body, actor=auth.analyst_id)
+    except Exception as exc:
+        raise HTTPException(400, str(exc)) from exc
+    audit.log("intelligence", "intelligence_ingest", saved, actor=auth.analyst_id, role=auth.role)
+    return saved
+
+
+@app.post("/api/intelligence/simulate")
+def intelligence_simulate(auth: AuthContext = Depends(require("intelligence:write"))):
+    from intelligence.provider import simulate_resolution
+    result = simulate_resolution(actor=auth.analyst_id)
+    audit.log("intelligence", "intelligence_simulate", result, actor=auth.analyst_id, role=auth.role)
+    return result
+
+
+@app.get("/api/patterns/{pattern_id}/matches")
+def pattern_matches(pattern_id: str, auth: AuthContext = Depends(require("patterns:read"))):
+    con = connect()
+    try:
+        rows = [dict(r) for r in con.execute(
+            "SELECT match_id, pattern_id, txn_id, score, created_at FROM pattern_matches WHERE pattern_id=? ORDER BY created_at DESC LIMIT 50",
+            (pattern_id,),
+        ).fetchall()]
+    except Exception:
+        rows = []
+    con.close()
+    return {"pattern_id": pattern_id, "matches": rows}
+
+
+def _visibility_snapshot() -> dict:
+    try:
+        network = _investigation_network("CW-MID-02")
+        return {
+            **(network.get("visibility") or {}),
+            "hero_txn_id": "CW-MID-02",
+            "partial_network": network.get("partial_network"),
+            "home_institution": network.get("home_institution"),
+        }
+    except Exception:
+        return {}
+
+
+def _institution_snapshot() -> list[dict]:
+    try:
+        from graph.institutions import list_institutions
+        return list_institutions()[:8]
+    except Exception:
+        return []
 
 
 @app.post("/api/ingest")

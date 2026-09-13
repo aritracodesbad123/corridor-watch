@@ -449,6 +449,7 @@ def network_subgraph(txn_id: str, depth: int = 2) -> dict:
                     "pattern": rs.get("primary_pattern", "external" if str(nid).startswith("EXT") else "elevated_activity"),
                     "focus": nid in focus,
                     "external": str(nid).startswith("EXT") or nid not in accounts,
+                    "institution_id": acc.get("bank_id"),
                 }
             else:
                 # keep strongest country signal
@@ -524,7 +525,7 @@ def network_subgraph(txn_id: str, depth: int = 2) -> dict:
         })
 
     node_list = list(nodes.values())
-    return {
+    payload = {
         "nodes": node_list,
         "edges": edges,
         "focus_txn_id": txn_id,
@@ -538,6 +539,21 @@ def network_subgraph(txn_id: str, depth: int = 2) -> dict:
             "flows": flows,
         },
     }
+    try:
+        from graph.visibility import annotate_network
+        intel_refs = set()
+        try:
+            from intelligence.repository import referenced_entities
+            intel_refs = referenced_entities()
+        except Exception:
+            intel_refs = set()
+        annotate_network(payload, accounts=accounts, intel_refs=intel_refs)
+        payload["flow_dag"]["nodes"] = payload["nodes"]
+        payload["flow_dag"]["edges"] = payload["edges"]
+        payload["flow_dag"]["max_layer"] = max((int(n.get("layer") or 0) for n in payload["nodes"]), default=0)
+    except Exception:
+        pass
+    return payload
 
 
 if __name__ == "__main__":

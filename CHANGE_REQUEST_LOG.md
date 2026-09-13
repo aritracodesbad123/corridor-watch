@@ -17,6 +17,7 @@
 | **CR-013** | Scale proof | Multi-instance Cloud Run, Cloud SQL `db-custom-2-7680`, Pub/Sub load-test with ledger measurement. Publisher held 200–1000 TPS; consume remained SQL-bound. Not a 5,000 TPS claim. | **Completed (measured)** | v1.6.0 |
 | **CR-014** | Analyst console | Viewport-locked Investigations layout: independent queue scroll, horizontal case-pane scroll, corridor-map and Explorer graph zoom/pan. | **Completed** | v1.6.1 |
 | **CR-015** | Competition proof | Ingest stage timings + upserts, GCP SQLite refusal, durable queue claim/retry, transaction-only baseline, Command Center impact/scale panel, Pattern DNA explainability, claims policy. | **Completed** | v1.7.0 |
+| **CR-016** | Partial visibility | Observed/external/inferred/unknown graph states, network visibility score, synthetic intelligence, middle-bank demo, cross-institution Pattern DNA. | **Completed** | v1.8.0 |
 
 ---
 
@@ -58,3 +59,7 @@
 ### CR-015: Competition proof without new AI surface
 - **Modules**: `metrics.py`, `db.py`, `pubsub/ingestion.py`, `investigations/queue.py`, `evaluation.py`, `static/index.html`, `docs/COMPETITION_CLAIMS.md`
 - **Capability**: Make the existing Detect → Investigate → Learn loop measurable. Profile ingest stages, keep Gemini off the hot path, compare a transaction-only baseline, and never present 5,000 TPS as achieved.
+
+### CR-016: Cross-institution partial visibility
+- **Modules**: `graph/visibility.py`, `intelligence/`, `synthetic/middle_bank.py`, `investigations/`, `static/index.html`
+- **Capability**: Distinguish observed, external, inferred, and unknown network areas. Visibility is not guilt. Synthetic intelligence can resolve a boundary without inventing Bank D.

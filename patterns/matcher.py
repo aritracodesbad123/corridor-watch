@@ -60,14 +60,20 @@ def match_patterns(txn: dict, network: dict, risk: dict | None = None, *, persis
             continue
         if score < 0.35:
             continue
+        vis = ((network or {}).get("visibility") or {})
         matches.append({
             "pattern_id": pattern.pattern_id,
             "name": pattern.name,
             "version": pattern.version,
             "score": round(score, 3),
+            "pattern_match_score": round(score, 3),
             "match_strength": round(score * 100),
+            "institutional_scope": getattr(pattern, "institutional_scope", "LOCAL"),
+            "visibility": vis.get("network_visibility_score"),
+            "evidence_coverage": round(score, 3),
             "matched_signals": sorted(overlap),
             "missing_signals": sorted(universe - overlap),
+            "missing_expected_signals": sorted(universe - overlap),
             "evidence": [
                 {
                     "evidence_id": f"P-{pattern.pattern_id}-{sig}",

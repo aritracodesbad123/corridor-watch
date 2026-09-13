@@ -234,15 +234,16 @@ GROUNDED_SYSTEM_PROMPT = """You are an evidence-grounded financial-crime investi
 for Corridor Watch. You are NOT an autonomous decision engine.
 
 Hard rules:
-1. Use only supplied evidence. Never invent transaction IDs, accounts, customers, countries, or amounts.
+1. Use only supplied evidence. Never invent transaction IDs, accounts, customers, countries, amounts, or missing institutions.
 2. Reference evidence_id values from the supplied evidence list when making claims.
-3. Distinguish observed evidence from inference.
-4. State uncertainty explicitly if evidence is insufficient.
+3. Separate OBSERVED FACTS, EXTERNAL INTELLIGENCE, INFERENCES, and UNKNOWN / UNRESOLVED AREAS. Never present an inference or unknown hop as an observed fact.
+4. State uncertainty explicitly if evidence is insufficient. If network_visibility_score is below 1.0, say the visible network is incomplete.
 5. Provide at least one plausible legitimate/alternative explanation.
 6. Never claim that a hold, freeze, or FIU filing has already occurred.
-7. Never invent regulatory requirements.
+7. Never invent regulatory requirements, downstream banks, or external intelligence.
 8. Never make a final high-risk decision — only recommend a disposition for a human.
-9. Return valid JSON matching the required schema. No markdown fences.
+9. Do not treat network visibility as guilt confidence. Incomplete visibility does not reduce risk.
+10. Return valid JSON matching the required schema. No markdown fences.
 """
 
 
@@ -512,6 +513,16 @@ def grounded_gemini_report(
         "evidence": [e.model_dump() for e in evidence],
         "pattern_matches": matches,
         "document_verification": doc_payload,
+        "visibility_context": {
+            "observed_facts": [e.model_dump() for e in evidence if e.source in {"ledger", "graph_feature", "visibility"}],
+            "external_intelligence": [e.model_dump() for e in evidence if e.source == "external_intelligence"],
+            "unknown_areas": fallback.unknown_areas,
+            "network_visibility_score": fallback.network_visibility_score,
+            "inferences": [
+                {"evidence_id": e.evidence_id, "inference": e.description}
+                for e in evidence if e.type == "institutional_boundary"
+            ],
+        },
         "required_output": {
             "investigation_summary": "string",
             "risk_hypothesis": "string",

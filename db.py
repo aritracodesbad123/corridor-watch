@@ -276,6 +276,21 @@ CREATE TABLE IF NOT EXISTS live_stream_state (
     published INTEGER,
     updated_at TEXT
 );
+
+CREATE TABLE IF NOT EXISTS intelligence_signals (
+    intelligence_id TEXT PRIMARY KEY,
+    source_institution TEXT,
+    entity_type TEXT,
+    entity_reference TEXT,
+    signal_type TEXT,
+    confidence REAL,
+    pattern_id TEXT,
+    sharing_tier TEXT,
+    visibility TEXT,
+    payload TEXT,
+    created_at TEXT,
+    created_by TEXT
+);
 """
 
 INDEXES = [
@@ -334,6 +349,10 @@ FLAGGED_COLUMNS = {
     "network_id": "TEXT",
     "workflow_state": "TEXT",
     "showcase": "TEXT",
+}
+
+PATTERN_COLUMNS = {
+    "institutional_scope": "TEXT",
 }
 
 QUEUE_COLUMNS = {
@@ -759,6 +778,7 @@ def init_schema(con: sqlite3.Connection | CompatConnection | None = None) -> Non
     _ensure_columns(con, "audit_log", AUDIT_COLUMNS)
     _ensure_columns(con, "flagged_transactions", FLAGGED_COLUMNS)
     _ensure_columns(con, "investigation_queue", QUEUE_COLUMNS)
+    _ensure_columns(con, "crime_patterns", PATTERN_COLUMNS)
     _create_indexes(con)
     con.commit()
     _SCHEMA_READY_FOR = ident

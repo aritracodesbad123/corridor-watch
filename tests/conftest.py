@@ -20,3 +20,18 @@ def local_runtime(request, monkeypatch):
     reset_settings_cache()
     yield
     reset_settings_cache()
+
+
+@pytest.fixture
+def isolated_db(tmp_path, monkeypatch):
+    import db
+    from config import reset_settings_cache
+    from db import init_schema
+    from patterns.repository import seed_library
+
+    monkeypatch.setattr(db, "DB_PATH", tmp_path / "platform.db")
+    reset_settings_cache()
+    init_schema()
+    seed_library()
+    yield
+    reset_settings_cache()
