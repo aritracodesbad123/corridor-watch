@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 from collections import Counter, defaultdict
+from datetime import datetime
 from typing import Any
 
 from db import connect, init_schema
@@ -110,7 +111,142 @@ def run_evaluation(include_trace: bool = False) -> dict[str, Any]:
     }
     if include_trace:
         result["examples"] = examples
+    result["baseline_comparison"] = compare_to_transaction_baseline(rows)
+    result["impact"] = impact_metrics(result, result["baseline_comparison"])
     return result
+
+
+def transaction_only_predict(txn: dict) -> bool:
+    """Deliberately simple thresholds. No graph, DNA, or Gemini."""
+    amount = float(txn.get("amount") or 0)
+    age = txn.get("account_age_days")
+    try:
+        age_n = float(age) if age is not None else None
+    except (TypeError, ValueError):
+        age_n = None
+    try:
+        velocity = int(txn.get("sender_velocity") or 0)
+    except (TypeError, ValueError):
+        velocity = 0
+    if amount >= 8000:
+        return True
+    if age_n is not None and age_n <= 3 and amount >= 2500:
+        return True
+    if velocity >= 4 and amount >= 2000:
+        return True
+    return False
+
+
+def compare_to_transaction_baseline(rows: list[dict] | None = None) -> dict[str, Any]:
+    init_schema()
+    con = connect()
+    if rows is None:
+        rows = [dict(r) for r in con.execute("SELECT * FROM transactions ORDER BY txn_id").fetchall()]
+    ages = {}
+    try:
+        ages = {
+            r["account_id"]: r["account_age_days"]
+            for r in con.execute("SELECT account_id, account_age_days FROM risk_scores").fetchall()
+        }
+    except Exception:
+        ages = {}
+    con.close()
+    sender_counts = Counter(t.get("sender_id") for t in rows)
+    enriched = []
+    for txn in rows:
+        item = dict(txn)
+        if item.get("account_age_days") is None:
+            item["account_age_days"] = ages.get(item.get("sender_id"))
+        item["sender_velocity"] = sender_counts.get(item.get("sender_id")) or 0
+        enriched.append(item)
+    y_true = [txn.get("fraud_scenario") in POSITIVE_SCENARIOS for txn in enriched]
+    y_base = [transaction_only_predict(txn) for txn in enriched]
+    return {
+        "name": "transaction_only",
+        "rules": [
+            "amount >= 8000",
+            "account_age_days <= 3 and amount >= 2500",
+            "sender_velocity >= 4 and amount >= 2000",
+        ],
+        "metrics": _binary_metrics(y_true, y_base),
+        "network_detection": None,
+        "note": "Threshold-only baseline. No graph, Pattern DNA, or Gemini.",
+    }
+
+
+def _parse_ts(value: str | None):
+    if not value:
+        return None
+    raw = str(value).replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(raw)
+    except ValueError:
+        return None
+
+
+def _ledger_impact() -> dict[str, Any]:
+    init_schema()
+    con = connect()
+    coverage = None
+    actionability = None
+    time_to_case = None
+    try:
+        cases = int(con.execute("SELECT COUNT(*) AS c FROM investigations").fetchone()["c"])
+        evidenced = int(con.execute(
+            "SELECT COUNT(*) AS c FROM investigations WHERE ai_summary IS NOT NULL AND ai_summary != ''"
+        ).fetchone()["c"])
+        if cases:
+            coverage = round(evidenced / cases, 4)
+        actionable = int(con.execute(
+            """SELECT COUNT(*) AS c FROM investigations
+               WHERE risk_level IN ('hold_payment','escalate_fiu','freeze_account','monitor')"""
+        ).fetchone()["c"])
+        if cases:
+            actionability = round(actionable / cases, 4)
+        rows = con.execute(
+            """SELECT created_at, completed_at FROM investigation_queue
+               WHERE status='COMPLETED' AND completed_at IS NOT NULL"""
+        ).fetchall()
+        deltas = []
+        for row in rows:
+            start = _parse_ts(row["created_at"])
+            end = _parse_ts(row["completed_at"])
+            if start and end:
+                deltas.append(max(0.0, (end - start).total_seconds()))
+        if deltas:
+            time_to_case = round(sum(deltas) / len(deltas), 2)
+    except Exception:
+        pass
+    con.close()
+    return {
+        "evidence_coverage": coverage,
+        "analyst_actionability_rate": actionability,
+        "time_to_case_ready": time_to_case,
+    }
+
+
+def impact_metrics(detection: dict, baseline: dict) -> dict[str, Any]:
+    from graph.corridor import investigation_compression
+
+    cw = (detection or {}).get("metrics") or {}
+    base = (baseline or {}).get("metrics") or {}
+    compression = investigation_compression()
+    fp_reduction = None
+    if base.get("false_positive_rate") is not None and cw.get("false_positive_rate") is not None:
+        fp_reduction = round(float(base["false_positive_rate"]) - float(cw["false_positive_rate"]), 4)
+    recall_lift = None
+    if base.get("recall") is not None and cw.get("recall") is not None:
+        recall_lift = round(float(cw["recall"]) - float(base["recall"]), 4)
+    ledger = _ledger_impact()
+    return {
+        "investigation_compression": compression,
+        "false_positive_reduction": fp_reduction,
+        "network_detection_lift": recall_lift,
+        "evidence_coverage": ledger["evidence_coverage"],
+        "analyst_actionability_rate": ledger["analyst_actionability_rate"],
+        "time_to_case_ready": ledger["time_to_case_ready"],
+        "note": "Compression and lift are measured on the synthetic ledger, not production banks.",
+    }
 
 
 def persist_benchmark(kind: str, payload: dict) -> None:
@@ -156,6 +292,7 @@ def scorecard() -> dict:
 
     detection = load_benchmark("detection")
     ingest = load_benchmark("ingest")
+    baseline = load_benchmark("baseline")
     compression = load_benchmark("compression") or investigation_compression()
     file_path = Path(__file__).resolve().parent / "benchmarks" / "latest.json"
     file_payload = None
@@ -198,6 +335,15 @@ def scorecard() -> dict:
             "note": "Benchmark FP is measured on fraud_scenario labels. Analyst clear-rate is measured from recorded dispositions.",
         },
         "source": "measured",
+        "baseline_comparison": baseline or (detection or {}).get("baseline_comparison"),
+        "impact": (detection or {}).get("impact") or {
+            "investigation_compression": compression,
+            "false_positive_reduction": None,
+            "network_detection_lift": None,
+            "evidence_coverage": None,
+            "analyst_actionability_rate": None,
+            "time_to_case_ready": None,
+        },
     }
 
 

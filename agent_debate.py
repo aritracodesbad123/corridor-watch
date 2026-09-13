@@ -132,6 +132,7 @@ def run_debate(txn_id: str, use_llm: bool = True) -> dict[str, Any]:
             "judge": judge,
             "mode": "gemini_debate",
             "requires_human_review": True,
+            "scorecard": debate_scorecard(prosecution, defense, judge),
         }
         audit.log(txn_id, "debate_complete", {"judge_verdict": judge.get("final_verdict")}, actor="agent_debate")
         return result
@@ -188,6 +189,16 @@ def _deterministic_debate(txn_id: str, evidence: dict, det_verdict: dict, note: 
         "mode": "deterministic_debate",
         "note": note,
         "requires_human_review": True,
+        "scorecard": debate_scorecard(prosecution, defense, judge),
+    }
+
+
+def debate_scorecard(prosecution: dict, defense: dict, judge: dict) -> dict:
+    return {
+        "prosecution_evidence": len(prosecution.get("key_incriminating_evidence") or []),
+        "defense_evidence": len(defense.get("key_mitigating_evidence") or []),
+        "judge_confidence": judge.get("confidence_score"),
+        "key_disagreement": judge.get("key_decisive_factor") or "",
     }
 
 

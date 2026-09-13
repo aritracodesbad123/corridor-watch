@@ -34,9 +34,13 @@ In-process and HTTP batch ingest are local/dev measurement paths. They are not t
 
 ## Persistence
 
+SQLite exists only for local development and offline evaluation. GCP deployment uses Cloud SQL PostgreSQL through `DATABASE_URL`. If `ENVIRONMENT=gcp` and `DATABASE_URL` is not PostgreSQL, the process refuses to start.
+
 - Local: SQLite `fraud_demo.db`
-- Cloud SQL: set `DATABASE_URL=postgresql://...`
-- Application code uses `db.connect()` / `db.upsert()` and does not import sqlite3 for new tables.
+- GCP: `DATABASE_URL=postgresql://...` (Cloud SQL). No SQLite fallback.
+- Application code uses `db.connect()` / `db.upsert()` / `db.insert_or_ignore()` and does not import sqlite3 for new tables.
+
+Queue states: `QUEUED → CLAIMED → RUNNING → COMPLETED`, with `RETRY` and `DEAD_LETTER` on failure. PostgreSQL is the durable queue; `INVESTIGATION_TOPIC` is notify-only.
 
 ## Gemini isolation
 
@@ -61,3 +65,5 @@ Gemini may only recommend a disposition.
 
 Report only measured `achieved_tps`. Do not present a target rate as a result.
 in_process ≠ HTTP ≠ Pub/Sub → Cloud Run.
+
+See [COMPETITION_CLAIMS.md](COMPETITION_CLAIMS.md). 5,000 TPS is a **TARGET**, not a verified result.

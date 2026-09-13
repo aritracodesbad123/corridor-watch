@@ -8,7 +8,7 @@ Internal map of the repository after the master-spec evolution. Existing Phase 1
 |---|---|
 | `main.py` | FastAPI surface (legacy alert APIs kept) |
 | `auth.py` | `analyst` / `fiu_lead` / `mrm_auditor` RBAC |
-| `db.py` | Connection + schema; SQLite default, PostgreSQL via `DATABASE_URL` |
+| `db.py` | Connection + schema; SQLite local-only, PostgreSQL required on GCP |
 | `audit.py` | Append-only case audit |
 | `data_gen.py` | Seeded demo population (5 typologies) |
 | `graph_features.py` | NetworkX scoring + neighborhood viz |
@@ -30,7 +30,7 @@ High-risk dispositions (`hold_payment`, `escalate_fiu`, `freeze_account`) remain
 | `synthetic/` | Multi-bank world + correlated fraud campaigns |
 | `graph/` | Bounded traversal + corridor intelligence |
 | `patterns/` | Crime Pattern DNA schema, extract, match, store |
-| `investigations/` | Evidence IDs, grounded report model, investigation service |
+| `investigations/` | Evidence IDs, grounded report, durable queue claim/retry |
 | `pubsub_load_generator.py` | Three-mode load test: in-process, HTTP, Pub/Sub → Cloud Run |
 | `evaluate.py` | Detection + ingest evaluation CLI |
 
@@ -57,8 +57,10 @@ The durable investigation queue is PostgreSQL. `INVESTIGATION_TOPIC` is a notifi
 ## Local vs GCP
 
 - **Local:** SQLite + HTTP ingest (`POST /api/ingest/...`). No GCP credentials required.
-- **GCP:** `DATABASE_URL` → Cloud SQL PostgreSQL; `GOOGLE_CLOUD_PROJECT` enables Pub/Sub publish/push.
+- **GCP:** `DATABASE_URL` → Cloud SQL PostgreSQL; SQLite is refused. `GOOGLE_CLOUD_PROJECT` enables Pub/Sub publish/push.
+
+Ingest stages (`ingest_decode`, `ingest_validate`, `ingest_idempotency`, writes, publish, DB pool wait) are timed in `/api/metrics` and Command Center `ingest_stages_ms`.
 
 ## Tests
 
-Baseline behavior stays in `tests/test_core.py`. Platform coverage is in `tests/test_platform.py` (auth, ingest idempotency, tiers, DNA, grounded report, RBAC).
+Baseline behavior stays in `tests/test_core.py`. Platform coverage is in `tests/test_platform.py` (auth, ingest idempotency, queue retry, GCP SQLite refusal, transaction baseline, DNA, grounded report, RBAC). Claims policy: [COMPETITION_CLAIMS.md](COMPETITION_CLAIMS.md).

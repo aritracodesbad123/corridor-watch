@@ -263,6 +263,19 @@ CREATE TABLE IF NOT EXISTS platform_benchmarks (
     kind TEXT,
     payload TEXT
 );
+
+CREATE TABLE IF NOT EXISTS live_stream_state (
+    stream_id TEXT PRIMARY KEY,
+    running INTEGER,
+    started_at TEXT,
+    ends_at TEXT,
+    rate INTEGER,
+    duration_seconds INTEGER,
+    scenario_mix TEXT,
+    transport TEXT,
+    published INTEGER,
+    updated_at TEXT
+);
 """
 
 INDEXES = [
@@ -278,6 +291,7 @@ INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_audit_ts ON audit_log(ts)",
     "CREATE INDEX IF NOT EXISTS idx_investigations_status ON investigations(status)",
     "CREATE INDEX IF NOT EXISTS idx_queue_status ON investigation_queue(status)",
+    "CREATE INDEX IF NOT EXISTS idx_queue_status_created ON investigation_queue(status, created_at)",
     "CREATE INDEX IF NOT EXISTS idx_pattern_matches_txn ON pattern_matches(txn_id)",
 ]
 
@@ -320,6 +334,16 @@ FLAGGED_COLUMNS = {
     "network_id": "TEXT",
     "workflow_state": "TEXT",
     "showcase": "TEXT",
+}
+
+QUEUE_COLUMNS = {
+    "priority": "INTEGER",
+    "attempt_count": "INTEGER",
+    "claimed_at": "TEXT",
+    "completed_at": "TEXT",
+    "last_error": "TEXT",
+    "next_attempt_at": "TEXT",
+    "worker_id": "TEXT",
 }
 
 
@@ -528,12 +552,15 @@ def _release_postgres(con: CompatConnection) -> None:
 
 def _checkout_postgres(row_factory: bool, *, wait: float, allow_overflow: bool) -> CompatConnection:
     from queue import Empty
+    from metrics import METRICS
 
+    started = time.perf_counter()
     _pg_pool_init()
     idle = _PG_POOL["idle"]
     try:
         con = idle.get_nowait()
         if getattr(con, "_row_factory", True) == row_factory:
+            METRICS.observe("db_connection_checkout", (time.perf_counter() - started) * 1000.0)
             return con
         _release_postgres(con)
     except Empty:
@@ -545,11 +572,17 @@ def _checkout_postgres(row_factory: bool, *, wait: float, allow_overflow: bool) 
         else:
             create = False
     if create:
-        return _new_postgres(row_factory)
+        con = _new_postgres(row_factory)
+        METRICS.observe("db_connection_checkout", (time.perf_counter() - started) * 1000.0)
+        return con
+    wait_started = time.perf_counter()
     try:
-        return idle.get(timeout=wait)
+        con = idle.get(timeout=wait)
+        METRICS.observe("db_pool_wait", (time.perf_counter() - wait_started) * 1000.0)
+        METRICS.observe("db_connection_checkout", (time.perf_counter() - started) * 1000.0)
+        return con
     except Empty:
-        pass
+        METRICS.observe("db_pool_wait", (time.perf_counter() - wait_started) * 1000.0)
     if allow_overflow:
         with _PG_POOL["lock"]:
             if int(_PG_POOL["overflow"]) < int(_PG_POOL["max_overflow"]):
@@ -566,6 +599,7 @@ def _checkout_postgres(row_factory: bool, *, wait: float, allow_overflow: bool) 
                 raise
             con._pooled = False
             con._overflow = True
+            METRICS.observe("db_connection_checkout", (time.perf_counter() - started) * 1000.0)
             return con
     raise DatabaseBusy("database busy")
 
@@ -593,7 +627,10 @@ def _connect_postgres(row_factory: bool, purpose: str = "interactive") -> Compat
 
 
 def connect(row_factory: bool = True, purpose: str = "interactive") -> sqlite3.Connection | CompatConnection:
-    if get_settings().is_postgres:
+    settings = get_settings()
+    if settings.environment == "gcp" and not settings.is_postgres:
+        raise RuntimeError("GCP requires DATABASE_URL PostgreSQL; SQLite is local-only")
+    if settings.is_postgres:
         if purpose == "interactive" and row_factory:
             last: Exception | None = None
             for attempt in range(3):
@@ -632,6 +669,21 @@ def warmup_pool() -> int:
 
 def dialect() -> str:
     return get_settings().dialect
+
+
+def insert_or_ignore(con: Any, table: str, columns: Sequence[str], values: Sequence[Any], conflict: str) -> bool:
+    """Idempotent insert. PostgreSQL uses ON CONFLICT; SQLite uses INSERT OR IGNORE."""
+    cols = ", ".join(columns)
+    placeholders = ", ".join("?" * len(columns))
+    if get_settings().is_postgres:
+        sql = f"INSERT INTO {table} ({cols}) VALUES ({placeholders}) ON CONFLICT ({conflict}) DO NOTHING"
+    else:
+        sql = f"INSERT OR IGNORE INTO {table} ({cols}) VALUES ({placeholders})"
+    cur = con.execute(sql, values)
+    count = getattr(cur, "rowcount", 0)
+    if callable(count):
+        count = count()
+    return int(count or 0) > 0
 
 
 def upsert(con: Any, table: str, pk: str | Sequence[str], data: dict[str, Any]) -> None:
@@ -706,6 +758,7 @@ def init_schema(con: sqlite3.Connection | CompatConnection | None = None) -> Non
     _ensure_columns(con, "transactions", TRANSACTION_COLUMNS)
     _ensure_columns(con, "audit_log", AUDIT_COLUMNS)
     _ensure_columns(con, "flagged_transactions", FLAGGED_COLUMNS)
+    _ensure_columns(con, "investigation_queue", QUEUE_COLUMNS)
     _create_indexes(con)
     con.commit()
     _SCHEMA_READY_FOR = ident

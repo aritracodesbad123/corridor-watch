@@ -2,6 +2,8 @@
 # Deploy Corridor Watch to Cloud Run with Secret Manager and Cloud SQL.
 # Usage:
 #   ./scripts/deploy_cloud_run.sh YOUR_PROJECT_ID [REGION]
+# Do not raise max instances, concurrency, and pool size together.
+# Measure the matrix in docs/COMPETITION_CLAIMS.md first.
 set -euo pipefail
 
 PROJECT_ID="${1:-${GOOGLE_CLOUD_PROJECT:-}}"

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
@@ -171,13 +172,15 @@ def _require_ingest_token(x_ingest_token: str | None = Header(default=None, alia
 @app.get("/api/health")
 def health():
     settings = get_settings()
+    sqlite_on_gcp = settings.environment == "gcp" and not settings.is_postgres
     return {
-        "ok": True,
+        "ok": not sqlite_on_gcp,
         "gemini": agent.gemini_available(),
         "gemini_backend": agent.gemini_backend(),
         "auth_mode": "api_key" if os.getenv("CORRIDOR_WATCH_API_KEYS") else "password",
         "environment": settings.environment,
         "database": settings.dialect,
+        "sqlite_forbidden_on_gcp": sqlite_on_gcp,
         "transaction_topic": settings.transaction_topic,
         "investigation_topic": settings.investigation_topic,
         "pubsub_push_subscription": settings.pubsub_push_subscription,
@@ -267,6 +270,12 @@ def alert_detail(txn_id: str, auth: AuthContext = Depends(require("alerts:read")
         whatif_features = counterfactual.features_for_case(txn_id)
     except Exception:
         whatif_features = {}
+    matches = []
+    try:
+        from patterns.matcher import match_patterns
+        matches = match_patterns(txn, network, persist=False)
+    except Exception:
+        matches = []
     return {
         "transaction": txn,
         "sender": sender,
@@ -278,6 +287,7 @@ def alert_detail(txn_id: str, auth: AuthContext = Depends(require("alerts:read")
         "dag_steps": step_catalog(),
         "workflow_state": txn.get("workflow_state") or "open",
         "showcase": describe_showcase() if txn.get("showcase") else None,
+        "pattern_matches": matches,
     }
 
 
@@ -333,7 +343,8 @@ def analyst_decision(
     ts = datetime.now(timezone.utc).isoformat()
     analyst_id = auth.analyst_id
     if body.decision in {"hold_payment", "escalate_fiu", "freeze_account"} and auth.role == "analyst":
-        raise HTTPException(403, "high-risk dispositions require FIU Team Lead authorization")
+        con.close()
+        raise HTTPException(403, "FIU Lead authorization required")
     con.execute(
         "INSERT INTO analyst_decisions (txn_id, decided_at, decision, notes, analyst_id) VALUES (?,?,?,?,?)",
         (txn_id, ts, body.decision, body.notes, analyst_id),
@@ -687,8 +698,8 @@ def ledger_stats(since: str | None = None, auth: AuthContext = Depends(require("
 
 @app.post("/api/benchmarks")
 def store_benchmark(body: BenchmarkRequest, auth: AuthContext = Depends(require("simulate:run"))):
-    if body.kind not in {"ingest", "detection", "compression"}:
-        raise HTTPException(400, "kind must be ingest, detection, or compression")
+    if body.kind not in {"ingest", "detection", "compression", "baseline"}:
+        raise HTTPException(400, "kind must be ingest, detection, compression, or baseline")
     evaluation.persist_benchmark(body.kind, body.payload)
     return {"ok": True, "kind": body.kind, "recorded_at": body.payload.get("measured_at")}
 
@@ -706,7 +717,8 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
             "SELECT COUNT(*) AS c FROM flagged_transactions WHERE risk_score>=75"
         ).fetchone()["c"]
         pending = con.execute(
-            "SELECT COUNT(*) AS c FROM investigation_queue WHERE status='pending'"
+            """SELECT COUNT(*) AS c FROM investigation_queue
+               WHERE status IN ('QUEUED','CLAIMED','RUNNING','RETRY','pending')"""
         ).fetchone()["c"]
         cases = con.execute("SELECT COUNT(*) AS c FROM investigations").fetchone()["c"]
         con.close()
@@ -723,6 +735,7 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
             "p50_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p50"),
             "p95_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p95"),
             "p99_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p99"),
+            "ingest_stages_ms": snap.get("ingest_stages_ms"),
             "environment": settings.environment,
             "database": settings.dialect,
             "gemini": agent.gemini_available(),
@@ -743,6 +756,7 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
         "p50_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p50"),
         "p95_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p95"),
         "p99_ingest_ms": (snap.get("ingestion_latency_ms") or {}).get("p99"),
+        "ingest_stages_ms": snap.get("ingest_stages_ms"),
         "active_investigations": pending,
         "investigation_cases": cases,
         "high_risk_cases": high,
@@ -758,11 +772,15 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
     if light:
         return payload
     try:
+        from investigations.queue import counts as queue_counts
         from observability import platform_signals
+        from patterns.repository import library_snapshot
         from pubsub.publisher import describe_wiring
         corridors = corridor_intelligence(limit=8)
         wiring = describe_wiring()
         signals = platform_signals()
+        scorecard = evaluation.scorecard()
+        compression = investigation_compression()
         if wiring.get("wired"):
             note = (
                 f"Publishing to {wiring.get('topic')}; ingesting on {wiring.get('subscription')}."
@@ -776,14 +794,17 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
             backlog = wiring.get("backlog")
         payload.update({
             "active_corridors": corridors,
-            "suspicious_networks": investigation_compression(),
+            "suspicious_networks": compression,
+            "queue": queue_counts(),
+            "pattern_dna": library_snapshot(),
+            "scale_evidence": _scale_evidence(scorecard, snap, signals, wiring),
             "pubsub": wiring,
             "pubsub_backlog": backlog,
             "cloud_run_instances": signals.get("cloud_run_instances"),
             "observability_source": signals.get("source"),
             "observability_note": note,
             "showcase": describe_showcase(),
-            "scorecard": evaluation.scorecard(),
+            "scorecard": scorecard,
         })
     except Exception as exc:
         payload["light"] = True
@@ -791,9 +812,31 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
     return payload
 
 
+def _scale_evidence(scorecard: dict, snap: dict, signals: dict, wiring: dict) -> dict:
+    ingest = (scorecard or {}).get("ingest") or {}
+    measured = ingest.get("achieved_tps")
+    try:
+        measured_n = float(measured) if measured is not None else None
+    except (TypeError, ValueError):
+        measured_n = None
+    return {
+        "target_tps": 5000,
+        "target_status": "TARGET",
+        "measured_tps": measured_n,
+        "publisher_tps": ingest.get("achieved_publish_tps"),
+        "p95_ingest_ms": ingest.get("p95_ingest_ms") or (snap.get("ingestion_latency_ms") or {}).get("p95"),
+        "status": "target_met" if measured_n is not None and measured_n >= 5000 else "benchmark_in_progress",
+        "primary_bottleneck": "Cloud SQL write path",
+        "next_optimization": "Batched persistence; measure the pool matrix before adding replicas",
+        "pubsub_backlog": ingest.get("pubsub_backlog_end") if ingest else wiring.get("backlog"),
+        "cloud_run_instances": ingest.get("cloud_run_instances") or signals.get("cloud_run_instances"),
+        "note": "5,000 TPS is a synthetic target, not a measured result. Never display it as achieved.",
+    }
+
+
 def _stream_status() -> dict:
     from synthetic.live_stream import STREAM
-    return STREAM.status()
+    return STREAM.public_status()
 
 
 @app.get("/api/simulate")
@@ -839,6 +882,12 @@ def network_investigate(txn_id: str, auth: AuthContext = Depends(require("invest
         raise HTTPException(404, str(e)) from e
 
 
+@app.post("/api/investigations/claim")
+def claim_investigations(limit: int = 1, auth: AuthContext = Depends(require("investigate"))):
+    from investigations.queue import claim_next
+    return {"claimed": claim_next(auth.analyst_id, limit=max(1, min(limit, 10)))}
+
+
 @app.post("/api/ingest")
 def ingest_one(body: IngestMessage, _: None = Depends(_require_ingest_token)):
     from pubsub.ingestion import ingest_transaction
@@ -879,8 +928,12 @@ def pubsub_push(body: dict, _: None = Depends(_require_ingest_token)):
     message_id = message.get("messageId") or message.get("message_id")
     raw = message.get("data") or ""
     try:
+        t0 = time.perf_counter()
         decoded = json.loads(base64.b64decode(raw).decode("utf-8")) if raw else body.get("transaction")
+        METRICS.observe("ingest_decode", (time.perf_counter() - t0) * 1000.0)
+        t1 = time.perf_counter()
         event = TransactionEvent.model_validate(decoded)
+        METRICS.observe("ingest_validate", (time.perf_counter() - t1) * 1000.0)
     except (ValueError, ValidationError) as e:
         METRICS.inc("transactions_failed_total")
         raise HTTPException(400, f"malformed Pub/Sub message: {e}") from e

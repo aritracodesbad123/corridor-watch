@@ -34,3 +34,7 @@ Measured Pub/Sub → Cloud Run → Cloud SQL (2026-09-13), after raising SQL to 
 | db-custom-2-7680 | 200 | 4,000 | 199.95 | 2,402 | 5.65 | 118ms |
 
 The publisher holds the target. Consume is still SQL/connector-bound (503s when the pool is cold or saturated). Do not claim 5,000 TPS.
+
+Do not raise Cloud Run max instances, concurrency, and pool size together. Measure the matrix in [COMPETITION_CLAIMS.md](COMPETITION_CLAIMS.md) first. Timestamped generator output lands in `benchmarks/results/` (no secrets).
+
+The entrypoint exits if `ENVIRONMENT=gcp` and `DATABASE_URL` is not PostgreSQL.

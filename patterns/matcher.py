@@ -47,7 +47,7 @@ def observed_signals(txn: dict, network: dict, risk: dict | None = None) -> set[
     return signals
 
 
-def match_patterns(txn: dict, network: dict, risk: dict | None = None) -> list[dict]:
+def match_patterns(txn: dict, network: dict, risk: dict | None = None, *, persist: bool = True) -> list[dict]:
     signals = observed_signals(txn, network, risk)
     matches = []
     for pattern in list_patterns():
@@ -65,6 +65,7 @@ def match_patterns(txn: dict, network: dict, risk: dict | None = None) -> list[d
             "name": pattern.name,
             "version": pattern.version,
             "score": round(score, 3),
+            "match_strength": round(score * 100),
             "matched_signals": sorted(overlap),
             "missing_signals": sorted(universe - overlap),
             "evidence": [
@@ -82,7 +83,8 @@ def match_patterns(txn: dict, network: dict, risk: dict | None = None) -> list[d
     matches.sort(key=lambda m: m["score"], reverse=True)
     if matches:
         METRICS.inc("pattern_matches_total", len(matches))
-        _persist_matches(txn.get("txn_id", ""), matches)
+        if persist:
+            _persist_matches(txn.get("txn_id", ""), matches)
     return matches
 
 

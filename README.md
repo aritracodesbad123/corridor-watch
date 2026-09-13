@@ -255,7 +255,7 @@ python evaluate.py --mode both --rate 200 --duration 3
 | Variable | Default | Purpose |
 |---|---|---|
 | `ENVIRONMENT` | `local` | Deployment label |
-| `DATABASE_URL` | empty (SQLite `fraud_demo.db`) | PostgreSQL / Cloud SQL URI |
+| `DATABASE_URL` | empty (local SQLite `fraud_demo.db`) | Required Cloud SQL PostgreSQL URI on GCP |
 | `GOOGLE_CLOUD_PROJECT` | empty | Enables Pub/Sub publish |
 | `TRANSACTION_TOPIC` | `corridor-transactions` | Ingest topic |
 | `INVESTIGATION_TOPIC` | `corridor-investigations` | Optional fan-out after a PostgreSQL queue insert |
@@ -267,7 +267,7 @@ python evaluate.py --mode both --rate 200 --duration 3
 | `MAX_INVESTIGATION_SIZE` | `200` | Node cap |
 | `CW_PG_POOL_MAX` / `CW_PG_OVERFLOW` / `CW_INGEST_SLOTS` | `8` / `4` / `8` | Cloud SQL pool (ingest stays off the interactive overflow) |
 
-See [docs/Corridor_Watch_Master_Implementation_Spec.md](docs/Corridor_Watch_Master_Implementation_Spec.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Cloud Run seeds an empty Cloud SQL database on first start; local SQLite is created by `python data_gen.py`.
+See [docs/Corridor_Watch_Master_Implementation_Spec.md](docs/Corridor_Watch_Master_Implementation_Spec.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and [docs/COMPETITION_CLAIMS.md](docs/COMPETITION_CLAIMS.md). SQLite is local-only. Cloud Run requires Cloud SQL PostgreSQL and seeds an empty database on first start; local SQLite is created by `python data_gen.py`.
 
 ---
 
@@ -294,7 +294,7 @@ export GEMINI_API_KEY="your_key"   # used only to create a Secret Manager secret
 ./scripts/deploy_cloud_run.sh YOUR_PROJECT_ID asia-southeast1
 ```
 
-See [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md). Default Cloud SQL is 2 vCPU / 7.5 GiB. Default Cloud Run deploy is 2 CPU / 2Gi / min 2 / max 10 / concurrency 16. Report only measured `achieved_tps`. The container seeds `fraud_demo.db` on first start if it is missing. Do not put the Gemini key in the image or in git.
+See [docs/CLOUD_RUN.md](docs/CLOUD_RUN.md). Default Cloud SQL is 2 vCPU / 7.5 GiB. Default Cloud Run deploy is 2 CPU / 2Gi / min 2 / max 10 / concurrency 16. Report only measured `achieved_tps`. 5,000 TPS is a target, not a measured result. The container uses Cloud SQL, not SQLite. Do not put the Gemini key in the image or in git.
 
 ### Azure Enterprise Deployment
 See [docs/AZURE_PORT.md](docs/AZURE_PORT.md) and [CHANGE_REQUEST_LOG.md](CHANGE_REQUEST_LOG.md) for swapping GCP Gemini $\rightarrow$ Azure OpenAI / AI Foundry Agent Service.

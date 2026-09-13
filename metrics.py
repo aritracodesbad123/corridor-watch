@@ -37,6 +37,22 @@ class MetricsRegistry:
         self._ingest_times: list[float] = []
         self.ingestion_latency = _Reservoir()
         self.gemini_latency = _Reservoir()
+        self.stages: dict[str, _Reservoir] = {
+            "ingest_decode": _Reservoir(),
+            "ingest_validate": _Reservoir(),
+            "ingest_idempotency": _Reservoir(),
+            "ingest_transaction_write": _Reservoir(),
+            "ingest_queue_write": _Reservoir(),
+            "ingest_publish": _Reservoir(),
+            "ingest_total": _Reservoir(),
+            "db_pool_wait": _Reservoir(),
+            "db_connection_checkout": _Reservoir(),
+        }
+
+    def observe(self, name: str, ms: float) -> None:
+        bucket = self.stages.get(name)
+        if bucket is not None:
+            bucket.add(ms)
 
     def inc(self, name: str, n: int = 1) -> None:
         now = time.time()
@@ -78,6 +94,10 @@ class MetricsRegistry:
                 "p50": self.gemini_latency.percentile(50),
                 "p95": self.gemini_latency.percentile(95),
                 "p99": self.gemini_latency.percentile(99),
+            },
+            "ingest_stages_ms": {
+                name: {"p50": r.percentile(50), "p95": r.percentile(95), "p99": r.percentile(99)}
+                for name, r in self.stages.items()
             },
         }
 

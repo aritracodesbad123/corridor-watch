@@ -1,8 +1,18 @@
 #!/bin/sh
 # Cloud Run / container entrypoint.
-# Seeds an empty database, then starts uvicorn. Cloud SQL is used when DATABASE_URL is set.
+# GCP must use Cloud SQL PostgreSQL. SQLite is local-only.
+# Seeds an empty Cloud SQL database, then starts uvicorn.
 set -e
 cd /app
+if [ "${ENVIRONMENT:-}" = "gcp" ]; then
+  case "${DATABASE_URL:-}" in
+    postgres://*|postgresql://*) ;;
+    *)
+      echo "GCP requires DATABASE_URL PostgreSQL; SQLite is local-only" >&2
+      exit 1
+      ;;
+  esac
+fi
 python - <<'PY'
 from pathlib import Path
 

@@ -111,10 +111,14 @@ def investigation_compression(txn_id: str | None = None) -> dict:
             parent.setdefault(b, b)
             parent[find(a)] = find(b)
         networks = {find(f["sender_id"]) for f in flagged}
+    flagged_n = len(flagged)
+    network_n = len(networks)
     return {
-        "flagged_transactions": len(flagged),
-        "network_investigations": len(networks),
-        "compression_ratio": round(len(flagged) / len(networks), 2) if networks else None,
+        "flagged_transactions": flagged_n,
+        "baseline_items_reviewed": flagged_n,
+        "network_items_reviewed": network_n or flagged_n,
+        "network_investigations": network_n,
+        "compression_ratio": round(flagged_n / network_n, 2) if network_n else None,
         "unit_of_work": "network_investigation",
-        "note": "Compression is measured from shared-account / queue network grouping, not a claimed industry average.",
+        "note": "Traditional review counts flagged wires. Corridor Watch reviews the collapsed network. Measured, not claimed.",
     }

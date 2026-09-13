@@ -418,10 +418,14 @@
   </div>
 </header>
 <div class="app-view" id="view-command">
-  <div class="page-head"><h2>Home</h2><p>Live ingest, measured scorecard, and Lotus Ring.</p></div>
+  <div class="page-head"><h2>Home</h2><p>Detect → Investigate → Confirm → Pattern DNA. Measured numbers only.</p></div>
   <div class="stats" id="command-stats"></div>
   <div class="pad">
     <div class="grid2">
+      <div class="card"><h3>Today’s impact</h3><div id="command-impact" class="muted">Loading…</div></div>
+      <div class="card"><h3>Scale evidence</h3><div id="command-scale" class="muted">Loading…</div></div>
+    </div>
+    <div class="grid2" style="margin-top:12px">
       <div class="card"><h3>Active corridors</h3><div id="command-corridors" class="muted">Loading…</div></div>
       <div class="card"><h3>Ingest / investigation</h3><div id="command-ingest" class="muted">Loading…</div></div>
     </div>
@@ -965,6 +969,7 @@ async function openCase(txnId){
         <div class="muted">→</div>
         <div class="node"><div class="id">${t.receiver_id}</div><div class="age">${fmtFeatures(d.receiver)}</div></div>
       </div>
+      ${renderPatternDna(d.pattern_matches||[])}
       <div class="grid2">
         <div class="card"><h3>Sender patterns</h3>${patternBars(sRisk)}</div>
         <div class="card"><h3>Receiver patterns</h3>${patternBars(rRisk)}</div>
@@ -1132,6 +1137,7 @@ async function openCase(txnId){
         <label class="muted" style="display:block;margin-top:8px">Notes</label>
         <textarea id="decision-notes" rows="3" placeholder="Rationale for audit…"></textarea>
         <div class="btn-row"><button id="btn-decide" type="button">Record decision</button></div>
+        <div id="decision-error" class="muted" style="margin-top:8px"></div>
         <div id="decision-list"></div>
       </div>
     </div>
@@ -1208,7 +1214,14 @@ async function openCase(txnId){
         const res = await fetch(`${API}/alerts/${current}/debate`, {method:"POST", headers:authHeaders()});
         const data = await res.json();
         if(!res.ok) throw new Error(apiError(data, res.statusText));
+        const card = data.scorecard || {};
         slot.innerHTML = `
+          <div class="card" style="margin-bottom:12px">
+            <div class="kv"><span>Prosecution evidence</span><span>${card.prosecution_evidence??(data.prosecutor.key_incriminating_evidence||[]).length}</span></div>
+            <div class="kv"><span>Defense evidence</span><span>${card.defense_evidence??(data.defense.key_mitigating_evidence||[]).length}</span></div>
+            <div class="kv"><span>Judge confidence</span><span>${card.judge_confidence??data.judge.confidence_score??"—"}%</span></div>
+            <div class="muted" style="margin-top:8px"><b>Key disagreement:</b> ${esc(card.key_disagreement||data.judge.key_decisive_factor||"—")}</div>
+          </div>
           <div class="grid2">
             <div class="card" style="border-color:var(--red-dim)">
               <h3 style="color:var(--red)">Prosecutor Argument</h3>
@@ -1399,10 +1412,12 @@ async function openCase(txnId){
     $("btn-wf-audit").onclick = ()=>runWorkflow("audit_ack");
   }
   if($("disposition-card")) $("disposition-card").style.display = can("decision:write") ? "" : "none";
-  if($("decision-select") && can("decision:high_risk")){
+  if($("decision-select") && can("decision:write")){
     ["hold_payment","escalate_fiu","freeze_account"].forEach(v=>{
+      if([...$("decision-select").options].some(o=>o.value===v)) return;
       const opt = document.createElement("option");
-      opt.value = v; opt.textContent = v;
+      opt.value = v;
+      opt.textContent = can("decision:high_risk") ? v : `${v} (FIU Lead)`;
       $("decision-select").appendChild(opt);
     });
   }
@@ -1414,11 +1429,18 @@ async function openCase(txnId){
       notes: $("decision-notes").value,
       analyst_id: session?.analyst_id || ""
     };
-    await fetch(`${API}/alerts/${txnId}/decision`, {
+    if($("decision-error")) $("decision-error").textContent = "";
+    const res = await fetch(`${API}/alerts/${txnId}/decision`, {
       method: "POST",
       headers: authHeaders({"Content-Type": "application/json"}),
       body: JSON.stringify(body)
     });
+    const payload = await res.json().catch(()=>({}));
+    if(!res.ok){
+      const msg = payload.detail || res.statusText || "Decision denied";
+      if($("decision-error")) $("decision-error").innerHTML = `<span style="color:var(--red)">${esc(typeof msg==="string"?msg:JSON.stringify(msg))}</span>`;
+      return;
+    }
     const refreshed = await (await fetch(`${API}/alerts/${txnId}`, {headers:authHeaders()})).json();
     renderDecisions(refreshed.analyst_decisions||[]);
     loadAudit(txnId);
@@ -1550,6 +1572,21 @@ function focusEvidence(id){
   if(card) card.scrollIntoView({behavior:"smooth", block:"center"});
 }
 
+function renderPatternDna(matches){
+  if(!matches || !matches.length){
+    return `<div class="card" style="margin-top:12px"><h3>Pattern DNA</h3><div class="muted">No library match on this network yet.</div></div>`;
+  }
+  return matches.slice(0,3).map(m=>`
+    <div class="card" style="margin-top:12px">
+      <h3>Pattern DNA: ${esc(m.name||m.pattern_id||"")}</h3>
+      <div class="kv"><span>Match strength</span><span>${m.match_strength??Math.round((m.score||0)*100)}%</span></div>
+      <div class="muted" style="margin-top:8px">Matched</div>
+      <ul class="tight">${(m.matched_signals||[]).map(s=>`<li>✓ ${esc(s)}</li>`).join("")||"<li class='muted'>none</li>"}</ul>
+      <div class="muted" style="margin-top:8px">Missing</div>
+      <ul class="tight">${(m.missing_signals||[]).map(s=>`<li>○ ${esc(s)}</li>`).join("")||"<li class='muted'>none</li>"}</ul>
+    </div>`).join("");
+}
+
 function renderReport(report){
   if(!report) return "";
   const items = report.supporting_evidence||[];
@@ -1608,9 +1645,11 @@ async function loadCommand(light=false){
     const d = await readJson(await fetch(`${API}/command-center${light?"?light=1":""}`, {headers: authHeaders()}), "command unavailable");
     $("command-stats").innerHTML = [
       ["Live TPS", d.live_tps],
-      ["Ingest P95 (ms)", d.p95_ingest_ms ?? d.ingestion_latency_ms?.p95],
+      ["P95 ingest (ms)", d.p95_ingest_ms ?? d.ingestion_latency_ms?.p95],
       ["Pub/Sub backlog", d.pubsub_backlog],
       ["Cloud Run instances", d.cloud_run_instances],
+      ["Suspicious networks", d.suspicious_networks?.network_investigations ?? d.suspicious_networks?.network_items_reviewed],
+      ["Active investigations", d.active_investigations],
     ].map(([k,v])=>`<div class="stat"><div class="muted">${k}</div><div class="n">${v==null?'—' : v}</div></div>`).join("");
     if(!d.light && d.active_corridors){
     $("command-corridors").innerHTML = (d.active_corridors||[]).slice(0,6).map(c=>
@@ -1628,7 +1667,7 @@ async function loadCommand(light=false){
       <div class="kv"><span>database</span><span>${esc(d.database||"sqlite")}</span></div>
       <div class="kv"><span>environment</span><span>${esc(d.environment||"local")}${d.pubsub?.project ? " · "+esc(d.pubsub.project) : ""}</span></div>
       <div class="kv"><span>live stream</span><span>${d.live_stream?.running ? "RUNNING" : "idle"} · ${esc(d.live_stream?.transport||"in_process")}</span></div>
-      <div class="kv"><span>stream published</span><span>${d.live_stream?.accepted||0}</span></div>
+      <div class="kv"><span>stream published</span><span>${d.live_stream?.accepted||0}${d.live_stream?.count_source==="ledger"?" · ledger":""}</span></div>
       <div class="kv"><span>stream flagged</span><span>${d.live_stream?.queued_for_investigation||0}</span></div>
       <div class="kv"><span>pubsub</span><span>${d.pubsub?.wired ? "WIRED · "+esc(d.pubsub.topic)+" → "+esc(d.pubsub.subscription) : (d.environment==="local" ? "local in-process — open the Cloud Run URL for live Pub/Sub" : esc(d.pubsub?.error||"not confirmed"))}</span></div>
       <div class="kv"><span>investigation path</span><span>${esc(d.investigation_path||d.pubsub?.investigation_path||"PostgreSQL investigation_queue")}</span></div>
@@ -1649,6 +1688,28 @@ async function loadCommand(light=false){
     const det = sc.detection?.metrics || {};
     const ingestBench = sc.ingest || {};
     const comp = sc.investigation_compression || d.suspicious_networks || {};
+    const impact = sc.impact || {};
+    const dna = d.pattern_dna || {};
+    const scale = d.scale_evidence || {};
+    if($("command-impact")){
+      $("command-impact").innerHTML = `
+        <div class="kv"><span>Network detection</span><span>${det.recall??"—"} recall · ${det.precision??"—"} precision</span></div>
+        <div class="kv"><span>Investigation compression</span><span>${comp.baseline_items_reviewed??comp.flagged_transactions??0} wires → ${comp.network_items_reviewed??comp.network_investigations??0} networks (${comp.compression_ratio||"—"}×)</span></div>
+        <div class="kv"><span>Pattern DNA matches</span><span>${dna.pattern_matches??0} · avg ${dna.average_match_strength??"—"}%</span></div>
+        <div class="kv"><span>False-positive reduction</span><span>${impact.false_positive_reduction??"—"}</span></div>
+        <div class="muted" style="margin-top:8px">${esc(impact.note||"Measured on the synthetic ledger.")}</div>`;
+    }
+    if($("command-scale")){
+      const measured = scale.measured_tps ?? ingestBench.achieved_tps;
+      $("command-scale").innerHTML = `
+        <div class="kv"><span>Target</span><span>5,000 TPS synthetic target</span></div>
+        <div class="kv"><span>Measured</span><span>${measured==null?"—":measured} TPS</span></div>
+        <div class="kv"><span>Publisher capacity</span><span>${scale.publisher_tps??ingestBench.achieved_publish_tps??"—"} TPS</span></div>
+        <div class="kv"><span>P95</span><span>${scale.p95_ingest_ms??d.p95_ingest_ms??"—"} ms</span></div>
+        <div class="kv"><span>Status</span><span>${esc(scale.status==="target_met"?"target met":"benchmark in progress")}</span></div>
+        <div class="kv"><span>Primary bottleneck</span><span>${esc(scale.primary_bottleneck||"Cloud SQL write path")}</span></div>
+        <div class="muted" style="margin-top:8px">${esc(scale.note||"Never treat 5,000 TPS as achieved unless measured_tps ≥ 5000.")}</div>`;
+    }
     if(!d.light && $("command-scorecard") && d.scorecard){
       $("command-scorecard").innerHTML = `
         <div class="kv"><span>precision / recall</span><span>${det.precision??"—"} / ${det.recall??"—"}</span></div>

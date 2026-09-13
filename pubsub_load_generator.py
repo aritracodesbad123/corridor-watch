@@ -219,7 +219,23 @@ def run(
         except Exception as exc:
             report["persisted"] = False
             report["persist_error"] = str(exc)
+    report["result_file"] = _write_result_file(report)
     return report
+
+
+def _write_result_file(report: dict) -> str:
+    """Timestamped local copy. Never write tokens or secrets."""
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent / "benchmarks" / "results"
+    root.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    mode = str(report.get("mode") or "run").replace("/", "-")
+    rate = report.get("requested_rate") or "x"
+    path = root / f"{stamp}-{mode}-{rate}tps.json"
+    safe = {k: v for k, v in report.items() if k not in {"token", "authorization", "persist_error"}}
+    path.write_text(json.dumps(safe, indent=2) + "\n")
+    return str(path)
 
 
 def print_report(report: dict) -> None:

@@ -96,6 +96,7 @@ def test_high_value_ingest_queues_investigation(isolated_db):
     queued = con.execute("SELECT status FROM investigation_queue WHERE txn_id='T-HOT'").fetchone()
     con.close()
     assert queued is not None
+    assert queued["status"] == "QUEUED"
 
 
 def test_pattern_dna_match_returns_evidence(isolated_db):
@@ -106,10 +107,21 @@ def test_pattern_dna_match_returns_evidence(isolated_db):
             "shared_beneficiary_groups": 1, "cross_border": 3, "institution_count": 3, "txn_count": 8,
         }
     }
-    matches = match_patterns(txn, network, {"account_age_days": 3, "pass_through_ratio": 0.95, "avg_hold_time_minutes": 20})
+    matches = match_patterns(
+        txn, network,
+        {"account_age_days": 3, "pass_through_ratio": 0.95, "avg_hold_time_minutes": 20},
+        persist=False,
+    )
     assert matches
     assert matches[0]["evidence"]
+    assert "match_strength" in matches[0]
+    assert matches[0]["matched_signals"]
+    assert "missing_signals" in matches[0]
     assert all("evidence_id" in e for e in matches[0]["evidence"])
+    con = connect()
+    stored = con.execute("SELECT COUNT(*) AS c FROM pattern_matches WHERE txn_id='T1'").fetchone()["c"]
+    con.close()
+    assert stored == 0
 
 
 def test_confirmed_decision_extracts_or_reinforces_pattern(isolated_db):
@@ -202,6 +214,9 @@ def test_live_stream_start_stop_and_flags(isolated_db):
     assert status["accepted"] >= 1
     assert stream.status()["running"] is False
     assert stream.status()["transport"] == "in_process"
+    public = stream.public_status()
+    assert public["queued_for_investigation"] >= 0
+    assert public["count_source"] in {"ledger", "in_memory"}
 
 
 PNG_1X1 = (
@@ -467,3 +482,83 @@ def test_ledger_stats_and_benchmark_persist(isolated_db, monkeypatch):
     card = client.get("/api/command-center?light=1", headers={"X-Analyst-Role": "analyst"})
     assert card.status_code == 200
     assert "PostgreSQL investigation_queue" in card.json()["investigation_path"]
+    assert "ingest_stages_ms" in card.json()
+
+
+def test_queue_survives_worker_kill(isolated_db):
+    from investigations.queue import claim_next, mark_failed
+
+    ingest_transaction(
+        _event(txn_id="T-KILL-1", amount=15000, account_age_days=1),
+        message_id="m-kill",
+    )
+    claimed = claim_next("worker-1", limit=1)
+    assert claimed
+    assert claimed[0]["status"] == "CLAIMED"
+    status = mark_failed(claimed[0]["queue_id"], "worker killed", retry=True)
+    assert status == "RETRY"
+    again = claim_next("worker-2", limit=1)
+    assert again
+    assert again[0]["queue_id"] == claimed[0]["queue_id"]
+
+
+def test_gcp_refuses_sqlite(monkeypatch):
+    monkeypatch.setenv("ENVIRONMENT", "gcp")
+    monkeypatch.delenv("DATABASE_URL", raising=False)
+    reset_settings_cache()
+    with pytest.raises(RuntimeError, match="GCP requires DATABASE_URL"):
+        connect()
+    from main import health
+    body = health()
+    assert body["ok"] is False
+    assert body["sqlite_forbidden_on_gcp"] is True
+    monkeypatch.setenv("ENVIRONMENT", "local")
+    reset_settings_cache()
+
+
+def test_gemini_unavailable_ingest_still_works(isolated_db, monkeypatch):
+    monkeypatch.setattr("agent.gemini_available", lambda: False)
+    result = ingest_transaction(
+        _event(txn_id="T-NOGEM", amount=15000, account_age_days=1),
+        message_id="m-nogem",
+    )
+    assert result["gemini_invoked"] is False
+    assert result["duplicate"] is False
+    assert result["queued_for_investigation"] is True
+    from investigations.service import process_queue_item
+    processed = process_queue_item(txn_id="T-NOGEM")
+    assert processed["txn_id"] == "T-NOGEM"
+    assert processed["report"]["gemini_used"] is False
+
+
+def test_transaction_baseline_metrics_exist(isolated_db):
+    from evaluation import compare_to_transaction_baseline, impact_metrics, transaction_only_predict
+
+    ingest_transaction(_event(txn_id="T-BASE-1", amount=9000, account_age_days=1, fraud_scenario="normal"), message_id="m-b1")
+    ingest_transaction(_event(txn_id="T-BASE-2", amount=100, account_age_days=400, fraud_scenario="normal"), message_id="m-b2")
+    assert transaction_only_predict({"amount": 9000, "account_age_days": 1}) is True
+    assert transaction_only_predict({"amount": 100, "account_age_days": 400}) is False
+    baseline = compare_to_transaction_baseline()
+    assert baseline["name"] == "transaction_only"
+    assert "precision" in baseline["metrics"]
+    impact = impact_metrics({"metrics": {"recall": 0.9, "false_positive_rate": 0.1}}, baseline)
+    assert "investigation_compression" in impact
+    assert "false_positive_reduction" in impact
+    assert "network_detection_lift" in impact
+    assert "analyst_actionability_rate" in impact
+
+
+def test_analyst_freeze_returns_fiu_message(isolated_db):
+    ingest_transaction(
+        _event(txn_id="T-FREEZE", amount=15000, account_age_days=1, fraud_scenario="mule_pass_through"),
+        message_id="m-freeze",
+    )
+    from main import app
+    client = TestClient(app)
+    denied = client.post(
+        "/api/alerts/T-FREEZE/decision",
+        headers={"X-Analyst-Role": "analyst", "X-Analyst-ID": "a1"},
+        json={"decision": "freeze_account", "notes": "try"},
+    )
+    assert denied.status_code == 403
+    assert denied.json()["detail"] == "FIU Lead authorization required"

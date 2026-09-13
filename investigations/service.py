@@ -63,31 +63,29 @@ def build_investigation(txn_id: str, *, use_gemini: bool = False) -> dict:
     }
 
 
-def process_queue_item(queue_id: str | None = None, txn_id: str | None = None) -> dict:
-    """Process one pending investigation. HIGH/CRITICAL may request Gemini; ingest already finished."""
+def process_queue_item(queue_id: str | None = None, txn_id: str | None = None, worker_id: str = "investigator") -> dict:
+    """Process one queued investigation. HIGH/CRITICAL may request Gemini; ingest already finished."""
+    from investigations.queue import claim_next, mark_completed, mark_failed, mark_running
+
     init_schema()
-    con = connect()
-    if queue_id:
-        row = con.execute("SELECT * FROM investigation_queue WHERE queue_id=?", (queue_id,)).fetchone()
-    elif txn_id:
-        row = con.execute(
-            "SELECT * FROM investigation_queue WHERE txn_id=? ORDER BY created_at DESC LIMIT 1",
-            (txn_id,),
-        ).fetchone()
-    else:
-        row = con.execute(
-            "SELECT * FROM investigation_queue WHERE status='pending' ORDER BY created_at ASC LIMIT 1"
-        ).fetchone()
-    if not row:
+    item = None
+    if queue_id or txn_id:
+        con = connect()
+        if queue_id:
+            row = con.execute("SELECT * FROM investigation_queue WHERE queue_id=?", (queue_id,)).fetchone()
+        else:
+            row = con.execute(
+                "SELECT * FROM investigation_queue WHERE txn_id=? ORDER BY created_at DESC LIMIT 1",
+                (txn_id,),
+            ).fetchone()
         con.close()
+        if row:
+            item = dict(row)
+    else:
+        claimed = claim_next(worker_id, limit=1)
+        item = claimed[0] if claimed else None
+    if not item:
         return {"status": "empty"}
-    item = dict(row)
-    con.execute(
-        "UPDATE investigation_queue SET status=?, updated_at=? WHERE queue_id=?",
-        ("running", utc_now(), item["queue_id"]),
-    )
-    con.commit()
-    con.close()
 
     settings = get_settings()
     tier = item.get("risk_tier") or "MEDIUM"
@@ -98,14 +96,13 @@ def process_queue_item(queue_id: str | None = None, txn_id: str | None = None) -
             use_gemini = agent.gemini_available()
         except Exception:
             use_gemini = False
-    result = build_investigation(item["txn_id"], use_gemini=use_gemini)
-    con = connect()
-    con.execute(
-        "UPDATE investigation_queue SET status=?, updated_at=? WHERE queue_id=?",
-        ("complete", utc_now(), item["queue_id"]),
-    )
-    con.commit()
-    con.close()
+    try:
+        mark_running(item["queue_id"], worker_id)
+        result = build_investigation(item["txn_id"], use_gemini=use_gemini)
+        mark_completed(item["queue_id"])
+    except Exception as exc:
+        mark_failed(item["queue_id"], str(exc), retry=True)
+        raise
     result["queue_id"] = item["queue_id"]
     result["settings_note"] = (
         f"Gemini invoked only for HIGH/CRITICAL. Current tier={tier}. "

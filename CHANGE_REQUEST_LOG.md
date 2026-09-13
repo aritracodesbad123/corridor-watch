@@ -16,6 +16,7 @@
 | **CR-012** | Platform evolution | Config, SQLite/PostgreSQL abstraction, Pub/Sub ingest, multi-bank synthetic world, Crime Pattern DNA, grounded Gemini report, command/corridor/pattern UI. | **Completed** | v1.5.0 |
 | **CR-013** | Scale proof | Multi-instance Cloud Run, Cloud SQL `db-custom-2-7680`, Pub/Sub load-test with ledger measurement. Publisher held 200–1000 TPS; consume remained SQL-bound. Not a 5,000 TPS claim. | **Completed (measured)** | v1.6.0 |
 | **CR-014** | Analyst console | Viewport-locked Investigations layout: independent queue scroll, horizontal case-pane scroll, corridor-map and Explorer graph zoom/pan. | **Completed** | v1.6.1 |
+| **CR-015** | Competition proof | Ingest stage timings + upserts, GCP SQLite refusal, durable queue claim/retry, transaction-only baseline, Command Center impact/scale panel, Pattern DNA explainability, claims policy. | **Completed** | v1.7.0 |
 
 ---
 
@@ -53,3 +54,7 @@
 ### CR-014: Console viewport and map zoom
 - **Module**: `static/index.html`
 - **Capability**: Investigations queue scrolls independently of page length. The case pane (tabs, feature cards, money-flow DAG) scrolls horizontally when content is wider than the frame. Corridor geography and Corridor Explorer graph support zoom in / zoom out / reset, wheel zoom, and drag-to-pan.
+
+### CR-015: Competition proof without new AI surface
+- **Modules**: `metrics.py`, `db.py`, `pubsub/ingestion.py`, `investigations/queue.py`, `evaluation.py`, `static/index.html`, `docs/COMPETITION_CLAIMS.md`
+- **Capability**: Make the existing Detect → Investigate → Learn loop measurable. Profile ingest stages, keep Gemini off the hot path, compare a transaction-only baseline, and never present 5,000 TPS as achieved.

@@ -140,6 +140,19 @@ def measured_library() -> list[dict]:
     return out
 
 
+def library_snapshot() -> dict:
+    """Compact Pattern DNA stats for the Command Center."""
+    lib = measured_library()
+    strengths = [p["avg_match_score"] for p in lib if p.get("avg_match_score") is not None]
+    confirmed = sum(1 for p in lib if int(p.get("confirmed_cases") or 0) > 0)
+    return {
+        "confirmed_patterns": confirmed,
+        "pattern_matches": sum(int(p.get("match_count") or 0) for p in lib),
+        "average_match_strength": round(100.0 * sum(strengths) / len(strengths), 1) if strengths else None,
+        "library_size": len(lib),
+    }
+
+
 def increment_confirmed(pattern_id: str) -> None:
     con = connect()
     con.execute(
