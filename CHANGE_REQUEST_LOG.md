@@ -28,6 +28,7 @@
 | **CR-024** | Judge remaining three | DeepEval 200+ mixed kinds `ran:true`; Dist B vs hard-neg topology diagnosis on frozen seed 7 (before F1 0.4118 kept); canonical `FINAL_VALIDATION_REPORT.md` with one run ID per experiment. Never claim 5,000 TPS. | **Completed** | v1.15.0 |
 | **CR-025** | Dist C holdout | Independent generator C, freeze detector, run once on seed 23. No detector retune. Never claim 5,000 TPS. | **Completed** | v1.16.0 |
 | **CR-026** | Collecting guard + Dist D | Fan-in counts only with ptr/youth/short-hold/burst-vel. Dist C artifact pinned. Dist D seed 37 one-shot gate. Never claim 5,000 TPS. | **Completed** | v1.17.0 |
+| **CR-027** | Commercial pass-through + Dist E | Ptr on old book is commerce; hop on old mesh is supply-chain. Dist D pinned. Dist E seed 41 one-shot gate. Never claim 5,000 TPS. | **Completed** | v1.18.0 |
 
 ---
 
@@ -113,3 +114,7 @@
 ### CR-026: Collecting guard + Dist D
 - **Modules**: `graph_features.py`, `validation/external/generator_d.py`, `validation/external/test_dist_d.py`
 - **Capability**: Fan-in contributes to mule/split/composite only if pass-through, age≤7, hold<180, or corridor velocity≥4. Dist C seed-23 json is pinned. Dist D seed 37 is the post-fix one-shot gate. Do not retune on 23 or 37. Do not claim 5,000 TPS.
+
+### CR-027: Commercial pass-through + Dist E
+- **Modules**: `graph_features.py`, `validation/external/generator_e.py`, `validation/external/test_dist_e.py`
+- **Capability**: Pass-through counts as mule only if age≤90 (or youth/short-hold/burst). Hop/ptr layering terms follow the same collecting guard. Dist D seed-37 json is pinned. Dist E seed 41 is the post-fix one-shot gate. Do not retune on 37 or 41. Do not claim 5,000 TPS.

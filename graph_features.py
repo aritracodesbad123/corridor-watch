@@ -148,14 +148,16 @@ def behavioral_risk(sessions_by_account, account_id) -> float:
 
 
 def collecting(features: dict) -> bool:
-    """Fan-in is mule/smurf only with pass-through, youth, short hold, or burst velocity.
+    """Fan-in is mule/smurf only with youth, short hold, burst, or early-life pass-through.
 
-    Slow inbound to an old sink (tuition, charity, merchant) is collection.
-    # ponytail: vel>=4 is the Dist B burst_smurf signature; raise if a public dataset needs a ROC
+    Slow inbound to an old sink is collection. Pass-through on old book is commerce.
+    # ponytail: age<=90 is a KYC-ish window; ROC if a public set needs a different cut
     """
+    age = int(features.get("account_age_days") or 0)
+    ptr = float(features.get("pass_through_ratio") or 0)
     return (
-        float(features.get("pass_through_ratio") or 0) >= 0.3
-        or int(features.get("account_age_days") or 0) <= 7
+        (ptr >= 0.3 and age <= 90)
+        or age <= 7
         or float(features.get("avg_hold_time_minutes") or 99999) < 180
         or float(features.get("corridor_velocity_score") or 0) >= 4
     )
@@ -179,7 +181,8 @@ def pattern_scores(features: dict, account: dict) -> dict[str, float]:
     sink = collecting(features)
     fan_mule = fan_in * 8 if sink else 0.0
     fan_split = fan_in * 7 if sink else 0.0
-    mule = min(100, fan_mule + ptr * 35 + (25 if hold < 180 else 0) + (15 if age <= 7 else 0))
+    ptr_mule = ptr * 35 if sink else 0.0
+    mule = min(100, fan_mule + ptr_mule + (25 if hold < 180 else 0) + (15 if age <= 7 else 0))
     split_vel = vel * 8 if inbound else 0.0
     split = min(100, fan_split + shared_ben * 12 + split_vel + (10 if age <= 30 and inbound and sink else 0))
     shared = min(100, shared_dev * 18 + beh * 0.35 + (20 if age <= 14 else 0))
@@ -192,7 +195,9 @@ def pattern_scores(features: dict, account: dict) -> dict[str, float]:
         synth += 20
     synth += beh * 0.2
     synth = min(100, synth)
-    multi = min(100, hop * 18 + ptr * 20 + (15 if hold < 360 else 0) + beh * 0.15)
+    hop_n = hop * 18 if sink else 0.0
+    ptr_n = ptr * 20 if sink else 0.0
+    multi = min(100, hop_n + ptr_n + (15 if hold < 360 else 0) + beh * 0.15)
 
     return {
         "mule_pass_through": round(mule, 1),

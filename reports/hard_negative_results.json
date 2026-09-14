@@ -1,7 +1,7 @@
 {
-  "run_id": "c9885ca9d49a",
-  "timestamp_utc": "2026-09-14T09:48:03.588680+00:00",
-  "git_commit": "8323b0486fc19d8b2c8b32a8200cce39d7269438",
+  "run_id": "14994a64cf91",
+  "timestamp_utc": "2026-09-14T10:11:31.722125+00:00",
+  "git_commit": "0a0c06ce73ced7f8b13c0ff4ac93933ec06e30df",
   "environment": "local",
   "dataset": "hard_negatives",
   "dataset_version": "data_gen.seed42",
@@ -37,7 +37,7 @@
   "recall": 1.0,
   "fpr": 0.0,
   "hard_negative_fpr": 0.0,
-  "legit_mean_score": 15.3,
+  "legit_mean_score": 14.4,
   "fraud_mean_score": 77.79,
   "by_label": {
     "normal": {

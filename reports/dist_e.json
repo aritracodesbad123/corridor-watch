@@ -1,0 +1,132 @@
+{
+  "run_id": "2e5062e5cf70",
+  "timestamp_utc": "2026-09-14T10:13:05.638392+00:00",
+  "git_commit": "0a0c06ce73ced7f8b13c0ff4ac93933ec06e30df",
+  "environment": "local",
+  "dataset": "dist_e",
+  "dataset_version": "generator_e.seed41",
+  "model": null,
+  "model_version": null,
+  "prompt_version": "investigator-v8",
+  "tool_schema_version": "investigation-report-v1",
+  "case_count": 84,
+  "random_seed": 41,
+  "status": "ok",
+  "benchmark": "dist_e",
+  "ground_truth": "validation.oracle (eval-only; runtime ignores fraud_scenario)",
+  "positive_scenarios": [
+    "dormant_drain",
+    "pulse_smurf",
+    "round_trip_peel",
+    "skip_hop"
+  ],
+  "sample_count": 84,
+  "metrics": {
+    "tp": 33,
+    "fp": 0,
+    "fn": 0,
+    "tn": 51,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "false_positive_rate": 0.0
+  },
+  "per_scenario": {
+    "ambiguous_dues": {
+      "total": 8,
+      "flagged": 0,
+      "flag_rate": 0.0
+    },
+    "ambiguous_levy": {
+      "total": 8,
+      "flagged": 0,
+      "flag_rate": 0.0
+    },
+    "dormant_drain": {
+      "total": 6,
+      "flagged": 6,
+      "flag_rate": 1.0
+    },
+    "normal": {
+      "total": 35,
+      "flagged": 0,
+      "flag_rate": 0.0
+    },
+    "pulse_smurf": {
+      "total": 16,
+      "flagged": 16,
+      "flag_rate": 1.0
+    },
+    "round_trip_peel": {
+      "total": 7,
+      "flagged": 7,
+      "flag_rate": 1.0
+    },
+    "skip_hop": {
+      "total": 4,
+      "flagged": 4,
+      "flag_rate": 1.0
+    }
+  },
+  "pattern_accuracy": 0.0,
+  "pattern_confusion": {
+    "dormant_drain->mule_pass_through": 6,
+    "pulse_smurf->mule_pass_through": 16,
+    "round_trip_peel->mule_pass_through": 7,
+    "skip_hop->mule_pass_through": 4
+  },
+  "quality_gate": {
+    "minimum_recall": 0.9,
+    "minimum_precision": 0.5,
+    "minimum_pattern_accuracy": 0.9,
+    "passed": false
+  },
+  "baseline_comparison": {
+    "name": "transaction_only",
+    "rules": [
+      "amount >= 8000",
+      "account_age_days <= 3 and amount >= 2500",
+      "sender_velocity >= 4 and amount >= 2000"
+    ],
+    "metrics": {
+      "tp": 15,
+      "fp": 7,
+      "fn": 18,
+      "tn": 44,
+      "precision": 0.6818,
+      "recall": 0.4545,
+      "f1": 0.5455,
+      "false_positive_rate": 0.1373
+    },
+    "network_detection": null,
+    "note": "Threshold-only baseline. No graph, Pattern DNA, or Gemini."
+  },
+  "impact": {
+    "investigation_compression": {
+      "flagged_transactions": 33,
+      "baseline_items_reviewed": 33,
+      "network_items_reviewed": 33,
+      "network_investigations": 33,
+      "compression_ratio": 1.0,
+      "unit_of_work": "network_investigation",
+      "note": "Traditional review counts flagged wires. Corridor Watch reviews the collapsed network. Measured, not claimed."
+    },
+    "false_positive_reduction": 0.1373,
+    "network_detection_lift": 0.5455,
+    "evidence_coverage": null,
+    "analyst_actionability_rate": null,
+    "time_to_case_ready": null,
+    "note": "Compression and lift are measured on the synthetic ledger, not production banks."
+  },
+  "freeze": {
+    "frozen_before_run": true,
+    "one_shot": true,
+    "do_not_tune": true,
+    "frozen_seed": 41,
+    "flag_threshold": 40,
+    "graph_features_sha256_12": "87fcdbefdd16",
+    "note": "Recorded before scoring. Do not edit graph_features.py to pass this seed."
+  },
+  "one_shot": true,
+  "do_not_tune": true
+}

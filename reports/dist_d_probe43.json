@@ -1,0 +1,55 @@
+{
+  "run_id": "88047c8d092d",
+  "timestamp_utc": "2026-09-14T10:11:35.082967+00:00",
+  "git_commit": "0a0c06ce73ced7f8b13c0ff4ac93933ec06e30df",
+  "environment": "local",
+  "dataset": "dist_d_probe43",
+  "dataset_version": "data_gen.seed42",
+  "model": null,
+  "model_version": null,
+  "prompt_version": "investigator-v8",
+  "tool_schema_version": "investigation-report-v1",
+  "case_count": 80,
+  "random_seed": 43,
+  "probe_seed": 43,
+  "note": "D-like mill pass-through, not frozen seed 37. Not a SCORECARD gate.",
+  "n": 80,
+  "tp": 27,
+  "fp": 0,
+  "fn": 0,
+  "tn": 53,
+  "precision": 1.0,
+  "recall": 1.0,
+  "f1": 1.0,
+  "false_positive_rate": 0.0,
+  "by_label": {
+    "normal": {
+      "n": 36,
+      "flagged": 0
+    },
+    "ambiguous_clinic": {
+      "n": 9,
+      "flagged": 0
+    },
+    "ambiguous_tithe": {
+      "n": 8,
+      "flagged": 0
+    },
+    "invoice_loop": {
+      "n": 3,
+      "flagged": 3
+    },
+    "nested_shell": {
+      "n": 4,
+      "flagged": 4
+    },
+    "drain_wake": {
+      "n": 6,
+      "flagged": 6
+    },
+    "burst_sink": {
+      "n": 14,
+      "flagged": 14
+    }
+  }
+}

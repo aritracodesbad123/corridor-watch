@@ -1,12 +1,12 @@
 # Corridor Watch — final validation report
 
-Suite wrap run `b772ab46da8e` commit `8323b0486fc1` ts `2026-09-14T09:50:21.445061+00:00` — `reports/validation_report.json`. Seed `42`.
+Suite wrap run `f519ce3e8c9c` commit `0a0c06ce73ce` ts `2026-09-14T10:14:34.904749+00:00` — `reports/validation_report.json`. Seed `42`.
 Each experiment below keeps its own run ID / commit / timestamp. Do not collapse them into one number.
 Dictionary: `validation/METRICS.md`. Scoreboard: `reports/SCORECARD.md`.
 
 ## Benchmark A (generator A / hidden oracle)
 
-run `b772ab46da8e` commit `8323b0486fc1` ts `2026-09-14T09:50:21.445061+00:00` — `reports/validation_report.json`
+run `f519ce3e8c9c` commit `0a0c06ce73ce` ts `2026-09-14T10:14:34.904749+00:00` — `reports/validation_report.json`
 
 - n=586 F1=1.0 FPR=0.0
 - Runtime ignores `fraud_scenario`. Gate F1 ≥ 0.85.
@@ -58,17 +58,30 @@ Freeze: `reports/dist_d_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.80,
 - Normals: tripartite farm-mill-shop, dividends, CHF trade, noise, ambiguous clinic/tithe.
 - Clinic/tithe inbound: 0 flagged (collecting guard). Gate missed on precision/FPR: 19/36 `normal` flagged — mill pass-through (farm→mill→shop) has `ptr>=0.3`, so fan-in still counts. Detector was not retuned on D.
 
+Pass-through on old book is commerce, not a mule. `collecting` requires `ptr>=0.3` **and** age≤90 (or youth/short-hold/burst). Graph hop depth on an old mesh is supply-chain, so hop/ptr mule terms also follow `collecting`. Fitted on Dist B + hard-neg + generator A + a seed-43 mill probe, **not** on frozen D.
+
+## Benchmark E (independent Dist E, frozen seed 41, one-shot)
+
+run `2e5062e5cf70` commit `0a0c06ce73ce` ts `2026-09-14T10:13:05.638392+00:00` — `reports/dist_e.json`
+
+Freeze: `reports/dist_e_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.80, FPR ≤ 0.10. Do not retune on seed 41.
+
+- n=84 precision=1.0 recall=1.0 F1=1.0 FPR=0.0
+- Unseen fraud: round_trip_peel, skip_hop, dormant_drain, pulse_smurf.
+- Normals: four-stage mine-smelter-trader-yard, royalties, MXN trade, noise, ambiguous levy/dues.
+- Levy/dues inbound and commercial pass-through: 0 flagged.
+
 ## Hard negatives
 
-run `c9885ca9d49a` commit `8323b0486fc1` ts `2026-09-14T09:48:03.588680+00:00` — `reports/hard_negative_results.json`
+run `14994a64cf91` commit `0a0c06ce73ce` ts `2026-09-14T10:11:31.722125+00:00` — `reports/hard_negative_results.json`
 
 - n=71 FPR=0.0 precision=1.0 recall=1.0
 - 10 legit archetypes + fraud twins. Not 7 isolated wires.
 
 ## Network v2 (investigation-useful)
 
-Full-graph account recall run `b772ab46da8e` commit `8323b0486fc1` ts `2026-09-14T09:50:21.445061+00:00` — `reports/network_metrics.json`: account=1.0
-v2 run `12e51994ae61` commit `8323b0486fc1` ts `2026-09-14T09:48:03.879290+00:00` — `reports/network_evaluation_v2.json`: anchor=0.8333 critical-node=1.0 critical-edge=1.0 path=0.6667 recall@10=1.0
+Full-graph account recall run `f519ce3e8c9c` commit `0a0c06ce73ce` ts `2026-09-14T10:14:34.904749+00:00` — `reports/network_metrics.json`: account=1.0
+v2 run `23b22fbba47d` commit `0a0c06ce73ce` ts `2026-09-14T10:11:31.944847+00:00` — `reports/network_evaluation_v2.json`: anchor=0.8333 critical-node=1.0 critical-edge=1.0 path=0.6667 recall@10=1.0
 
 Old full-graph line and v2 are different metrics. Do not substitute.
 
@@ -157,3 +170,4 @@ run `unstamped` commit `not-recorded` ts `not-recorded` — `reports/dr_gameday.
 - PITR-to-past RPO is NOT_MEASURED.
 - Dist C one-shot (seed 23, pinned): recall=1.0 FPR=0.7568 F1=0.5. Not overwritten after the collecting-guard change.
 - Dist D one-shot (seed 37): recall=1.0 precision=0.587 FPR=0.3585 F1=0.7397. Missed precision≥0.80 / FPR≤0.10 (mill pass-through FPs). Detector was not retuned on D.
+- Dist E one-shot (seed 41): recall=1.0 precision=1.0 FPR=0.0 F1=1.0. Detector was not retuned on E. Pattern names still collapse to `mule_pass_through`; detection F1 is the scored metric.

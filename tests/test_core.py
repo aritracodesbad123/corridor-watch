@@ -102,6 +102,24 @@ def test_pass_through_mule_still_flags():
     assert score >= FLAG_THRESHOLD
 
 
+def test_old_commercial_pass_through_is_not_mule():
+    from graph_features import FLAG_THRESHOLD, collecting, composite_score, pattern_scores
+    mill = {
+        "account_age_days": 900,
+        "pass_through_ratio": 1.0,
+        "fan_in_count": 6,
+        "avg_hold_time_minutes": 2880.0,
+        "shared_device_count": 0,
+        "shared_beneficiary_count": 0,
+        "multi_hop_chain_depth": 5,
+        "corridor_velocity_score": 0.1,
+        "behavioral_risk": 0.0,
+    }
+    assert collecting(mill) is False
+    score, _ = composite_score(mill, pattern_scores(mill, {}))
+    assert score < FLAG_THRESHOLD
+
+
 def test_schema_bootstrap_is_idempotent(tmp_path, monkeypatch):
     db_path = tmp_path / "test.db"
     import db

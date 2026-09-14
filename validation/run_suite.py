@@ -65,6 +65,7 @@ def main(argv: list[str] | None = None) -> int:
     dist_b_before = _read(REPORTS / "dist_b_before.json")
     dist_c = _read(REPORTS / "dist_c.json")
     dist_d = _read(REPORTS / "dist_d.json")
+    dist_e = _read(REPORTS / "dist_e.json")
     live_tps = gates.get("max_sustained_consume_tps_passing_gate") or 814.13
     if det.get("network_metrics") and not (REPORTS / "network_metrics.json").exists():
         (REPORTS / "network_metrics.json").write_text(json.dumps(det["network_metrics"], indent=2, default=str))
@@ -108,6 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         "dist_b_before": dist_b_before or None,
         "dist_c": dist_c or None,
         "dist_d": dist_d or None,
+        "dist_e": dist_e or None,
         "injection": inj,
         "hard_negatives": hn_net or hn,
         "network_v2": net_v2 or None,
@@ -131,8 +133,8 @@ def main(argv: list[str] | None = None) -> int:
     }
     (REPORTS / "validation_report.json").write_text(json.dumps(report, indent=2, default=str))
     _write_markdown(report, gates)
-    _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d)
-    _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d)
+    _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e)
+    _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e)
     dest = ROOT / "validation" / "results" / f"run_{started.replace(':', '').replace('-', '')[:15]}"
     dest.mkdir(parents=True, exist_ok=True)
     for name in ("SCORECARD.md", "VALIDATION_REPORT.md", "validation_report.json"):
@@ -198,7 +200,7 @@ def _exp(d: dict, artifact: str) -> str:
     return f"run `{rid}` commit `{commit}` ts `{ts}` — `{artifact}`"
 
 
-def _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c=None, dist_d=None) -> None:
+def _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c=None, dist_d=None, dist_e=None) -> None:
     det = report.get("deterministic") or {}
     metrics = det.get("metrics") or {}
     before = (dist_b_before or {}).get("metrics") or {}
@@ -273,6 +275,19 @@ Freeze: `reports/dist_d_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.80,
 - Unseen fraud: invoice_loop, nested_shell, drain_wake, burst_sink.
 - Normals: tripartite farm-mill-shop, dividends, CHF trade, noise, ambiguous clinic/tithe.
 - Clinic/tithe inbound: 0 flagged (collecting guard). Gate missed on precision/FPR: 19/36 `normal` flagged — mill pass-through (farm→mill→shop) has `ptr>=0.3`, so fan-in still counts. Detector was not retuned on D.
+
+Pass-through on old book is commerce, not a mule. `collecting` requires `ptr>=0.3` **and** age≤90 (or youth/short-hold/burst). Graph hop depth on an old mesh is supply-chain, so hop/ptr mule terms also follow `collecting`. Fitted on Dist B + hard-neg + generator A + a seed-43 mill probe, **not** on frozen D.
+
+## Benchmark E (independent Dist E, frozen seed 41, one-shot)
+
+{_exp(dist_e or {{}}, "reports/dist_e.json")}
+
+Freeze: `reports/dist_e_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.80, FPR ≤ 0.10. Do not retune on seed 41.
+
+- n={(dist_e or {{}}).get("sample_count")} precision={((dist_e or {{}}).get("metrics") or {{}}).get("precision")} recall={((dist_e or {{}}).get("metrics") or {{}}).get("recall")} F1={((dist_e or {{}}).get("metrics") or {{}}).get("f1")} FPR={((dist_e or {{}}).get("metrics") or {{}}).get("false_positive_rate")}
+- Unseen fraud: round_trip_peel, skip_hop, dormant_drain, pulse_smurf.
+- Normals: four-stage mine-smelter-trader-yard, royalties, MXN trade, noise, ambiguous levy/dues.
+- Levy/dues inbound and commercial pass-through: 0 flagged.
 
 ## Hard negatives
 
@@ -354,12 +369,13 @@ Rule-miner holdout {_exp(hold, "reports/rule_miner_holdout.json")}: precision={h
 - PITR-to-past RPO is NOT_MEASURED.
 - Dist C one-shot (seed 23, pinned): recall={((dist_c or {{}}).get("metrics") or {{}}).get("recall")} FPR={((dist_c or {{}}).get("metrics") or {{}}).get("false_positive_rate")} F1={((dist_c or {{}}).get("metrics") or {{}}).get("f1")}. Not overwritten after the collecting-guard change.
 - Dist D one-shot (seed 37): recall={((dist_d or {{}}).get("metrics") or {{}}).get("recall")} precision={((dist_d or {{}}).get("metrics") or {{}}).get("precision")} FPR={((dist_d or {{}}).get("metrics") or {{}}).get("false_positive_rate")} F1={((dist_d or {{}}).get("metrics") or {{}}).get("f1")}. Missed precision≥0.80 / FPR≤0.10 (mill pass-through FPs). Detector was not retuned on D.
+- Dist E one-shot (seed 41): recall={((dist_e or {{}}).get("metrics") or {{}}).get("recall")} precision={((dist_e or {{}}).get("metrics") or {{}}).get("precision")} FPR={((dist_e or {{}}).get("metrics") or {{}}).get("false_positive_rate")} F1={((dist_e or {{}}).get("metrics") or {{}}).get("f1")}. Detector was not retuned on E. Pattern names still collapse to `mule_pass_through`; detection F1 is the scored metric.
 """
     (ROOT / "FINAL_VALIDATION_REPORT.md").write_text(body)
     (REPORTS / "FINAL_VALIDATION_REPORT.md").write_text(body)
 
 
-def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval, net_v2=None, tput_v2=None, dist_b_before=None, dist_c=None, dist_d=None) -> None:
+def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval, net_v2=None, tput_v2=None, dist_b_before=None, dist_c=None, dist_d=None, dist_e=None) -> None:
     det = report.get("deterministic") or {}
     metrics = det.get("metrics") or {}
     f1 = metrics.get("f1")
@@ -419,14 +435,27 @@ def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, h
         else "NOT_MEASURED"
     )
     dist_d_m = (dist_d or {}).get("metrics") or {}
+    dist_d_fpr = dist_d_m.get("false_positive_rate")
     dist_d_ok = (
         (dist_d_m.get("recall") or 0) >= 0.90
         and (dist_d_m.get("precision") or 0) >= 0.80
-        and (dist_d_m.get("false_positive_rate") or 1) <= 0.10
+        and dist_d_fpr is not None and dist_d_fpr <= 0.10
     ) if dist_d_m.get("f1") is not None else False
     dist_d_row = (
-        f"{'Verified' if dist_d_ok else 'Measured'} F1 {dist_d_m.get('f1')} recall {dist_d_m.get('recall')} FPR {dist_d_m.get('false_positive_rate')} (seed 37 one-shot)"
+        f"{'Verified' if dist_d_ok else 'Measured'} F1 {dist_d_m.get('f1')} recall {dist_d_m.get('recall')} FPR {dist_d_m.get('false_positive_rate')} (seed 37 one-shot, pinned)"
         if dist_d_m.get("f1") is not None
+        else "NOT_MEASURED"
+    )
+    dist_e_m = (dist_e or {}).get("metrics") or {}
+    dist_e_fpr = dist_e_m.get("false_positive_rate")
+    dist_e_ok = (
+        (dist_e_m.get("recall") or 0) >= 0.90
+        and (dist_e_m.get("precision") or 0) >= 0.80
+        and dist_e_fpr is not None and dist_e_fpr <= 0.10
+    ) if dist_e_m.get("f1") is not None else False
+    dist_e_row = (
+        f"{'Verified' if dist_e_ok else 'Measured'} F1 {dist_e_m.get('f1')} recall {dist_e_m.get('recall')} FPR {dist_e_m.get('false_positive_rate')} (seed 41 one-shot)"
+        if dist_e_m.get("f1") is not None
         else "NOT_MEASURED"
     )
     pol_a = (tput_v2 or {}).get("policy_a_deterministic") or {}
@@ -446,6 +475,7 @@ Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`
 | Dist B F1 | {dist_row} | `reports/dist_b.json` vs `reports/dist_b_before.json` |
 | Dist C F1 | {dist_c_row} | `reports/dist_c.json` (freeze `reports/dist_c_freeze.json`) |
 | Dist D F1 | {dist_d_row} | `reports/dist_d.json` (freeze `reports/dist_d_freeze.json`) |
+| Dist E F1 | {dist_e_row} | `reports/dist_e.json` (freeze `reports/dist_e_freeze.json`) |
 | Network account recall | {_status(net.get('account_recall'))} | `reports/network_metrics.json` |
 | Network v2 anchor recall | {_status((net_v2 or {}).get('anchor_recall'))} | `reports/network_evaluation_v2.json` |
 | Network v2 critical-node recall | {_status((net_v2 or {}).get('critical_node_recall'))} | `reports/network_evaluation_v2.json` |
