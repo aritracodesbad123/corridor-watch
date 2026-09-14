@@ -1,12 +1,13 @@
 # Corridor Watch — validation scorecard
 
-run_id `cedb4b314656` commit `7d22cff27eaa6d6074d46de6f1bd8ab879ffd3a0`. Seed `42`.
+run_id `146d77ab27ef` commit `a4de7e1817a8255bbea14028b1126ab553e1d62f`. Seed `42`.
 Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`.
 
 | Claim | Status | Evidence |
 |---|---|---|
 | Detector F1 | Verified 1.0 | `validation/deterministic/test_detection.py` / hidden oracle |
 | Dist B F1 | Verified 1.0 (before 0.4118, FPR 1.0) | `reports/dist_b.json` vs `reports/dist_b_before.json` |
+| Dist C F1 | Measured F1 0.5 recall 1.0 FPR 0.7568 (seed 23 one-shot) | `reports/dist_c.json` (freeze `reports/dist_c_freeze.json`) |
 | Network account recall | Verified 1.0 | `reports/network_metrics.json` |
 | Network v2 anchor recall | Verified 0.8333 | `reports/network_evaluation_v2.json` |
 | Network v2 critical-node recall | Verified 1.0 | `reports/network_evaluation_v2.json` |

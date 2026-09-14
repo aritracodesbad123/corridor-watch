@@ -1,12 +1,12 @@
 # Corridor Watch — final validation report
 
-Suite wrap run `cedb4b314656` commit `7d22cff27eaa` ts `2026-09-14T09:17:24.339974+00:00` — `reports/validation_report.json`. Seed `42`.
+Suite wrap run `146d77ab27ef` commit `a4de7e1817a8` ts `2026-09-14T09:36:45.901166+00:00` — `reports/validation_report.json`. Seed `42`.
 Each experiment below keeps its own run ID / commit / timestamp. Do not collapse them into one number.
 Dictionary: `validation/METRICS.md`. Scoreboard: `reports/SCORECARD.md`.
 
 ## Benchmark A (generator A / hidden oracle)
 
-run `cedb4b314656` commit `7d22cff27eaa` ts `2026-09-14T09:17:24.339974+00:00` — `reports/validation_report.json`
+run `146d77ab27ef` commit `a4de7e1817a8` ts `2026-09-14T09:36:45.901166+00:00` — `reports/validation_report.json`
 
 - n=586 F1=1.0 FPR=0.0
 - Runtime ignores `fraud_scenario`. Gate F1 ≥ 0.85.
@@ -34,6 +34,17 @@ Hard-negative FPR is 0% on payroll/treasury/marketplace networks. Dist B "normal
 
 One model change: `split_vel = vel * 8` only if `fan_in >= 3` or `pass_through >= 0.3`. Frozen test remains seed 7; sweep used seed 11. Forensics: `reports/dist_b_false_positive_analysis.md`.
 
+## Benchmark C (independent Dist C, frozen seed 23, one-shot)
+
+run `5de896b7f460` commit `a4de7e1817a8` ts `2026-09-14T09:36:21.531397+00:00` — `reports/dist_c.json`
+
+Freeze: `reports/dist_c_freeze.json`. Detector was not retuned on this seed. Threshold remains 40.
+
+- n=102 precision=0.3333 recall=1.0 F1=0.5 FPR=0.7568
+- Unseen fraud names: layering_cascade (middle hop dropped), dormant_wake, funnel_exit, mirror_peel. Not data_gen / Dist B labels.
+- Normals: bipartite market, remittance mesh, FX hedge, JPY payroll, noise, ambiguous tuition/charity inbound.
+- Do not treat a later retune against seed 23 as generalization.
+
 ## Hard negatives
 
 run `c8045460f678` commit `7d22cff27eaa` ts `2026-09-14T09:16:27.154534+00:00` — `reports/hard_negative_results.json`
@@ -43,7 +54,7 @@ run `c8045460f678` commit `7d22cff27eaa` ts `2026-09-14T09:16:27.154534+00:00` �
 
 ## Network v2 (investigation-useful)
 
-Full-graph account recall run `cedb4b314656` commit `7d22cff27eaa` ts `2026-09-14T09:17:24.339974+00:00` — `reports/network_metrics.json`: account=1.0
+Full-graph account recall run `146d77ab27ef` commit `a4de7e1817a8` ts `2026-09-14T09:36:45.901166+00:00` — `reports/network_metrics.json`: account=1.0
 v2 run `9cd09cb73634` commit `7d22cff27eaa` ts `2026-09-14T09:16:27.371712+00:00` — `reports/network_evaluation_v2.json`: anchor=0.8333 critical-node=1.0 critical-edge=1.0 path=0.6667 recall@10=1.0
 
 Old full-graph line and v2 are different metrics. Do not substitute.
@@ -131,3 +142,4 @@ run `unstamped` commit `not-recorded` ts `not-recorded` — `reports/dr_gameday.
 - Pattern accuracy on Dist B can be 0 even when F1 is 1.0 (`burst_smurf` → `mule_pass_through`). Detection F1 is the scored metric.
 - Policy B Gemini completion is 0.36 TPS on n=10. Not a fleet number.
 - PITR-to-past RPO is NOT_MEASURED.
+- Dist C one-shot (seed 23): recall=1.0 FPR=0.7568 F1=0.5. High fan-in legit (tuition/charity/market) still flags. Detector was not retuned.

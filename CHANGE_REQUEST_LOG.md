@@ -26,6 +26,7 @@
 | **CR-022** | Validation honesty | Reverse CR-021: add real `deepeval` package + BaseMetric wrappers. Hidden oracle, Dist B generator, network recall, hallucination≠cost, injection decision-change, races, investigation enqueue TPS, miner holdout. Never claim 5,000 TPS. | **Completed** | v1.13.0 |
 | **CR-023** | Five score-gap fixes | Dist B source-only velocity no longer counts as split; hard-negative *networks*; investigation-useful network v2; DeepEval n≥100 `ran:true`; investigation *completion* TPS. Frozen Dist B seed 7. Never claim 5,000 TPS. | **Completed** | v1.14.0 |
 | **CR-024** | Judge remaining three | DeepEval 200+ mixed kinds `ran:true`; Dist B vs hard-neg topology diagnosis on frozen seed 7 (before F1 0.4118 kept); canonical `FINAL_VALIDATION_REPORT.md` with one run ID per experiment. Never claim 5,000 TPS. | **Completed** | v1.15.0 |
+| **CR-025** | Dist C holdout | Independent generator C, freeze detector, run once on seed 23. No detector retune. Never claim 5,000 TPS. | **Completed** | v1.16.0 |
 
 ---
 
@@ -103,3 +104,7 @@
 ### CR-024: Remaining three (DeepEval mix, Dist B diagnosis, canonical report)
 - **Modules**: `validation/datasets/golden.py`, `validation/deepeval/`, `validation/run_suite.py`, `FINAL_VALIDATION_REPORT.md`
 - **Capability**: 200+ mixed investigation reports (normal/obvious/subtle/hardneg/partial/contradict/missing/document/injection/toolfail/hybrid). Dist B vs hard-neg topology diagnosis on frozen seed 7; keep before F1 0.4118 / FPR 1.0. One run ID / commit / timestamp per experiment in `FINAL_VALIDATION_REPORT.md`. Do not claim 5,000 TPS.
+
+### CR-025: Dist C one-shot holdout
+- **Modules**: `validation/external/generator_c.py`, `validation/external/test_dist_c.py`, `evaluation.py`
+- **Capability**: Independent Dist C (seed 23) with novel normals, altered topology, new amounts, unseen fraud names, partial visibility, noise, ambiguous inbound. Freeze `graph_features.py` fingerprint before scoring. Run once. Do not retune. Do not claim 5,000 TPS.

@@ -22,6 +22,7 @@ Statuses:
 | Transaction-only baseline vs Corridor Watch | **IMPLEMENTED** | `evaluation.compare_to_transaction_baseline` |
 | Hidden evaluation oracle (runtime ignores `fraud_scenario`) | **VERIFIED** | `validation/oracle/test_leakage.py` |
 | Independent Dist B (not `data_gen`) | **VERIFIED** F1 1.0 / FPR 0.0 on frozen seed 7 (was F1 0.4118 / FPR 1.0) | `reports/dist_b.json` vs `reports/dist_b_before.json`. Threshold sweep used seed 11 only. |
+| Independent Dist C (not A/B) | **MEASURED** one-shot seed 23: F1 0.5 / recall 1.0 / FPR 0.7568 | `reports/dist_c.json`. Freeze `reports/dist_c_freeze.json` before scoring. Do not retune. |
 | Network account/key-node recall | **VERIFIED** 1.0 per connected component | `reports/network_metrics.json` (was ~0.17 when every mule in the ledger was one “truth” graph) |
 | Network v2 investigation-useful | **IMPLEMENTED** | `reports/network_evaluation_v2.json` — anchor 0.83, critical-node 1.0, path 0.67, recall@10 1.0 |
 | DeepEval package + custom metrics | **VERIFIED** n≥200 mixed investigation reports `ran: true` | `reports/deepeval.json`. Kinds include normal, obvious/subtle fraud, hardneg, partial, contradict, missing, document, injection, toolfail, hybrid. Official FaithfulnessMetric **RAN** n=10 score 1.0 (carry-forward if live judge not re-run). |

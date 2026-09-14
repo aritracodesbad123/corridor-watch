@@ -103,6 +103,31 @@ def _dist_b_db() -> Iterator[None]:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
+@contextmanager
+def _dist_c_db() -> Iterator[None]:
+    """Score frozen generator C. Do not retune the detector on this seed."""
+    import db
+    from validation.external import generator_c
+    from validation.external.generator_b import write_db
+
+    old_db = db.DB_PATH
+    tmpdir = Path(tempfile.mkdtemp(prefix="cw-eval-c-"))
+    tmp = tmpdir / "dist_c.db"
+    db.DB_PATH = tmp
+    try:
+        accounts, txns = generator_c.build(seed=generator_c.SEED)
+        write_db(accounts, txns)
+        from graph_features import score_all, write_scores
+        con = connect()
+        scores, _, _ = score_all(con)
+        write_scores(con, scores, txns)
+        con.close()
+        yield
+    finally:
+        db.DB_PATH = old_db
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
 def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: set[str] | None = None) -> dict[str, Any]:
     if cut == "clean":
         with _clean_synthetic_db():
@@ -111,6 +136,10 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
         from validation.external.generator_b import POSITIVE_B
         with _dist_b_db():
             return run_evaluation(include_trace=include_trace, cut="ledger_b", positive=POSITIVE_B)
+    if cut == "dist_c":
+        from validation.external.generator_c import POSITIVE_C
+        with _dist_c_db():
+            return run_evaluation(include_trace=include_trace, cut="ledger_c", positive=POSITIVE_C)
     init_schema()
     con = connect()
     rows = [dict(r) for r in con.execute(
@@ -165,7 +194,7 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
 
     result = {
         "status": "ok",
-        "benchmark": "dist_b" if cut == "ledger_b" else "synthetic_v1",
+        "benchmark": {"ledger_c": "dist_c", "ledger_b": "dist_b"}.get(cut, "synthetic_v1"),
         "ground_truth": "validation.oracle (eval-only; runtime ignores fraud_scenario)",
         "positive_scenarios": sorted(positive),
         "sample_count": len(rows),
@@ -185,7 +214,7 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
         result["examples"] = examples
     result["baseline_comparison"] = compare_to_transaction_baseline(rows, positive=positive)
     result["impact"] = impact_metrics(result, result["baseline_comparison"])
-    if cut != "ledger_b":
+    if cut not in {"ledger_b", "ledger_c"}:
         result["network_metrics"] = _network_eval(rows, labels)
     return result
 
