@@ -29,6 +29,7 @@
 | **CR-025** | Dist C holdout | Independent generator C, freeze detector, run once on seed 23. No detector retune. Never claim 5,000 TPS. | **Completed** | v1.16.0 |
 | **CR-026** | Collecting guard + Dist D | Fan-in counts only with ptr/youth/short-hold/burst-vel. Dist C artifact pinned. Dist D seed 37 one-shot gate. Never claim 5,000 TPS. | **Completed** | v1.17.0 |
 | **CR-027** | Commercial pass-through + Dist E | Ptr on old book is commerce; hop on old mesh is supply-chain. Dist D pinned. Dist E seed 41 one-shot gate. Never claim 5,000 TPS. | **Completed** | v1.18.0 |
+| **CR-028** | Business context + Dist F | Graph-only commercial context; DNA-family primary picking. Dist E pinned. Dist F seed 47 one-shot + eval-only FAMILY map. Never claim 5,000 TPS. | **Completed** | v1.19.0 |
 
 ---
 
@@ -118,3 +119,7 @@
 ### CR-027: Commercial pass-through + Dist E
 - **Modules**: `graph_features.py`, `validation/external/generator_e.py`, `validation/external/test_dist_e.py`
 - **Capability**: Pass-through counts as mule only if age≤90 (or youth/short-hold/burst). Hop/ptr layering terms follow the same collecting guard. Dist D seed-37 json is pinned. Dist E seed 41 is the post-fix one-shot gate. Do not retune on 37 or 41. Do not claim 5,000 TPS.
+
+### CR-028: Business context + Dist F
+- **Modules**: `graph_features.py`, `investigation_dag.py`, `validation/external/generator_f.py`, `validation/external/test_dist_f.py`
+- **Capability**: `business_context` from graph features; `pick_primary` names split vs multi_hop vs mule without changing detection scores. Dist F seed 47 freeze + eval-only FAMILY map, taxonomy_accuracy, novel_detection_recall. Do not retune on 47. Do not claim 5,000 TPS.

@@ -178,7 +178,32 @@ def _dist_e_db() -> Iterator[None]:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: set[str] | None = None) -> dict[str, Any]:
+@contextmanager
+def _dist_f_db() -> Iterator[None]:
+    """Score frozen generator F. Do not retune the detector on this seed."""
+    import db
+    from validation.external import generator_f
+    from validation.external.generator_b import write_db
+
+    old_db = db.DB_PATH
+    tmpdir = Path(tempfile.mkdtemp(prefix="cw-eval-f-"))
+    tmp = tmpdir / "dist_f.db"
+    db.DB_PATH = tmp
+    try:
+        accounts, txns = generator_f.build(seed=generator_f.SEED)
+        write_db(accounts, txns)
+        from graph_features import score_all, write_scores
+        con = connect()
+        scores, _, _ = score_all(con)
+        write_scores(con, scores, txns)
+        con.close()
+        yield
+    finally:
+        db.DB_PATH = old_db
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: set[str] | None = None, family: dict[str, str] | None = None) -> dict[str, Any]:
     if cut == "clean":
         with _clean_synthetic_db():
             return run_evaluation(include_trace=include_trace, cut="ledger")
@@ -198,6 +223,10 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
         from validation.external.generator_e import POSITIVE_E
         with _dist_e_db():
             return run_evaluation(include_trace=include_trace, cut="ledger_e", positive=POSITIVE_E)
+    if cut == "dist_f":
+        from validation.external.generator_f import FAMILY, POSITIVE_F
+        with _dist_f_db():
+            return run_evaluation(include_trace=include_trace, cut="ledger_f", positive=POSITIVE_F, family=FAMILY)
     init_schema()
     con = connect()
     rows = [dict(r) for r in con.execute(
@@ -216,6 +245,10 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
     pattern_confusion: Counter[tuple[str, str]] = Counter()
     positive_total = 0
     pattern_correct = 0
+    mapped_total = 0
+    mapped_ok = 0
+    novel_total = 0
+    novel_hit = 0
     examples = []
 
     # Core benchmark is based on the deterministic graph/rule detector.
@@ -232,6 +265,14 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
             positive_total += 1
             pattern_correct += int(predicted_pattern == scenario)
             pattern_confusion[(scenario, predicted_pattern)] += 1
+            if family is not None:
+                fam = family.get(scenario)
+                if fam:
+                    mapped_total += 1
+                    mapped_ok += int(predicted_pattern == fam)
+                else:
+                    novel_total += 1
+                    novel_hit += int(predicted)
         by_scenario[scenario]["total"] += 1
         by_scenario[scenario]["flagged"] += int(predicted)
         if include_trace and len(examples) < 20:
@@ -252,7 +293,7 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
 
     result = {
         "status": "ok",
-        "benchmark": {"ledger_e": "dist_e", "ledger_d": "dist_d", "ledger_c": "dist_c", "ledger_b": "dist_b"}.get(cut, "synthetic_v1"),
+        "benchmark": {"ledger_f": "dist_f", "ledger_e": "dist_e", "ledger_d": "dist_d", "ledger_c": "dist_c", "ledger_b": "dist_b"}.get(cut, "synthetic_v1"),
         "ground_truth": "validation.oracle (eval-only; runtime ignores fraud_scenario)",
         "positive_scenarios": sorted(positive),
         "sample_count": len(rows),
@@ -268,11 +309,16 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
                        and (pattern_correct / positive_total if positive_total else 0.0) >= 0.90),
         },
     }
+    if family is not None:
+        result["family_map"] = family
+        result["taxonomy_accuracy"] = round(mapped_ok / mapped_total, 4) if mapped_total else None
+        result["mapping_coverage"] = round(mapped_total / positive_total, 4) if positive_total else 0.0
+        result["novel_detection_recall"] = round(novel_hit / novel_total, 4) if novel_total else None
     if include_trace:
         result["examples"] = examples
     result["baseline_comparison"] = compare_to_transaction_baseline(rows, positive=positive)
     result["impact"] = impact_metrics(result, result["baseline_comparison"])
-    if cut not in {"ledger_b", "ledger_c", "ledger_d", "ledger_e"}:
+    if cut not in {"ledger_b", "ledger_c", "ledger_d", "ledger_e", "ledger_f"}:
         result["network_metrics"] = _network_eval(rows, labels)
     return result
 

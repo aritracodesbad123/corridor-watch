@@ -1,0 +1,26 @@
+{
+  "run_id": "73a61d413186",
+  "timestamp_utc": "2026-09-14T10:31:36.538150+00:00",
+  "git_commit": "129bb69febcd866da959a268e17fc48c96c0269a",
+  "environment": "local",
+  "dataset": "dist_f_freeze",
+  "dataset_version": "data_gen.seed42",
+  "model": null,
+  "model_version": null,
+  "prompt_version": "investigator-v8",
+  "tool_schema_version": "investigation-report-v1",
+  "case_count": 0,
+  "random_seed": 47,
+  "frozen_before_run": true,
+  "one_shot": true,
+  "do_not_tune": true,
+  "frozen_seed": 47,
+  "flag_threshold": 40,
+  "graph_features_sha256_12": "34a3e1a3dff0",
+  "family_map": {
+    "dock_smurf": "split_transaction_laundering",
+    "berth_skip": "multi_hop_chain",
+    "quay_wake": "mule_pass_through"
+  },
+  "note": "Recorded before scoring. Do not edit graph_features.py to pass this seed. FAMILY is eval-only."
+}

@@ -66,11 +66,13 @@ def build_evidence_items(txn: dict, network: dict, risk: dict | None, matches: l
             source_ref="shared_beneficiary_groups",
         ))
     if risk:
+        from graph_features import business_context
         items.append(EvidenceItem(
             evidence_id="E-RISK",
             type="account_risk",
             description=(
                 f"Account graph risk {risk.get('risk_score')} pattern {risk.get('primary_pattern')} "
+                f"context={business_context(risk)} "
                 f"age={risk.get('account_age_days')}d pass-through={risk.get('pass_through_ratio')} "
                 f"hold={risk.get('avg_hold_time_minutes')}m"
             ),

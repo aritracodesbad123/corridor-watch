@@ -1,19 +1,19 @@
 # Corridor Watch — final validation report
 
-Suite wrap run `f519ce3e8c9c` commit `0a0c06ce73ce` ts `2026-09-14T10:14:34.904749+00:00` — `reports/validation_report.json`. Seed `42`.
+Suite wrap run `5fcf08a2b0e3` commit `129bb69febcd` ts `2026-09-14T10:35:13.454904+00:00` — `reports/validation_report.json`. Seed `42`.
 Each experiment below keeps its own run ID / commit / timestamp. Do not collapse them into one number.
 Dictionary: `validation/METRICS.md`. Scoreboard: `reports/SCORECARD.md`.
 
 ## Benchmark A (generator A / hidden oracle)
 
-run `f519ce3e8c9c` commit `0a0c06ce73ce` ts `2026-09-14T10:14:34.904749+00:00` — `reports/validation_report.json`
+run `5fcf08a2b0e3` commit `129bb69febcd` ts `2026-09-14T10:35:13.454904+00:00` — `reports/validation_report.json`
 
 - n=586 F1=1.0 FPR=0.0
 - Runtime ignores `fraud_scenario`. Gate F1 ≥ 0.85.
 
 ## Benchmark B (independent Dist B, frozen seed 7)
 
-run `4f6abc7ebc8b` commit `8323b0486fc1` ts `2026-09-14T09:48:03.414152+00:00` — `reports/dist_b.json`
+run `5ecbc68cafbd` commit `129bb69febcd` ts `2026-09-14T10:33:52.239511+00:00` — `reports/dist_b.json`
 Before (same seed, pre-fix): precision=0.2593 F1=0.4118 FPR=1.0 (`reports/dist_b_before.json`).
 After: precision=1.0 F1=1.0 FPR=0.0 TP=28 FP=0 FN=0 TN=80.
 
@@ -71,17 +71,31 @@ Freeze: `reports/dist_e_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.80,
 - Normals: four-stage mine-smelter-trader-yard, royalties, MXN trade, noise, ambiguous levy/dues.
 - Levy/dues inbound and commercial pass-through: 0 flagged.
 
+## Benchmark F (independent Dist F, frozen seed 47, one-shot)
+
+run `4eb8ce459421` commit `129bb69febcd` ts `2026-09-14T10:31:36.867404+00:00` — `reports/dist_f.json`
+
+Freeze: `reports/dist_f_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.85, FPR ≤ 0.10, taxonomy_accuracy > 0. Do not retune on seed 47.
+
+`business_context` names commerce vs burst vs mule vs collection from graph features already on the score row. `pick_primary` names split on inbound burst and multi_hop on collecting layering; detection scores stay argmax. Fitted on Dist B + hard-neg + A + probe 43, **not** on frozen F. Deterministic verdict uses the higher-risk account's stored primary (does not re-argmax merged pattern_scores).
+
+- n=81 precision=1.0 recall=1.0 F1=1.0 FPR=0.0
+- Exact pattern_accuracy=0.0 (novel names vs five DNA labels).
+- taxonomy_accuracy=0.25 mapping_coverage=0.75 novel_detection_recall=1.0
+- Mapped: dock_smurf→split, berth_skip→multi_hop, quay_wake→mule. Unmapped novel: trade_overbill.
+- FAMILY is eval-only. Runtime ignores fraud_scenario.
+
 ## Hard negatives
 
-run `14994a64cf91` commit `0a0c06ce73ce` ts `2026-09-14T10:11:31.722125+00:00` — `reports/hard_negative_results.json`
+run `49dc0b84dff6` commit `129bb69febcd` ts `2026-09-14T10:33:55.354421+00:00` — `reports/hard_negative_results.json`
 
 - n=71 FPR=0.0 precision=1.0 recall=1.0
 - 10 legit archetypes + fraud twins. Not 7 isolated wires.
 
 ## Network v2 (investigation-useful)
 
-Full-graph account recall run `f519ce3e8c9c` commit `0a0c06ce73ce` ts `2026-09-14T10:14:34.904749+00:00` — `reports/network_metrics.json`: account=1.0
-v2 run `23b22fbba47d` commit `0a0c06ce73ce` ts `2026-09-14T10:11:31.944847+00:00` — `reports/network_evaluation_v2.json`: anchor=0.8333 critical-node=1.0 critical-edge=1.0 path=0.6667 recall@10=1.0
+Full-graph account recall run `5fcf08a2b0e3` commit `129bb69febcd` ts `2026-09-14T10:35:13.454904+00:00` — `reports/network_metrics.json`: account=1.0
+v2 run `f2d4819f442a` commit `129bb69febcd` ts `2026-09-14T10:33:55.575017+00:00` — `reports/network_evaluation_v2.json`: anchor=0.8333 critical-node=1.0 critical-edge=1.0 path=0.6667 recall@10=1.0
 
 Old full-graph line and v2 are different metrics. Do not substitute.
 
@@ -165,9 +179,10 @@ run `unstamped` commit `not-recorded` ts `not-recorded` — `reports/dr_gameday.
 
 - 2,000 TPS consume missed the 1500 gate (measured 1148). SQL-bound. Not claimed as 5,000 TPS.
 - Investigation-path recovery 0.6667 (not 1.0).
-- Pattern accuracy on Dist B can be 0 even when F1 is 1.0 (`burst_smurf` → `mule_pass_through`). Detection F1 is the scored metric.
+- Pattern accuracy on Dist B is 0 even when F1 is 1.0 (generator names ≠ DNA labels). Confusion: `burst_smurf` → `split_transaction_laundering`, `circular_pass` → `multi_hop_chain`. Detection F1 is the scored metric.
 - Policy B Gemini completion is 0.36 TPS on n=10. Not a fleet number.
 - PITR-to-past RPO is NOT_MEASURED.
 - Dist C one-shot (seed 23, pinned): recall=1.0 FPR=0.7568 F1=0.5. Not overwritten after the collecting-guard change.
 - Dist D one-shot (seed 37): recall=1.0 precision=0.587 FPR=0.3585 F1=0.7397. Missed precision≥0.80 / FPR≤0.10 (mill pass-through FPs). Detector was not retuned on D.
 - Dist E one-shot (seed 41): recall=1.0 precision=1.0 FPR=0.0 F1=1.0. Detector was not retuned on E. Pattern names still collapse to `mule_pass_through`; detection F1 is the scored metric.
+- Dist F one-shot (seed 47): recall=1.0 precision=1.0 FPR=0.0 F1=1.0 taxonomy=0.25 exact_pattern=0.0. Detector was not retuned on F.

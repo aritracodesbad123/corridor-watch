@@ -102,28 +102,11 @@ def deterministic_verdict(evidence: dict) -> dict:
     sender_risk = evidence.get("sender_risk") or {}
     receiver_risk = evidence.get("receiver_risk") or {}
     txn = evidence.get("transaction") or {}
-    patterns = {}
-    for side in (sender_risk, receiver_risk):
-        ps = side.get("pattern_scores") or {}
-        if isinstance(ps, str):
-            try:
-                ps = json.loads(ps)
-            except json.JSONDecodeError:
-                ps = {}
-        for k, v in ps.items():
-            patterns[k] = max(patterns.get(k, 0), float(v))
-
-    primary = max(patterns, key=patterns.get) if patterns else (
-        sender_risk.get("primary_pattern")
-        or receiver_risk.get("primary_pattern")
-        or txn.get("primary_pattern")
-        or "elevated_activity"
-    )
-    score = max(
-        float(sender_risk.get("risk_score") or 0),
-        float(receiver_risk.get("risk_score") or 0),
-        float(txn.get("risk_score") or 0),
-    )
+    s_score = float(sender_risk.get("risk_score") or 0)
+    r_score = float(receiver_risk.get("risk_score") or 0)
+    winner = sender_risk if s_score >= r_score else receiver_risk
+    primary = winner.get("primary_pattern") or txn.get("primary_pattern") or "elevated_activity"
+    score = max(s_score, r_score, float(txn.get("risk_score") or 0))
     if score >= 75:
         level = "high"
     elif score >= 50:
@@ -179,7 +162,7 @@ def deterministic_verdict(evidence: dict) -> dict:
             "shared_beneficiaries", "neighborhood", "sessions",
         ],
         "mode": "deterministic",
-        "pattern_scores": patterns,
+        "pattern_scores": winner.get("pattern_scores") or {},
     }
 
 

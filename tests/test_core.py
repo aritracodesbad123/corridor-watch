@@ -81,12 +81,13 @@ def test_burst_inbound_sink_still_flags():
         "behavioral_risk": 0.0,
     }
     assert collecting(burst) is True
-    score, _ = composite_score(burst, pattern_scores(burst, {}))
+    score, primary = composite_score(burst, pattern_scores(burst, {}))
     assert score >= FLAG_THRESHOLD
+    assert primary == "split_transaction_laundering"
 
 
 def test_pass_through_mule_still_flags():
-    from graph_features import FLAG_THRESHOLD, composite_score, pattern_scores
+    from graph_features import FLAG_THRESHOLD, business_context, composite_score, pattern_scores
     mule = {
         "account_age_days": 3,
         "pass_through_ratio": 1.0,
@@ -98,12 +99,14 @@ def test_pass_through_mule_still_flags():
         "corridor_velocity_score": 1.0,
         "behavioral_risk": 0.0,
     }
-    score, _ = composite_score(mule, pattern_scores(mule, {}))
+    assert business_context(mule) == "mule_like"
+    score, primary = composite_score(mule, pattern_scores(mule, {}))
     assert score >= FLAG_THRESHOLD
+    assert primary == "mule_pass_through"
 
 
 def test_old_commercial_pass_through_is_not_mule():
-    from graph_features import FLAG_THRESHOLD, collecting, composite_score, pattern_scores
+    from graph_features import FLAG_THRESHOLD, business_context, collecting, composite_score, pattern_scores
     mill = {
         "account_age_days": 900,
         "pass_through_ratio": 1.0,
@@ -116,8 +119,27 @@ def test_old_commercial_pass_through_is_not_mule():
         "behavioral_risk": 0.0,
     }
     assert collecting(mill) is False
+    assert business_context(mill) == "commercial"
     score, _ = composite_score(mill, pattern_scores(mill, {}))
     assert score < FLAG_THRESHOLD
+
+
+def test_layering_hop_names_multi_hop():
+    from graph_features import FLAG_THRESHOLD, composite_score, pattern_scores
+    hop = {
+        "account_age_days": 5,
+        "pass_through_ratio": 0.9,
+        "fan_in_count": 1,
+        "avg_hold_time_minutes": 40.0,
+        "shared_device_count": 0,
+        "shared_beneficiary_count": 0,
+        "multi_hop_chain_depth": 4,
+        "corridor_velocity_score": 1.0,
+        "behavioral_risk": 0.0,
+    }
+    score, primary = composite_score(hop, pattern_scores(hop, {}))
+    assert score >= FLAG_THRESHOLD
+    assert primary == "multi_hop_chain"
 
 
 def test_schema_bootstrap_is_idempotent(tmp_path, monkeypatch):

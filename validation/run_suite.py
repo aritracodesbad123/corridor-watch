@@ -66,6 +66,7 @@ def main(argv: list[str] | None = None) -> int:
     dist_c = _read(REPORTS / "dist_c.json")
     dist_d = _read(REPORTS / "dist_d.json")
     dist_e = _read(REPORTS / "dist_e.json")
+    dist_f = _read(REPORTS / "dist_f.json")
     live_tps = gates.get("max_sustained_consume_tps_passing_gate") or 814.13
     if det.get("network_metrics") and not (REPORTS / "network_metrics.json").exists():
         (REPORTS / "network_metrics.json").write_text(json.dumps(det["network_metrics"], indent=2, default=str))
@@ -110,6 +111,7 @@ def main(argv: list[str] | None = None) -> int:
         "dist_c": dist_c or None,
         "dist_d": dist_d or None,
         "dist_e": dist_e or None,
+        "dist_f": dist_f or None,
         "injection": inj,
         "hard_negatives": hn_net or hn,
         "network_v2": net_v2 or None,
@@ -133,8 +135,8 @@ def main(argv: list[str] | None = None) -> int:
     }
     (REPORTS / "validation_report.json").write_text(json.dumps(report, indent=2, default=str))
     _write_markdown(report, gates)
-    _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e)
-    _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e)
+    _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e, dist_f)
+    _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e, dist_f)
     dest = ROOT / "validation" / "results" / f"run_{started.replace(':', '').replace('-', '')[:15]}"
     dest.mkdir(parents=True, exist_ok=True)
     for name in ("SCORECARD.md", "VALIDATION_REPORT.md", "validation_report.json"):
@@ -200,7 +202,7 @@ def _exp(d: dict, artifact: str) -> str:
     return f"run `{rid}` commit `{commit}` ts `{ts}` — `{artifact}`"
 
 
-def _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c=None, dist_d=None, dist_e=None) -> None:
+def _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c=None, dist_d=None, dist_e=None, dist_f=None) -> None:
     det = report.get("deterministic") or {}
     metrics = det.get("metrics") or {}
     before = (dist_b_before or {}).get("metrics") or {}
@@ -289,6 +291,20 @@ Freeze: `reports/dist_e_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.80,
 - Normals: four-stage mine-smelter-trader-yard, royalties, MXN trade, noise, ambiguous levy/dues.
 - Levy/dues inbound and commercial pass-through: 0 flagged.
 
+## Benchmark F (independent Dist F, frozen seed 47, one-shot)
+
+{_exp(dist_f or {{}}, "reports/dist_f.json")}
+
+Freeze: `reports/dist_f_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.85, FPR ≤ 0.10, taxonomy_accuracy > 0. Do not retune on seed 47.
+
+`business_context` names commerce vs burst vs mule vs collection from graph features already on the score row. `pick_primary` names split on inbound burst and multi_hop on collecting layering; detection scores stay argmax. Fitted on Dist B + hard-neg + A + probe 43, **not** on frozen F. Deterministic verdict uses the higher-risk account's stored primary (does not re-argmax merged pattern_scores).
+
+- n={(dist_f or {{}}).get("sample_count")} precision={((dist_f or {{}}).get("metrics") or {{}}).get("precision")} recall={((dist_f or {{}}).get("metrics") or {{}}).get("recall")} F1={((dist_f or {{}}).get("metrics") or {{}}).get("f1")} FPR={((dist_f or {{}}).get("metrics") or {{}}).get("false_positive_rate")}
+- Exact pattern_accuracy={(dist_f or {{}}).get("pattern_accuracy")} (novel names vs five DNA labels).
+- taxonomy_accuracy={(dist_f or {{}}).get("taxonomy_accuracy")} mapping_coverage={(dist_f or {{}}).get("mapping_coverage")} novel_detection_recall={(dist_f or {{}}).get("novel_detection_recall")}
+- Mapped: dock_smurf→split, berth_skip→multi_hop, quay_wake→mule. Unmapped novel: trade_overbill.
+- FAMILY is eval-only. Runtime ignores fraud_scenario.
+
 ## Hard negatives
 
 {_exp(hn or {{}}, "reports/hard_negative_results.json")}
@@ -364,18 +380,19 @@ Rule-miner holdout {_exp(hold, "reports/rule_miner_holdout.json")}: precision={h
 
 - 2,000 TPS consume missed the 1500 gate (measured 1148). SQL-bound. Not claimed as 5,000 TPS.
 - Investigation-path recovery {(net_v2 or {{}}).get("investigation_path_recovery")} (not 1.0).
-- Pattern accuracy on Dist B can be 0 even when F1 is 1.0 (`burst_smurf` → `mule_pass_through`). Detection F1 is the scored metric.
+- Pattern accuracy on Dist B is 0 even when F1 is 1.0 (generator names ≠ DNA labels). Confusion: `burst_smurf` → `split_transaction_laundering`, `circular_pass` → `multi_hop_chain`. Detection F1 is the scored metric.
 - Policy B Gemini completion is 0.36 TPS on n=10. Not a fleet number.
 - PITR-to-past RPO is NOT_MEASURED.
 - Dist C one-shot (seed 23, pinned): recall={((dist_c or {{}}).get("metrics") or {{}}).get("recall")} FPR={((dist_c or {{}}).get("metrics") or {{}}).get("false_positive_rate")} F1={((dist_c or {{}}).get("metrics") or {{}}).get("f1")}. Not overwritten after the collecting-guard change.
 - Dist D one-shot (seed 37): recall={((dist_d or {{}}).get("metrics") or {{}}).get("recall")} precision={((dist_d or {{}}).get("metrics") or {{}}).get("precision")} FPR={((dist_d or {{}}).get("metrics") or {{}}).get("false_positive_rate")} F1={((dist_d or {{}}).get("metrics") or {{}}).get("f1")}. Missed precision≥0.80 / FPR≤0.10 (mill pass-through FPs). Detector was not retuned on D.
 - Dist E one-shot (seed 41): recall={((dist_e or {{}}).get("metrics") or {{}}).get("recall")} precision={((dist_e or {{}}).get("metrics") or {{}}).get("precision")} FPR={((dist_e or {{}}).get("metrics") or {{}}).get("false_positive_rate")} F1={((dist_e or {{}}).get("metrics") or {{}}).get("f1")}. Detector was not retuned on E. Pattern names still collapse to `mule_pass_through`; detection F1 is the scored metric.
+- Dist F one-shot (seed 47): recall={((dist_f or {{}}).get("metrics") or {{}}).get("recall")} precision={((dist_f or {{}}).get("metrics") or {{}}).get("precision")} FPR={((dist_f or {{}}).get("metrics") or {{}}).get("false_positive_rate")} F1={((dist_f or {{}}).get("metrics") or {{}}).get("f1")} taxonomy={(dist_f or {{}}).get("taxonomy_accuracy")} exact_pattern={(dist_f or {{}}).get("pattern_accuracy")}. Detector was not retuned on F.
 """
     (ROOT / "FINAL_VALIDATION_REPORT.md").write_text(body)
     (REPORTS / "FINAL_VALIDATION_REPORT.md").write_text(body)
 
 
-def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval, net_v2=None, tput_v2=None, dist_b_before=None, dist_c=None, dist_d=None, dist_e=None) -> None:
+def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval, net_v2=None, tput_v2=None, dist_b_before=None, dist_c=None, dist_d=None, dist_e=None, dist_f=None) -> None:
     det = report.get("deterministic") or {}
     metrics = det.get("metrics") or {}
     f1 = metrics.get("f1")
@@ -458,6 +475,19 @@ def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, h
         if dist_e_m.get("f1") is not None
         else "NOT_MEASURED"
     )
+    dist_f_m = (dist_f or {}).get("metrics") or {}
+    dist_f_fpr = dist_f_m.get("false_positive_rate")
+    dist_f_ok = (
+        (dist_f_m.get("recall") or 0) >= 0.90
+        and (dist_f_m.get("precision") or 0) >= 0.85
+        and dist_f_fpr is not None and dist_f_fpr <= 0.10
+        and (dist_f or {}).get("taxonomy_accuracy") not in (None, 0)
+    ) if dist_f_m.get("f1") is not None else False
+    dist_f_row = (
+        f"{'Verified' if dist_f_ok else 'Measured'} F1 {dist_f_m.get('f1')} recall {dist_f_m.get('recall')} FPR {dist_f_m.get('false_positive_rate')} taxonomy {(dist_f or {}).get('taxonomy_accuracy')} (seed 47 one-shot)"
+        if dist_f_m.get("f1") is not None
+        else "NOT_MEASURED"
+    )
     pol_a = (tput_v2 or {}).get("policy_a_deterministic") or {}
     pol_b = (tput_v2 or {}).get("policy_b_gemini") or {}
     hn_fpr = hn.get("fpr") if hn else None
@@ -476,6 +506,7 @@ Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`
 | Dist C F1 | {dist_c_row} | `reports/dist_c.json` (freeze `reports/dist_c_freeze.json`) |
 | Dist D F1 | {dist_d_row} | `reports/dist_d.json` (freeze `reports/dist_d_freeze.json`) |
 | Dist E F1 | {dist_e_row} | `reports/dist_e.json` (freeze `reports/dist_e_freeze.json`) |
+| Dist F F1 | {dist_f_row} | `reports/dist_f.json` (freeze `reports/dist_f_freeze.json`) |
 | Network account recall | {_status(net.get('account_recall'))} | `reports/network_metrics.json` |
 | Network v2 anchor recall | {_status((net_v2 or {}).get('anchor_recall'))} | `reports/network_evaluation_v2.json` |
 | Network v2 critical-node recall | {_status((net_v2 or {}).get('critical_node_recall'))} | `reports/network_evaluation_v2.json` |

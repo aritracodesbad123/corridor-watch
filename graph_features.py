@@ -163,6 +163,45 @@ def collecting(features: dict) -> bool:
     )
 
 
+def business_context(features: dict) -> str:
+    """Why this node looks like commerce, collection, burst, or a mule. Graph only."""
+    age = int(features.get("account_age_days") or 0)
+    ptr = float(features.get("pass_through_ratio") or 0)
+    hold = float(features.get("avg_hold_time_minutes") or 99999)
+    vel = float(features.get("corridor_velocity_score") or 0)
+    fan_in = int(features.get("fan_in_count") or 0)
+    if vel >= 4:
+        return "burst"
+    if age <= 7 or hold < 180:
+        return "mule_like"
+    if age > 90 and hold >= 180 and vel < 4 and ptr >= 0.2:
+        return "commercial"
+    if age > 90 and ptr < 0.2 and fan_in >= 3:
+        return "collection_sink"
+    return "other"
+
+
+def pick_primary(features: dict, patterns: dict) -> str:
+    """Name the DNA family from distinctive signals. Does not change detection scores.
+
+    # ponytail: corridor_velocity is sender-only, so inbound burst uses young fan-in
+    """
+    vel = float(features.get("corridor_velocity_score") or 0)
+    ptr = float(features.get("pass_through_ratio") or 0)
+    hop = int(features.get("multi_hop_chain_depth") or 0)
+    age = int(features.get("account_age_days") or 0)
+    fan_in = int(features.get("fan_in_count") or 0)
+    split = float(patterns.get("split_transaction_laundering") or 0)
+    multi = float(patterns.get("multi_hop_chain") or 0)
+    inbound_burst = vel >= 4 or (fan_in >= 3 and age <= 7)
+    if inbound_burst and ptr < 0.3 and split >= 35:
+        return "split_transaction_laundering"
+    if hop >= 3 and collecting(features) and multi >= 35:
+        return "multi_hop_chain"
+    primary = max(patterns, key=patterns.get)
+    return primary if patterns[primary] >= 35 else "elevated_activity"
+
+
 def pattern_scores(features: dict, account: dict) -> dict[str, float]:
     age = features["account_age_days"]
     ptr = features["pass_through_ratio"]
@@ -212,14 +251,15 @@ def composite_score(features: dict, patterns: dict) -> tuple[float, str]:
     base = 0
     fan_in = features["fan_in_count"] if collecting(features) else 0
     base += min(fan_in * 5, 25)
-    base += min(features["pass_through_ratio"] * 30, 30)
+    ptr = 0.0 if business_context(features) == "commercial" else features["pass_through_ratio"]
+    base += min(ptr * 30, 30)
     base += 15 if features["account_age_days"] <= 7 else (8 if features["account_age_days"] <= 30 else 0)
     base += min(features["shared_device_count"] * 8, 20)
     base += min(features["behavioral_risk"] * 0.2, 15)
     base += 10 if features["avg_hold_time_minutes"] < 180 else 0
-    primary = max(patterns, key=patterns.get)
-    score = round(min(max(base, patterns[primary] * 0.85), 100), 1)
-    return score, primary if patterns[primary] >= 35 else "elevated_activity"
+    top = max(patterns, key=patterns.get)
+    score = round(min(max(base, patterns[top] * 0.85), 100), 1)
+    return score, pick_primary(features, patterns)
 
 
 def score_all(con):
