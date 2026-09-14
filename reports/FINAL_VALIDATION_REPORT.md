@@ -1,8 +1,11 @@
 # Corridor Watch — final validation report
 
+<!-- FROZEN_EVIDENCE_PACK -->
+All competition benchmark artifacts are frozen one-shot evaluations. Subsequent code changes are not used to alter or replace benchmark results.
+
 Suite wrap run `5fcf08a2b0e3` commit `129bb69febcd` ts `2026-09-14T10:35:13.454904+00:00` — `reports/validation_report.json`. Seed `42`.
 Each experiment below keeps its own run ID / commit / timestamp. Do not collapse them into one number.
-Dictionary: `validation/METRICS.md`. Scoreboard: `reports/SCORECARD.md`.
+Dictionary: `validation/METRICS.md`. Scoreboard: `reports/SCORECARD.md`. Provenance: `reports/BENCHMARK_PROVENANCE.md`.
 
 ## Benchmark A (generator A / hidden oracle)
 
@@ -83,6 +86,9 @@ Freeze: `reports/dist_f_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.85,
 - Exact pattern_accuracy=0.0 (novel names vs five DNA labels).
 - taxonomy_accuracy=0.25 mapping_coverage=0.75 novel_detection_recall=1.0
 - Mapped: dock_smurf→split, berth_skip→multi_hop, quay_wake→mule. Unmapped novel: trade_overbill.
+- `pattern_accuracy` is exact canonical Pattern DNA label agreement (structurally 0 on novel generator names).
+- `taxonomy_accuracy` uses an eval-only FAMILY map declared in `generator_f.py` **before** the run. Runtime never sees those names and does not add Dist F labels to Pattern DNA.
+- Unmapped families stay novel (`novel_detection_recall`) rather than being renamed to a DNA string.
 - FAMILY is eval-only. Runtime ignores fraud_scenario.
 
 ## Hard negatives
@@ -175,14 +181,15 @@ run `unstamped` commit `not-recorded` ts `not-recorded` — `reports/dr_gameday.
 
 - RTO=4.5 min. Clone RPO=0.0 min (current-state). PITR-to-past NOT_MEASURED.
 
-## Known failures
+## Known limitations
 
-- 2,000 TPS consume missed the 1500 gate (measured 1148). SQL-bound. Not claimed as 5,000 TPS.
-- Investigation-path recovery 0.6667 (not 1.0).
-- Pattern accuracy on Dist B is 0 even when F1 is 1.0 (generator names ≠ DNA labels). Confusion: `burst_smurf` → `split_transaction_laundering`, `circular_pass` → `multi_hop_chain`. Detection F1 is the scored metric.
+- Synthetic ledgers only. No production bank integration.
+- **814 TPS** measured sustained ingest under the defined SLO. **5,000 TPS is a target, not achieved.** 2,000 TPS consume missed the 1500 gate (measured 1148). SQL-bound.
+- Dist C FPR 0.7568 / F1 0.5 and Dist D FPR 0.3585 / F1 0.7397 are frozen false-positive misses. Detector was not retuned on C or D.
+- Full investigation-path recall = **0.667** (not 1.0).
+- Exact novel taxonomy classification remains imperfect: Dist F `pattern_accuracy` 0.0, `taxonomy_accuracy` 0.25. Unmapped `trade_overbill` was detected (recall 1.0) without being assigned a DNA name.
+- Dist B exact name-match is 0 (generator names ≠ DNA labels). Confusion: `burst_smurf` → `split_transaction_laundering`, `circular_pass` → `multi_hop_chain`. Detection F1 is the scored metric.
+- Official Gemini Faithfulness evaluation is **n=10**, not the 205-case DeepEval mix.
+- PITR-to-past RPO is NOT_MEASURED. Clone RPO 0.0 min is current-state only.
 - Policy B Gemini completion is 0.36 TPS on n=10. Not a fleet number.
-- PITR-to-past RPO is NOT_MEASURED.
-- Dist C one-shot (seed 23, pinned): recall=1.0 FPR=0.7568 F1=0.5. Not overwritten after the collecting-guard change.
-- Dist D one-shot (seed 37): recall=1.0 precision=0.587 FPR=0.3585 F1=0.7397. Missed precision≥0.80 / FPR≤0.10 (mill pass-through FPs). Detector was not retuned on D.
-- Dist E one-shot (seed 41): recall=1.0 precision=1.0 FPR=0.0 F1=1.0. Detector was not retuned on E. Pattern names still collapse to `mule_pass_through`; detection F1 is the scored metric.
-- Dist F one-shot (seed 47): recall=1.0 precision=1.0 FPR=0.0 F1=1.0 taxonomy=0.25 exact_pattern=0.0. Detector was not retuned on F.
+- Dist E/F: 100% recall on those frozen unseen fraud families is not 100% accuracy on all fraud.

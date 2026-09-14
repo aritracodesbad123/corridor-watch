@@ -35,6 +35,8 @@ def test_distribution_e_one_shot_artifact_is_pinned():
     assert payload["metrics"]["f1"] == 1.0
     assert payload["metrics"]["false_positive_rate"] == 0.0
     assert freeze["frozen_seed"] == 41
+    assert freeze["dataset_version"] == "generator_e.seed41"
+    assert freeze["generator"] == "validation/external/generator_e.py"
     assert freeze["graph_features_sha256_12"] == "87fcdbefdd16"
     assert freeze["do_not_tune"] is True
     assert freeze["frozen_before_run"] is True

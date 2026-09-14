@@ -15,6 +15,11 @@ from validation import ROOT, SEED, experiment_metadata
 REPORTS = ROOT / "reports"
 
 
+def _frozen_pack() -> bool:
+    card = REPORTS / "SCORECARD.md"
+    return card.exists() and "FROZEN_EVIDENCE_PACK" in card.read_text(encoding="utf-8")
+
+
 def _read(path: Path) -> dict:
     if not path.exists():
         return {}
@@ -133,10 +138,11 @@ def main(argv: list[str] | None = None) -> int:
             "label": dr.get("label", "Target — not yet timed"),
         },
     }
-    (REPORTS / "validation_report.json").write_text(json.dumps(report, indent=2, default=str))
-    _write_markdown(report, gates)
-    _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e, dist_f)
-    _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e, dist_f)
+    if not _frozen_pack():
+        (REPORTS / "validation_report.json").write_text(json.dumps(report, indent=2, default=str))
+        _write_markdown(report, gates)
+        _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e, dist_f)
+        _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e, dist_f)
     dest = ROOT / "validation" / "results" / f"run_{started.replace(':', '').replace('-', '')[:15]}"
     dest.mkdir(parents=True, exist_ok=True)
     for name in ("SCORECARD.md", "VALIDATION_REPORT.md", "validation_report.json"):

@@ -1,35 +1,39 @@
-# Architecture notes (master spec evolution)
+# Architecture notes
 
-Corridor Watch is now two cooperating layers:
+**The transaction is not the crime. The network is.** Judge-facing brief: [COMPETITION.md](COMPETITION.md).
 
-1. **Existing investigation console** — DAG, Gemini tool agent, Phase 2/3 judgment tools, analyst RBAC.
+```text
+Transactions
+     ↓
+Network Construction
+     ↓
+Deterministic Detection
+     ↓
+Investigation DAG
+     ↓
+Evidence Pack
+     ↓
+Gemini Copilot
+     ↓
+Grounding Gate
+     ↓
+Human Decision
+     ↓
+Crime Pattern DNA
+     ↓
+Institutional Memory
+     ↺
+Future Investigations
+```
+
+Corridor Watch is two cooperating layers:
+
+1. **Investigation console** — DAG, Gemini copilot, Pattern DNA, analyst RBAC.
 2. **Network intelligence platform** — ingest → cheap screen → investigation queue → bounded graph → Crime Pattern DNA → evidence-grounded Gemini → human decision → reusable pattern.
 
-```
-synthetic generator
-        ↓
-Google Pub/Sub (corridor-transactions)
-        ↓
-push subscription → Cloud Run /api/pubsub/push
-        ↓
-validate + idempotent persist     (no Gemini)
-        ↓
-cheap_screen → LOW / MEDIUM / HIGH / CRITICAL
-        ↓
-one commit: ledger + investigation_queue + outbox_events
-        ↓
-outbox worker / in-request drain → optional corridor-investigations notify
-        ↓
-bounded graph + DNA match
-        ↓
-Gemini copilot (HIGH/CRITICAL or analyst-requested only)
-        ↓
-human decision + audit
-        ↓
-Crime Pattern DNA library
-```
+Ingest never calls Gemini. High-risk freeze/hold/escalate requires `fiu_lead`. Graphs distinguish observed / external / inferred / unknown. Visibility is a coverage score, not guilt.
 
-Graphs distinguish **observed / external / inferred / unknown**. Visibility is a coverage score, not guilt. Gemini must not invent missing institutions. Synthetic intelligence is an optional overlay; ingest stays cheap.
+SQLite is local-only. GCP uses Cloud SQL PostgreSQL. Report only measured `achieved_tps`. 5,000 TPS is a **TARGET**.
 
 The durable investigation queue is **PostgreSQL**, not a second Pub/Sub consumer.
 `outbox_events` is written in the same ingest transaction. `INVESTIGATION_TOPIC` is a best-effort notification after commit; unpublished outbox rows retry.

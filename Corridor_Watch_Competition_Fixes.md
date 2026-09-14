@@ -1,5 +1,8 @@
 # Corridor Watch — Competition Fix & Mitigation Plan
 
+> **Historical planning notes. Not canonical.** Measured numbers: [`reports/SCORECARD.md`](reports/SCORECARD.md). Judge brief: [`docs/COMPETITION.md`](docs/COMPETITION.md). Gemini agreement is **1.0, n=100**; p95 **4.025s**; cost/case **$0.00143**. Do not quote older Gemini figures from this file.
+
+
 ## Purpose
 
 Close the gaps identified during the latest competition-rubric review of the public Corridor Watch repository.

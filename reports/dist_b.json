@@ -4,7 +4,7 @@
   "git_commit": "129bb69febcd866da959a268e17fc48c96c0269a",
   "environment": "local",
   "dataset": "dist_b",
-  "dataset_version": "data_gen.seed42",
+  "dataset_version": "generator_b.seed7",
   "model": null,
   "model_version": null,
   "prompt_version": "investigator-v8",

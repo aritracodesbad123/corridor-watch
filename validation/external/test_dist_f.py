@@ -44,6 +44,8 @@ def test_distribution_f_one_shot_artifact_is_pinned():
     assert payload["novel_detection_recall"] == 1.0
     assert payload["family_map"] == FAMILY
     assert freeze["frozen_seed"] == 47
+    assert freeze["dataset_version"] == "generator_f.seed47"
+    assert freeze["generator"] == "validation/external/generator_f.py"
     assert freeze["graph_features_sha256_12"] == "34a3e1a3dff0"
     assert freeze["do_not_tune"] is True
     assert freeze["frozen_before_run"] is True

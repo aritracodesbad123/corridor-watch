@@ -16,7 +16,7 @@
   "key_node_recall": 1.0,
   "relationship_reconstruction": 1.0,
   "path_recovery": 1.0,
-  "anchor_recall": 0.8333,
+  "anchor_recall": 1.0,
   "critical_node_recall": 1.0,
   "critical_edge_recall": 1.0,
   "investigation_path_recovery": 0.6667,
@@ -59,14 +59,7 @@
         "fp": 0,
         "fn": 0
       },
-      "anchor_recall": {
-        "precision": 0,
-        "recall": 0,
-        "f1": 0,
-        "tp": 0,
-        "fp": 0,
-        "fn": 0
-      },
+      "anchor_recall": "not_applicable",
       "critical_node_recall": {
         "precision": 1.0,
         "recall": 1.0,
@@ -421,5 +414,5 @@
       "truth_nodes": 3
     }
   ],
-  "note": "Existing full-graph account recall kept in reports/network_metrics.json. These rows are investigation-useful."
+  "note": "Existing full-graph account recall kept in reports/network_metrics.json. These rows are investigation-useful. anchor_recall is the mean over clusters with designated anchors. One circular_pass component had no anchors (not_applicable), previously averaged as 0 to yield 0.8333 — that 0 was N/A, not a miss."
 }

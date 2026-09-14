@@ -26,13 +26,9 @@ Source: `benchmarks/latest.json`. Ground truth = `transactions.fraud_scenario`. 
 | sample_count | 586 |
 | precision / recall / f1 | 1.0 / 1.0 / 1.0 |
 | false_positive_rate | 0.0 |
-| pattern_accuracy | 0.9915 |
-| quality_gate | passed (recall ≥ 0.9, precision ≥ 0.5, pattern_accuracy ≥ 0.9) |
-| investigation_compression | 117 flagged → 30 networks (3.9×) |
+| pattern_accuracy | 0.8547 (Measured; detection F1 is the scored metric) |
 
-One pattern confusion: `multi_hop_chain → shared_device_ring` (1 case).
-
-Do not present 100% precision as production AML performance.
+Canonical wrap: `reports/validation_report.json`. Do not present 100% detection F1 as production AML performance.
 
 ## Gemini controls that are enforced
 
@@ -49,17 +45,17 @@ Do not present 100% precision as production AML performance.
 
 Source: `reports/gemini_agreement.json`. Isolated ingest, **100** cases, `gemini-2.5-flash`. Gate agreement ≥ 0.85 on schema-valid reports; p95 ≤ 8 s.
 
-Agreement **0.949** on **98** schema-valid reports (100 attempted; **2 HTTP 429**). Wilson 95% CI **0.89–0.98**. p95 **18928 ms** — **missed** the 8 s gate. Cost/case **$0.002387**. Tokens/case **1973.3**.
-Do not present this as 100% of 100 calls. Schema fallback is no longer the main loss mode. Gemini cannot downgrade a deterministic disposition (`apply_grounding_gate`).
+Agreement **1.0** on **100** schema-valid reports (100 invoked). Wilson 95% CI **0.963–1.0**. p95 **4025.4 ms (4.025 s)** — passed the 8 s gate. Cost/case **$0.00143**. Tokens/case **1397.3**.
+Gemini cannot downgrade a deterministic disposition (`apply_grounding_gate`).
 
 ## What is not measured
 
 | Item | Status |
 |---|---|
-| Gemini vs deterministic verdict agreement | **measured 0.949 on 98/100 schema-valid**; 2 HTTP 429 |
-| Hallucination rate on live cases | live ungrounded **0.0** on 100 invoked (`reports/hallucination.json`) |
-| Token usage / cost per case | **measured** $0.00241 / 1977.8 tokens on schema-valid cost mean |
-| DeepEval official FaithfulnessMetric (LLM judge) | NOT_MEASURED unless Gemini judge binds |
+| Gemini vs deterministic verdict agreement | **measured 1.0 on n=100** |
+| Hallucination rate on live cases | live ungrounded **0.0** on 100 invoked (`reports/hallucination.json`); live model hallucination rate NOT_MEASURED as a rate |
+| Token usage / cost per case | **measured** $0.00143 / 1397.3 tokens |
+| DeepEval official FaithfulnessMetric (LLM judge) | **RAN n=10** score 1.0; 205-case mix is custom BaseMetric, not 205 Gemini-judged cases |
 | Shadow v1 vs v2 promotion gate | metric exists; no live promotion run |
 | Monthly 99.9% availability | session 5xx only (`/api/metrics` slos) |
 

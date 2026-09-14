@@ -125,6 +125,8 @@
     "frozen_seed": 41,
     "flag_threshold": 40,
     "graph_features_sha256_12": "87fcdbefdd16",
+    "dataset_version": "generator_e.seed41",
+    "generator": "validation/external/generator_e.py",
     "note": "Recorded before scoring. Do not edit graph_features.py to pass this seed."
   },
   "one_shot": true,

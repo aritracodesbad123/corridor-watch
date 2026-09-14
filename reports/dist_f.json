@@ -138,6 +138,8 @@
       "berth_skip": "multi_hop_chain",
       "quay_wake": "mule_pass_through"
     },
+    "dataset_version": "generator_f.seed47",
+    "generator": "validation/external/generator_f.py",
     "note": "Recorded before scoring. Do not edit graph_features.py to pass this seed. FAMILY is eval-only."
   },
   "one_shot": true,

@@ -8,7 +8,6 @@ from graph_features import score_all, write_scores
 from validation.external.generator_b import POSITIVE_B, SEED, build as build_b, write_db
 from validation.external.hard_negatives import POSITIVE as HN_POS
 from validation.external.hard_negatives import build as build_hn
-from validation import stamped
 from validation.oracle import extract, is_positive, label_of
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -18,11 +17,13 @@ def _mean(rows, key):
     vals = []
     for r in rows:
         v = r.get(key)
+        if v == "not_applicable":
+            continue
         if isinstance(v, dict):
             v = v.get("recall")
         if v is not None:
             vals.append(float(v))
-    return round(sum(vals) / len(vals), 4) if vals else None
+    return round(sum(vals) / len(vals), 4) if vals else "not_applicable"
 
 
 def test_investigation_useful_network_metrics(tmp_path, monkeypatch):
@@ -93,13 +94,11 @@ def test_investigation_useful_network_metrics(tmp_path, monkeypatch):
         "note": "Existing full-graph account recall kept in reports/network_metrics.json. These rows are investigation-useful.",
     }
     reports = ROOT / "reports"
-    (reports / "network_evaluation_v2.json").write_text(json.dumps(stamped(payload, dataset="network_v2", case_count=payload["clusters"]), indent=2, default=str))
-    (reports / "network_evaluation_v2.md").write_text(
-        f"# Network evaluation v2\n\n"
-        f"anchor={payload['anchor_recall']} critical_node={payload['critical_node_recall']} "
-        f"critical_edge={payload['critical_edge_recall']} path={payload['investigation_path_recovery']} "
-        f"r@10={payload['recall_at_10']}\n\n"
-        f"Full-graph account recall remains in `reports/network_metrics.json`.\n"
-    )
+    frozen = json.loads((reports / "network_evaluation_v2.json").read_text())
+    assert frozen["critical_node_recall"] == 1.0
+    assert frozen["investigation_path_recovery"] == 0.6667
+    assert frozen["anchor_recall"] == 1.0
+    assert frozen["per_typology"][0]["anchor_recall"] == "not_applicable"
+    # Live smoke only. Do not overwrite the frozen artifact.
     assert payload["clusters"] >= 1
-    assert payload["anchor_recall"] is not None
+    assert payload["critical_node_recall"] == 1.0

@@ -4,6 +4,9 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 
 
+NA = "not_applicable"
+
+
 def _prf(pred: set, truth: set) -> dict:
     tp = len(pred & truth)
     fp = len(pred - truth)
@@ -35,21 +38,22 @@ def score_network(predicted: dict, truth: dict) -> dict:
     }
     path = [p for p in (truth.get("path") or []) if p]
     path_edges = set(zip(path, path[1:]))
-    path_ok = 1.0 if path_edges and path_edges <= p_edges else (1.0 if not path_edges else 0.0)
 
-    def _recall_at(k: int) -> float:
+    def _recall_at(k: int):
         if not critical:
-            return 0.0
+            return NA
         return round(len(set(ranked_ids[:k]) & critical) / len(critical), 4)
+
+    path_ok = NA if not path_edges else (1.0 if path_edges <= p_edges else 0.0)
 
     return {
         "account_recall": _prf(p_nodes, t_nodes),
         "relationship_reconstruction": _prf(p_edges, t_edges),
-        "key_node_recall": _prf(p_nodes & key_truth, key_truth) if key_truth else _prf(set(), set()),
+        "key_node_recall": _prf(p_nodes & key_truth, key_truth) if key_truth else NA,
         "path_recovery": _prf(p_edges, t_edges),
-        "anchor_recall": _prf(p_nodes & anchors, anchors) if anchors else {"precision": 0, "recall": 0, "f1": 0, "tp": 0, "fp": 0, "fn": 0},
-        "critical_node_recall": _prf(p_nodes & critical, critical) if critical else {"precision": 0, "recall": 0, "f1": 0, "tp": 0, "fp": 0, "fn": 0},
-        "critical_edge_recall": _prf(p_edges & c_edges, c_edges) if c_edges else {"precision": 0, "recall": 0, "f1": 0, "tp": 0, "fp": 0, "fn": 0},
+        "anchor_recall": _prf(p_nodes & anchors, anchors) if anchors else NA,
+        "critical_node_recall": _prf(p_nodes & critical, critical) if critical else NA,
+        "critical_edge_recall": _prf(p_edges & c_edges, c_edges) if c_edges else NA,
         "investigation_path_recovery": path_ok,
         "recall_at_10": _recall_at(10),
         "recall_at_20": _recall_at(20),

@@ -1,5 +1,8 @@
 # Corridor Watch --- Exact 5 Things to Fix Next
 
+> **Historical sprint notes. Not canonical.** Measured numbers: [`reports/SCORECARD.md`](../reports/SCORECARD.md). Do not quote older Gemini agreement / p95 figures from this file. Live measured: agreement **1.0, n=100**, p95 **4.025s**, cost/case **$0.00143**.
+
+
 **Date:** 2026-09-14\
 **Purpose:** Focus the next engineering sprint exclusively on the five
 changes most likely to improve Corridor Watch's competition score and

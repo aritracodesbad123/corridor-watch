@@ -6,3 +6,8 @@ fraud_demo.db
 .env
 credentials.json
 .serena/
+.pytest_cache/
+.deepeval/
+*.egg-info/
+.coverage
+htmlcov/
