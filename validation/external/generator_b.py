@@ -12,8 +12,8 @@ SEED = 7
 POSITIVE_B = {"circular_pass", "burst_smurf"}
 
 
-def build(n_normal: int = 80, n_circle: int = 12, n_smurf: int = 16) -> tuple[list[dict], list[dict]]:
-    rng = random.Random(SEED)
+def build(n_normal: int = 80, n_circle: int = 12, n_smurf: int = 16, *, seed: int = SEED) -> tuple[list[dict], list[dict]]:
+    rng = random.Random(seed)
     t0 = datetime(2024, 6, 1, 9, 0, 0)
     accounts: list[dict] = []
     txns: list[dict] = []

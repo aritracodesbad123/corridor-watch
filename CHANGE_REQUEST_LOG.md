@@ -24,6 +24,7 @@
 | **CR-020** | Production evidence | Four `production/` reports: measured load paths, DR procedure without invented RPO, threat model mapped to tests, AI validation on synthetic + grounding gates. | **Completed** | v1.11.0 |
 | **CR-021** | Validation suite | Executable `validation/` suite + `reports/SCORECARD.md`. Prove existing controls (grounding, 5.65 TPS SLO, adversarial, DR Target, UX/a11y). No DeepEval dependency. Do not claim 5,000 TPS. | **Completed** | v1.12.0 |
 | **CR-022** | Validation honesty | Reverse CR-021: add real `deepeval` package + BaseMetric wrappers. Hidden oracle, Dist B generator, network recall, hallucination≠cost, injection decision-change, races, investigation enqueue TPS, miner holdout. Never claim 5,000 TPS. | **Completed** | v1.13.0 |
+| **CR-023** | Five score-gap fixes | Dist B source-only velocity no longer counts as split; hard-negative *networks*; investigation-useful network v2; DeepEval n≥100 `ran:true`; investigation *completion* TPS. Frozen Dist B seed 7. Never claim 5,000 TPS. | **Completed** | v1.14.0 |
 
 ---
 
@@ -93,3 +94,7 @@
 ### CR-022: Validation honesty and DeepEval
 - **Modules**: `validation/`, `evaluation.py`, `risk/tiers.py`, `patterns/matcher.py`, `privacy.py`, `rule_miner.py`, `reports/`
 - **Capability**: Real `deepeval` package + BaseMetric wrappers. Hidden oracle (runtime ignores `fraud_scenario`). Dist B generator. Network recall. Hallucination ≠ cost. Injection decision-change. Concurrent claim races. Investigation enqueue TPS. Rule-miner 70/30 holdout without invented 94% precision. Do not claim 5,000 TPS or 100% Gemini from n=3.
+
+### CR-023: Five score-gap fixes
+- **Modules**: `graph_features.py`, `validation/external/`, `graph/network_metrics.py`, `validation/deepeval/`, `validation/scale/`, `reports/`
+- **Capability**: Dist B FPR from source-only velocity (forensics then detector). Hard-negative network archetypes + fraud twins. Investigation-useful network metrics beside full-graph account recall. DeepEval on ≥100 investigation reports (`ran: true` only then). Investigation completion TPS / time-to-verdict (Policy A/B). Frozen Dist B test seed 7; threshold sweep on seed 11 only. Do not claim 5,000 TPS.

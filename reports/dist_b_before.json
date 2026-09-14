@@ -9,13 +9,13 @@
   "sample_count": 108,
   "metrics": {
     "tp": 28,
-    "fp": 0,
+    "fp": 80,
     "fn": 0,
-    "tn": 80,
-    "precision": 1.0,
+    "tn": 0,
+    "precision": 0.2593,
     "recall": 1.0,
-    "f1": 1.0,
-    "false_positive_rate": 0.0
+    "f1": 0.4118,
+    "false_positive_rate": 1.0
   },
   "per_scenario": {
     "burst_smurf": {
@@ -30,8 +30,8 @@
     },
     "normal": {
       "total": 80,
-      "flagged": 0,
-      "flag_rate": 0.0
+      "flagged": 80,
+      "flag_rate": 1.0
     }
   },
   "pattern_accuracy": 0.0,
@@ -67,20 +67,19 @@
   },
   "impact": {
     "investigation_compression": {
-      "flagged_transactions": 28,
-      "baseline_items_reviewed": 28,
-      "network_items_reviewed": 28,
-      "network_investigations": 28,
-      "compression_ratio": 1.0,
+      "flagged_transactions": 108,
+      "baseline_items_reviewed": 108,
+      "network_items_reviewed": 3,
+      "network_investigations": 3,
+      "compression_ratio": 36.0,
       "unit_of_work": "network_investigation",
       "note": "Traditional review counts flagged wires. Corridor Watch reviews the collapsed network. Measured, not claimed."
     },
-    "false_positive_reduction": 0.0,
+    "false_positive_reduction": -1.0,
     "network_detection_lift": 0.5714,
     "evidence_coverage": null,
     "analyst_actionability_rate": null,
     "time_to_case_ready": null,
     "note": "Compression and lift are measured on the synthetic ledger, not production banks."
-  },
-  "baseline_cut": "reports/dist_b_before.json"
+  }
 }

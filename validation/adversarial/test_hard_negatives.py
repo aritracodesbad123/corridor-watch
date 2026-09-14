@@ -43,9 +43,6 @@ def test_established_accounts_are_not_all_critical(isolated_db):
         kinds.append(row.get("kind"))
     fpr = flagged / total if total else 0.0
     dag_fpr = dag_fp / total if total else 0.0
-    (ROOT / "reports" / "hard_negatives.json").write_text(json.dumps({
-        "n": total, "kinds": kinds, "screen_fpr": fpr, "fpr": dag_fpr, "dag_fp": dag_fp,
-    }, indent=2))
     assert total >= 6
     assert fpr <= 0.08 or flagged == 0
     assert dag_fpr <= 0.25

@@ -161,7 +161,10 @@ def pattern_scores(features: dict, account: dict) -> dict[str, float]:
     occ = (account.get("occupation") or "").lower()
 
     mule = min(100, fan_in * 8 + ptr * 35 + (25 if hold < 180 else 0) + (15 if age <= 7 else 0))
-    split = min(100, fan_in * 7 + shared_ben * 12 + vel * 8 + (10 if age <= 30 else 0))
+    # ponytail: source-only velocity is disbursement (payroll/treasury), not smurf
+    inbound = fan_in >= 3 or ptr >= 0.3
+    split_vel = vel * 8 if inbound else 0.0
+    split = min(100, fan_in * 7 + shared_ben * 12 + split_vel + (10 if age <= 30 and inbound else 0))
     shared = min(100, shared_dev * 18 + beh * 0.35 + (20 if age <= 14 else 0))
     synth = 0
     if age <= 7:

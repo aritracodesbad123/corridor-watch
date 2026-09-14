@@ -1,0 +1,43 @@
+{
+  "validation_seed": 11,
+  "frozen_test_seed": 7,
+  "chosen_threshold": 40,
+  "note": "Sweep used seed 11 only. Frozen Dist B test remains seed 7.",
+  "rows": [
+    {
+      "threshold": 20,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "threshold": 30,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "threshold": 40,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "threshold": 50,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0
+    },
+    {
+      "threshold": 60,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0
+    }
+  ]
+}

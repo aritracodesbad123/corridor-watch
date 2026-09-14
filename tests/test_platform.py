@@ -158,7 +158,9 @@ def test_grounded_report_schema(isolated_db):
     assert parsed.gemini_used is False
     assert parsed.supporting_evidence
     assert parsed.alternative_explanations
-    assert parsed.recommended_disposition in {"clear", "monitor", "hold_payment", "escalate_fiu", "freeze_account"}
+    assert parsed.recommended_disposition == "escalate_fiu"
+    hold = deterministic_report(txn, evidence, [], {"risk_score": 43}, network)
+    assert hold.recommended_disposition == "hold_payment"
 
 
 def test_high_risk_decision_still_requires_fiu_lead():

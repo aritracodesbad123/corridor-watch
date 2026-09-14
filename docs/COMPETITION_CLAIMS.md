@@ -21,12 +21,15 @@ Statuses:
 | Investigation queue retry | **IMPLEMENTED** | `QUEUED → CLAIMED → RUNNING → COMPLETED / RETRY / DEAD_LETTER` |
 | Transaction-only baseline vs Corridor Watch | **IMPLEMENTED** | `evaluation.compare_to_transaction_baseline` |
 | Hidden evaluation oracle (runtime ignores `fraud_scenario`) | **VERIFIED** | `validation/oracle/test_leakage.py` |
-| Independent Dist B (not `data_gen`) | **IMPLEMENTED** | `reports/dist_b.json` — not AMLSim |
-| Network account/key-node recall | **IMPLEMENTED** | `reports/network_metrics.json` |
-| DeepEval package + custom metrics | **VERIFIED** | `reports/deepeval.json` |
-| Gemini agreement n≥100 | **VERIFIED** on schema-valid subset | `reports/gemini_agreement.json` invoked 98/100 (2× HTTP 429), schema_valid 98, agreement 0.949 CI 0.89–0.98. p95 **missed** ~19 s vs 8 s |
-| Hallucination rate (live model) | **NOT_MEASURED** | trap/gate measured in `reports/hallucination.json` |
-| Injection decision-change | **IMPLEMENTED** | `reports/injection_decision.json` |
+| Independent Dist B (not `data_gen`) | **VERIFIED** F1 1.0 / FPR 0.0 on frozen seed 7 (was F1 0.4118 / FPR 1.0) | `reports/dist_b.json` vs `reports/dist_b_before.json`. Threshold sweep used seed 11 only. |
+| Network account/key-node recall | **VERIFIED** 1.0 per connected component | `reports/network_metrics.json` (was ~0.17 when every mule in the ledger was one “truth” graph) |
+| Network v2 investigation-useful | **IMPLEMENTED** | `reports/network_evaluation_v2.json` — anchor 0.83, critical-node 1.0, path 0.67, recall@10 1.0 |
+| DeepEval package + custom metrics | **VERIFIED** n=100 investigation reports `ran: true` | `reports/deepeval.json`. Official FaithfulnessMetric **RAN** n=10 score 1.0. AmlCorrectness mean **1.0**. |
+| Gemini agreement n≥100 | **VERIFIED** | `reports/gemini_agreement.json` invoked 100/100, schema_valid 100, agreement 1.0 CI 0.963–1.0. p95 **4025 ms** (gate 8000) on `gemini-2.5-flash`, prompt investigator-v9. |
+| Hallucination / unsupported / entity / numerical | **VERIFIED** trap/gate (live hallucination **NOT_MEASURED** as a model rate) | `reports/hallucination.json` — post-gate unsupported 0.0; entity and numerical traps caught |
+| Injection decision-change | **VERIFIED** 0.0 on n=50 | `reports/injection_decision.json` |
+| Hard-negative network FPR | **VERIFIED** 0.0 (n=71, 10 legit archetypes + fraud twins) | `reports/hard_negative_results.json` |
+| Investigation completion TPS | **MEASURED** Policy A 74.76 local (p95 16 ms); Policy B Gemini 0.36 TPS (p95 4634 ms, n=10) | `reports/investigation_throughput_v2.json`. Ingest ceiling remains **814.13** TPS. Not 5,000 TPS. |
 | Investigation compression | **IMPLEMENTED** | `graph.corridor.investigation_compression` |
 | Pattern DNA match explainability | **IMPLEMENTED** | match strength, matched/missing signals |
 | Evidence-addressable Gemini output | **IMPLEMENTED** | `InvestigationReport` IDs resolve to case evidence |

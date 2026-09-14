@@ -58,7 +58,11 @@ def main(argv: list[str] | None = None) -> int:
     hold = _read(REPORTS / "rule_miner_holdout.json")
     races = _read(REPORTS / "races.json")
     hn = _read(REPORTS / "hard_negatives.json")
+    hn_net = _read(REPORTS / "hard_negative_results.json")
     deepeval = _read(REPORTS / "deepeval.json")
+    net_v2 = _read(REPORTS / "network_evaluation_v2.json")
+    tput_v2 = _read(REPORTS / "investigation_throughput_v2.json")
+    dist_b_before = _read(REPORTS / "dist_b_before.json")
     live_tps = gates.get("max_sustained_consume_tps_passing_gate") or 814.13
     if det.get("network_metrics") and not (REPORTS / "network_metrics.json").exists():
         (REPORTS / "network_metrics.json").write_text(json.dumps(det["network_metrics"], indent=2, default=str))
@@ -82,6 +86,7 @@ def main(argv: list[str] | None = None) -> int:
             "label": "Measured",
             "live_gates": "reports/scale/live_gates.json",
             "investigation_throughput": inv or None,
+            "investigation_throughput_v2": tput_v2 or None,
             "note": "Highest consume that passed its gate. 2k miss. Not 5,000 TPS.",
         },
         "gemini": {
@@ -98,11 +103,19 @@ def main(argv: list[str] | None = None) -> int:
         },
         "network": net,
         "dist_b": dist_b,
+        "dist_b_before": dist_b_before or None,
         "injection": inj,
-        "hard_negatives": hn,
+        "hard_negatives": hn_net or hn,
+        "network_v2": net_v2 or None,
         "races": races,
         "rule_miner": hold,
-        "deepeval": {"imported": bool(deepeval), "artifact": "reports/deepeval.json" if deepeval else None},
+        "deepeval": {
+            "imported": bool(deepeval),
+            "ran": bool(deepeval.get("ran")),
+            "case_count": deepeval.get("case_count"),
+            "official_metrics": deepeval.get("official_metrics"),
+            "artifact": "reports/deepeval.json" if deepeval else None,
+        },
         "dr": {
             "rpo": dr.get("rpo_minutes"),
             "rto": dr.get("rto_minutes"),
@@ -114,7 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     }
     (REPORTS / "validation_report.json").write_text(json.dumps(report, indent=2, default=str))
     _write_markdown(report, gates)
-    _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval)
+    _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before)
     dest = ROOT / "validation" / "results" / f"run_{started.replace(':', '').replace('-', '')[:15]}"
     dest.mkdir(parents=True, exist_ok=True)
     for name in ("SCORECARD.md", "VALIDATION_REPORT.md", "validation_report.json"):
@@ -153,7 +166,8 @@ account_recall={net.get('account_recall')} key_node_recall={net.get('key_node_re
 {scale_rows}
 
 Max sustained ingest TPS under a passing gate: **{report['scale']['max_sustained_tps_under_slo']}**. Not 5,000 TPS.
-Investigation enqueue TPS: {(report['scale'].get('investigation_throughput') or {}).get('enqueue_tps')}. Completions NOT_MEASURED.
+Investigation enqueue TPS: {(report['scale'].get('investigation_throughput') or {}).get('enqueue_tps')}.
+Investigation completion TPS (Policy A): {((report['scale'].get('investigation_throughput_v2') or {}).get('policy_a_deterministic') or {}).get('completion_tps')}.
 
 ## Gemini
 agreement={gem.get('agreement')} n={gem.get('agreement_n')} ci={gem.get('agreement_ci')} p95_ms={gem.get('p95_latency_ms')}
@@ -167,7 +181,7 @@ PITR-to-past RPO={report['dr']['pitr_to_past_rpo']}. replay_duplicates={report['
     )
 
 
-def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval) -> None:
+def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval, net_v2=None, tput_v2=None, dist_b_before=None) -> None:
     det = report.get("deterministic") or {}
     metrics = det.get("metrics") or {}
     f1 = metrics.get("f1")
@@ -199,7 +213,7 @@ def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, h
     hall_n = hall.get("live_n")
     uns_v = hall.get("unsupported_claim_rate")
     hall_status = (
-        f"Verified {hall_v} (live ungrounded n={hall_n}; trap/gate)"
+        f"Verified trap/gate {hall_v}; live ungrounded {hall.get('live_ungrounded_rate')} n={hall_n} (live model rate NOT_MEASURED)"
         if hall_v is not None
         else "NOT_MEASURED"
     )
@@ -208,7 +222,23 @@ def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, h
     dr_label = f"Measured RTO {rto} min; clone RPO {rpo} min (current-state). PITR-to-past NOT_MEASURED"
     if rto is None:
         dr_label = "Target — not yet timed"
-    deepeval_row = "Verified import + custom BaseMetric" if deepeval else "NOT_MEASURED"
+    deepeval_row = (
+        f"Verified n={deepeval.get('case_count')} BaseMetric (official {deepeval.get('official_metrics')})"
+        if deepeval.get("ran") and (deepeval.get("case_count") or 0) >= 100
+        else ("NOT_MEASURED" if not deepeval else f"Implemented ran={deepeval.get('ran')} n={deepeval.get('case_count')}")
+    )
+    dist_after = (dist_b.get("metrics") or {}).get("f1")
+    dist_before_f1 = ((dist_b_before or {}).get("metrics") or {}).get("f1")
+    dist_row = (
+        f"{_status(dist_after)} (before {dist_before_f1}, FPR {((dist_b_before or {}).get('metrics') or {}).get('false_positive_rate')})"
+        if dist_after is not None
+        else "NOT_MEASURED"
+    )
+    pol_a = (tput_v2 or {}).get("policy_a_deterministic") or {}
+    pol_b = (tput_v2 or {}).get("policy_b_gemini") or {}
+    hn_fpr = hn.get("fpr") if hn else None
+    ent_v = hall.get("entity_error_rate")
+    num_v = hall.get("numerical_error_rate")
     (ROOT / "reports" / "SCORECARD.md").write_text(
         f"""# Corridor Watch — validation scorecard
 
@@ -218,12 +248,18 @@ Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`
 | Claim | Status | Evidence |
 |---|---|---|
 | Detector F1 | {det_status} {f1 if f1 is not None else ""} | `validation/deterministic/test_detection.py` / hidden oracle |
-| Dist B F1 | {_status((dist_b.get('metrics') or {}).get('f1'))} | `reports/dist_b.json` |
+| Dist B F1 | {dist_row} | `reports/dist_b.json` vs `reports/dist_b_before.json` |
 | Network account recall | {_status(net.get('account_recall'))} | `reports/network_metrics.json` |
+| Network v2 anchor recall | {_status((net_v2 or {}).get('anchor_recall'))} | `reports/network_evaluation_v2.json` |
+| Network v2 critical-node recall | {_status((net_v2 or {}).get('critical_node_recall'))} | `reports/network_evaluation_v2.json` |
+| Network v2 investigation-path | {_status((net_v2 or {}).get('investigation_path_recovery'))} | `reports/network_evaluation_v2.json` |
+| Network v2 recall@10 | {_status((net_v2 or {}).get('recall_at_10'))} | `reports/network_evaluation_v2.json` |
 | Gemini grounding | Verified | `validation/deepeval/test_grounding.py` |
 | Gemini vs deterministic agreement | {agree_row} | `reports/gemini_agreement.json` |
 | Hallucination rate | {hall_status} | `reports/hallucination.json` |
 | Unsupported claim rate | {_status(uns_v)} | `reports/hallucination.json` |
+| Entity error rate | {_status(ent_v)} | `reports/hallucination.json` |
+| Numerical error rate | {_status(num_v)} | `reports/hallucination.json` |
 | Gemini cost per case | {_status(gem.get('cost_per_case_usd'), label='Verified $') if gem.get('cost_per_case_usd') is not None else 'NOT_MEASURED'} | `reports/gemini_agreement.json` |
 | Gemini tokens per case | {_status(gem.get('tokens_per_case'))} | `reports/gemini_agreement.json` |
 | Gemini p95 | {p95_row} | `reports/gemini_agreement.json` |
@@ -235,7 +271,10 @@ Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`
 | 2,000 TPS consume | {_row(2000)} | `reports/scale/test_2000_tps.json` |
 | Max sustained ingest TPS under SLO | Measured {report['scale']['max_sustained_tps_under_slo']} | passing 1k gate; 2k miss |
 | Investigation enqueue TPS | {_status(inv.get('enqueue_tps'))} | `reports/scale/investigation_throughput.json` |
-| Hard-negative FPR | {_status(hn.get('fpr'))} | `reports/hard_negatives.json` |
+| Investigation completion TPS (Policy A) | {_status(pol_a.get('completion_tps'))} | `reports/investigation_throughput_v2.json` |
+| Investigation time-to-verdict p95 (Policy A) | {_status((pol_a.get('time_to_verdict_ms') or {}).get('p95'))} | `reports/investigation_throughput_v2.json` |
+| Investigation Gemini TPS (Policy B) | {_status(pol_b.get('completion_tps'))} | `reports/investigation_throughput_v2.json` |
+| Hard-negative FPR | {_status(hn_fpr)} | `reports/hard_negative_results.json` |
 | Concurrent race failures | {_status(races.get('failures'))} | `reports/races.json` |
 | Rule-miner holdout precision | {_status(hold.get('holdout_precision'))} | `reports/rule_miner_holdout.json` |
 | RTO/RPO | {dr_label} | `reports/dr_gameday.json` |
@@ -247,7 +286,7 @@ Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`
 | PII tokens at Gemini boundary | Verified | `validation/security/test_pii_minimization.py` |
 
 Suite root is `validation/` (not `evaluation/`) because `evaluation.py` already exists.
-DeepEval is the real package plus custom BaseMetric wrappers. Official FaithfulnessMetric is NOT_MEASURED unless a Gemini judge binds.
+DeepEval is Verified only when `reports/deepeval.json` has `ran: true` on ≥100 investigation reports. Official FaithfulnessMetric stays NOT_MEASURED unless a Gemini judge actually ran.
 """
     )
 

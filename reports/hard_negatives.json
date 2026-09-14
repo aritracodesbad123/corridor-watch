@@ -1,13 +1,20 @@
 {
-  "n": 7,
+  "n": 71,
   "kinds": [
-    "remittance",
-    "corridor",
-    "payroll",
-    "family",
-    "treasury",
-    "marketplace",
-    "travel"
+    "CHARITY",
+    "FAMILY",
+    "MARKET",
+    "MERCHANT",
+    "MULEHUB",
+    "PAYROLL",
+    "REMIT",
+    "SHARED",
+    "SMURFSINK",
+    "SUBS",
+    "TREASURY",
+    "circular_pass",
+    "household",
+    "mule_pass_through"
   ],
   "screen_fpr": 0.0,
   "fpr": 0.0,

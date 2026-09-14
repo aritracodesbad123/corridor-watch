@@ -264,7 +264,8 @@ python evaluate.py --mode both --rate 200 --duration 3
 | `CORRIDOR_WATCH_INGEST_TOKEN` | empty | Optional ingest auth |
 | `RISK_THRESHOLD_LOW/MEDIUM/HIGH` | `25` / `40` / `75` | Configurable tiers |
 | `GRAPH_MAX_HOPS` | `3` | Bounded traversal |
-| `GRAPH_LOOKBACK_MINUTES` | `1440` | Graph window |
+| `GRAPH_LOOKBACK_MINUTES` | `10080` (7d) | Graph window behind the seed |
+| `GRAPH_LOOKAHEAD_MINUTES` | `4320` (3d) | Graph window ahead of the seed |
 | `MAX_INVESTIGATION_SIZE` | `200` | Node cap |
 | `CW_PG_POOL_MAX` / `CW_PG_OVERFLOW` / `CW_INGEST_SLOTS` | `8` / `4` / `8` | Cloud SQL pool (ingest stays off the interactive overflow) |
 

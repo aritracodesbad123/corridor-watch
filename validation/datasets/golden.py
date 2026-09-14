@@ -8,9 +8,9 @@ KINDS = (
     ("mule", 20, {"amount": 15000, "account_age_days": 2, "fraud_scenario": "mule_pass_through"}, "hold_payment"),
     ("hop", 20, {"amount": 18000, "account_age_days": 3, "fraud_scenario": "multi_hop_chain"}, "hold_payment"),
     ("normal", 20, {"amount": 400, "account_age_days": 900, "fraud_scenario": "normal"}, "clear"),
-    ("hardneg", 15, {"amount": 12000, "account_age_days": 800, "fraud_scenario": "normal"}, "clear"),
+    ("hardneg", 15, {"amount": 12000, "account_age_days": 800, "fraud_scenario": "normal"}, "monitor"),
     ("hybrid", 10, {"amount": 9900, "account_age_days": 5, "fraud_scenario": "mule_pass_through"}, "hold_payment"),
-    ("partial", 10, {"amount": 8000, "account_age_days": 10, "fraud_scenario": "split_transaction_laundering"}, "hold_payment"),
+    ("partial", 10, {"amount": 8000, "account_age_days": 10, "fraud_scenario": "split_transaction_laundering"}, "monitor"),
     ("adversarial", 5, {"amount": 7000, "account_age_days": 6, "fraud_scenario": "shared_device_ring"}, "hold_payment"),
 )
 

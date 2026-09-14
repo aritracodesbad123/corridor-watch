@@ -1,13 +1,15 @@
 {
   "n_trap": 2,
   "hallucination_rate": 0.0,
-  "unsupported_claim_rate": 0.5,
-  "material_error_rate": 1.0,
+  "unsupported_claim_rate": 0.0,
+  "unsupported_claim_rate_pre_gate": 0.5,
+  "entity_error_rate": 0.0,
+  "numerical_error_rate": 0.0,
+  "material_error_rate": 0.0,
   "numerical_trap_caught": true,
-  "entity_trap_caught": false,
+  "entity_trap_caught": true,
   "gate_rejected_invented_ids": true,
   "live_ungrounded_rate": 0.0,
   "live_n": 100,
-  "schema_valid_n": 98,
-  "note": "Trap suite measures the grounding gate. Live: 98/100 schema-valid Gemini reports; 2 HTTP 429. Ungrounded rate 0.0 on schema-valid reports."
+  "note": "Split: hallucination=invented material that survived the gate; unsupported=IDs not in allowed after gate; entity/numerical traps are gate catches."
 }

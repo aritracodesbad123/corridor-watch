@@ -30,6 +30,25 @@ def test_pattern_scores_are_bounded():
     assert primary in patterns
 
 
+def test_source_only_high_velocity_stays_below_flag_threshold():
+    from graph_features import FLAG_THRESHOLD, composite_score, pattern_scores
+    feats = {
+        "account_age_days": 1800,
+        "pass_through_ratio": 0.0,
+        "fan_in_count": 0,
+        "avg_hold_time_minutes": 99999.0,
+        "shared_device_count": 0,
+        "shared_beneficiary_count": 0,
+        "multi_hop_chain_depth": 0,
+        "corridor_velocity_score": 8.6,
+        "behavioral_risk": 0.0,
+    }
+    patterns = pattern_scores(feats, {})
+    score, _ = composite_score(feats, patterns)
+    assert score < FLAG_THRESHOLD
+    assert patterns["split_transaction_laundering"] < 35
+
+
 def test_schema_bootstrap_is_idempotent(tmp_path, monkeypatch):
     db_path = tmp_path / "test.db"
     import db
@@ -78,6 +97,8 @@ def test_thinking_off_sets_budget_zero():
         assert str(cfg.thinking_level).endswith("MINIMAL")
     else:
         assert cfg.thinking_budget == 0
+        unset = cfg.model_dump(exclude_unset=True) if hasattr(cfg, "model_dump") else {}
+        assert "thinking_level" not in unset
 
 
 def test_investigate_gemini_is_one_call(monkeypatch):
@@ -120,6 +141,52 @@ def test_investigate_gemini_is_one_call(monkeypatch):
     out = agent.investigate("T-1", mode="gemini")
     assert out == {"ok": True}
     assert seen == {"tool": 0, "grounded": 1}
+
+
+def test_grounded_payload_omits_output_skeleton(monkeypatch):
+    import json
+    import agent
+    from investigations.schemas import EvidenceItem, InvestigationReport
+
+    captured = {}
+    fb = InvestigationReport(
+        investigation_summary="summary",
+        risk_hypothesis="hyp",
+        supporting_evidence=[EvidenceItem(evidence_id="E-TXN", type="txn", description="wire", source="ledger")],
+        recommended_disposition="monitor",
+        confidence=40,
+        unknown_areas=["u"],
+        network_visibility_score=0.5,
+    )
+
+    def fake_complete(c, prompt):
+        captured["prompt"] = prompt
+        return json.dumps({
+            "investigation_summary": "short",
+            "risk_hypothesis": "hyp",
+            "supporting_evidence": [{"evidence_id": "E-TXN", "type": "txn", "description": "wire", "source": "ledger"}],
+            "contradicting_evidence": [],
+            "matched_patterns": [],
+            "alternative_explanations": ["alt"],
+            "recommended_next_checks": ["check"],
+            "recommended_disposition": "monitor",
+            "confidence": 40,
+            "uncertainty": "incomplete",
+        })
+
+    monkeypatch.setattr(agent, "client", lambda: object())
+    monkeypatch.setattr(agent, "_complete_text", fake_complete)
+    out = agent.grounded_gemini_report(
+        {"txn_id": "T-1", "sender_id": "A", "receiver_id": "B"},
+        fb.supporting_evidence,
+        [],
+        {"risk_score": 40},
+        {"features": {"txn_count": 1, "noise": "drop-me"}},
+        fb,
+    )
+    assert "required_output" not in captured["prompt"]
+    assert "drop-me" not in captured["prompt"]
+    assert out.prompt_version == "investigator-v9"
 
 
 def test_rbac_uses_server_identity_for_decisions():

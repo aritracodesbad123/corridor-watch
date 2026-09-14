@@ -72,6 +72,9 @@ def cheap_screen(txn: dict, con=None, *, velocity: bool = True) -> ScreenResult:
     if account_age is not None and int(account_age) <= 7:
         score += 18
         signals.append("new_account")
+        if amount >= 4000:
+            score += 15
+            signals.append("new_account_elevated")
 
     if sender and velocity:
         score += _recent_velocity(sender, ts, con)

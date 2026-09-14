@@ -1,0 +1,53 @@
+{
+  "n": 71,
+  "archetypes": [
+    "CHARITY",
+    "FAMILY",
+    "MARKET",
+    "MERCHANT",
+    "MULEHUB",
+    "PAYROLL",
+    "REMIT",
+    "SHARED",
+    "SMURFSINK",
+    "SUBS",
+    "TREASURY",
+    "circular_pass",
+    "household",
+    "mule_pass_through"
+  ],
+  "frozen_seed": 19,
+  "tp": 20,
+  "fp": 0,
+  "fn": 0,
+  "tn": 51,
+  "precision": 1.0,
+  "recall": 1.0,
+  "fpr": 0.0,
+  "hard_negative_fpr": 0.0,
+  "legit_mean_score": 15.3,
+  "fraud_mean_score": 77.79,
+  "by_label": {
+    "normal": {
+      "n": 51,
+      "flagged": 0
+    },
+    "burst_smurf": {
+      "n": 6,
+      "flagged": 6
+    },
+    "split_transaction_laundering": {
+      "n": 8,
+      "flagged": 8
+    },
+    "mule_pass_through": {
+      "n": 2,
+      "flagged": 2
+    },
+    "circular_pass": {
+      "n": 4,
+      "flagged": 4
+    }
+  },
+  "note": "Networks, not single wires. Runtime ignores fraud_scenario."
+}

@@ -1,0 +1,84 @@
+{
+  "policy_a_deterministic": {
+    "policy": "A",
+    "n": 40,
+    "use_gemini": false,
+    "enqueue_tps": 548.94,
+    "completion_tps": 74.76,
+    "completed": 40,
+    "queue_depth_after_enqueue": {
+      "QUEUED": 40,
+      "active": 40
+    },
+    "time_to_verdict_ms": {
+      "p50": 12.8,
+      "p95": 16.0,
+      "p99": 22.8,
+      "mean": 13.3
+    }
+  },
+  "policy_b_gemini": {
+    "policy": "B",
+    "n": 10,
+    "use_gemini": true,
+    "enqueue_tps": 568.7,
+    "completion_tps": 0.36,
+    "completed": 10,
+    "queue_depth_after_enqueue": {
+      "COMPLETED": 40,
+      "QUEUED": 10,
+      "active": 10
+    },
+    "time_to_verdict_ms": {
+      "p50": 2304.6,
+      "p95": 4633.9,
+      "p99": 4633.9,
+      "mean": 2744.8
+    }
+  },
+  "sustainable_ingest_tps": 814.13,
+  "ingest_ceiling_note": "Keep 814.13 from the passing 1k gate. Not 5,000 TPS. Not four product modes.",
+  "implied_load_from_ingest_artifacts": [
+    {
+      "target": 100,
+      "achieved_ingest_tps": 97.09,
+      "queued_for_investigation": 233,
+      "processed": 2000,
+      "elapsed_seconds": 20.599,
+      "inferred_alert_rate": 0.1165,
+      "implied_investigation_tps": 11.31,
+      "note": "Alert rate inferred from queued/processed. Load gen did not tag a 5% mix."
+    },
+    {
+      "target": 500,
+      "achieved_ingest_tps": 407.26,
+      "queued_for_investigation": 546,
+      "processed": 5000,
+      "elapsed_seconds": 12.277,
+      "inferred_alert_rate": 0.1092,
+      "implied_investigation_tps": 44.47,
+      "note": "Alert rate inferred from queued/processed. Load gen did not tag a 5% mix."
+    },
+    {
+      "target": 1000,
+      "achieved_ingest_tps": 811.14,
+      "queued_for_investigation": 1056,
+      "processed": 10000,
+      "elapsed_seconds": 12.328,
+      "inferred_alert_rate": 0.1056,
+      "implied_investigation_tps": 85.66,
+      "note": "Alert rate inferred from queued/processed. Load gen did not tag a 5% mix."
+    },
+    {
+      "target": 2000,
+      "achieved_ingest_tps": 1148.32,
+      "queued_for_investigation": 2086,
+      "processed": 20000,
+      "elapsed_seconds": 17.417,
+      "inferred_alert_rate": 0.1043,
+      "implied_investigation_tps": 119.77,
+      "note": "Alert rate inferred from queued/processed. Load gen did not tag a 5% mix."
+    }
+  ],
+  "note": "Completion TPS is investigations finished / drain time, not ingest enqueue TPS."
+}

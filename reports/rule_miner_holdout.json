@@ -1,9 +1,9 @@
 {
-  "total_analyst_decisions_analyzed": 10,
-  "train_n": 7,
-  "holdout_n": 3,
-  "unflagged_negatives": 0,
-  "holdout_precision": null,
+  "total_analyst_decisions_analyzed": 20,
+  "train_n": 14,
+  "holdout_n": 6,
+  "unflagged_negatives": 51,
+  "holdout_precision": 1.0,
   "mined_rules_count": 3,
   "mined_rules": [
     {

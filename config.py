@@ -62,8 +62,8 @@ def get_settings() -> Settings:
         risk_threshold_medium=_float("RISK_THRESHOLD_MEDIUM", 40.0),
         risk_threshold_high=_float("RISK_THRESHOLD_HIGH", 75.0),
         graph_max_hops=_int("GRAPH_MAX_HOPS", 3),
-        graph_lookback_minutes=_int("GRAPH_LOOKBACK_MINUTES", 1440),
-        graph_lookahead_minutes=_int("GRAPH_LOOKAHEAD_MINUTES", 120),
+        graph_lookback_minutes=_int("GRAPH_LOOKBACK_MINUTES", 10080),  # ponytail: 24h clipped mule +22h payouts; 7d if rings span a week
+        graph_lookahead_minutes=_int("GRAPH_LOOKAHEAD_MINUTES", 4320),
         max_investigation_size=_int("MAX_INVESTIGATION_SIZE", 200),
         max_investigation_edges=_int("MAX_INVESTIGATION_EDGES", 400),
     )

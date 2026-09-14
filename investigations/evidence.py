@@ -203,11 +203,13 @@ def deterministic_report(
     network: dict,
 ) -> InvestigationReport:
     score = float((risk or {}).get("risk_score") or txn.get("risk_score") or 0)
-    if score >= 75:
+    from risk.tiers import RiskTier, assign_tier
+    tier = assign_tier(score)
+    if tier is RiskTier.CRITICAL:
         disposition = "escalate_fiu"
-    elif score >= 50:
+    elif tier is RiskTier.HIGH:
         disposition = "hold_payment"
-    elif score >= 40:
+    elif tier is RiskTier.MEDIUM:
         disposition = "monitor"
     else:
         disposition = "clear"

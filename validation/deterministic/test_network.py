@@ -4,7 +4,7 @@ from pathlib import Path
 import networkx as nx
 import pytest
 
-from graph.network_metrics import score_network
+from graph.network_metrics import partition_components, score_network
 from graph_features import multi_hop_depth, pass_through_ratio
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -22,6 +22,12 @@ def test_network_recall_helper_and_artifact(eval_result):
     scored = score_network(pred, truth)
     assert scored["account_recall"]["recall"] == pytest.approx(2 / 3, abs=0.01)
     assert net.get("account_recall") is not None
+    parts = partition_components([
+        {"sender_id": "A", "receiver_id": "B"},
+        {"sender_id": "B", "receiver_id": "C"},
+        {"sender_id": "X", "receiver_id": "Y"},
+    ])
+    assert len(parts) == 2
 
 
 def test_feature_fixtures():

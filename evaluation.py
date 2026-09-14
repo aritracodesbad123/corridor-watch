@@ -90,7 +90,7 @@ def _dist_b_db() -> Iterator[None]:
     tmp = tmpdir / "dist_b.db"
     db.DB_PATH = tmp
     try:
-        accounts, txns = generator_b.build()
+        accounts, txns = generator_b.build(seed=generator_b.SEED)
         generator_b.write_db(accounts, txns)
         from graph_features import score_all, write_scores
         con = connect()
@@ -192,7 +192,7 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
 
 def _network_eval(rows: list[dict], labels: dict[str, dict]) -> dict[str, Any]:
     from graph.investigator import bounded_network
-    from graph.network_metrics import score_network
+    from graph.network_metrics import hub_seed, partition_components, score_network
 
     by_label: dict[str, list[dict]] = defaultdict(list)
     for txn in rows:
@@ -201,11 +201,12 @@ def _network_eval(rows: list[dict], labels: dict[str, dict]) -> dict[str, Any]:
             by_label[lab].append(txn)
     scored = []
     for lab, cluster in by_label.items():
-        truth_nodes = {t["sender_id"] for t in cluster} | {t["receiver_id"] for t in cluster}
-        truth_edges = [(t["sender_id"], t["receiver_id"]) for t in cluster]
-        seed = cluster[0]
-        pred = bounded_network(seed)
-        scored.append({"label": lab, **score_network(pred, {"nodes": truth_nodes, "edges": truth_edges, "key_nodes": truth_nodes})})
+        for component in partition_components(cluster):
+            truth_nodes = {t["sender_id"] for t in component} | {t["receiver_id"] for t in component}
+            truth_edges = [(t["sender_id"], t["receiver_id"]) for t in component]
+            seed = hub_seed(component)
+            pred = bounded_network(seed)
+            scored.append({"label": lab, **score_network(pred, {"nodes": truth_nodes, "edges": truth_edges, "key_nodes": truth_nodes})})
     if not scored:
         return {"status": "no_positive_clusters"}
     rec = sum(s["account_recall"]["recall"] for s in scored) / len(scored)
