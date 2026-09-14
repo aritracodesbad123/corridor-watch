@@ -4,13 +4,67 @@
 
 Corridor Watch detects **suspicious transaction networks**, builds a deterministic evidence pack, investigates the graph, grounds Gemini on that evidence, requires a human for consequential actions, and turns confirmed cases into **Crime Pattern DNA** — institutional memory, not a one-off alert.
 
-```text
-Transactions → Network → Deterministic detection → Investigation DAG
-    → Evidence pack → Gemini copilot → Grounding gate → Human decision
-    → Crime Pattern DNA → Institutional memory ↺ future investigations
+Gemini is **Evidence → grounding gate → human**, not User → chatbot → answer. Ingest never calls Gemini.
+
+## End-to-end architecture
+
+```mermaid
+flowchart TD
+  src[Transactions / Pub/Sub]
+  push[Cloud Run push ingest]
+  db[(Cloud SQL / local SQLite)]
+  screen[Cheap screen — no Gemini]
+  q[Investigation queue]
+  graph[Network construction]
+  det[Deterministic detection]
+  dag[Investigation DAG]
+  evid[Evidence pack]
+  gem[Gemini copilot]
+  gate[Grounding gate]
+  human[Human decision — FIU lead]
+  dna[Crime Pattern DNA]
+  mem[Institutional memory]
+  ui[Analyst console]
+
+  src --> push --> db
+  db --> screen --> q
+  q --> graph --> det --> dag --> evid
+  evid --> gem --> gate --> human --> dna --> mem
+  mem -.->|reuse on later networks| graph
+  evid --> ui
+  gate --> ui
+  dna --> ui
 ```
 
-Gemini is **Evidence → grounding gate → human**, not User → chatbot → answer.
+```text
+Transactions / Pub/Sub
+     ↓
+Cloud Run ingest  (idempotent persist, no Gemini)
+     ↓
+Cheap screen → investigation queue
+     ↓
+Network construction
+     ↓
+Deterministic detection
+     ↓
+Investigation DAG
+     ↓
+Evidence pack
+     ↓
+Gemini copilot
+     ↓
+Grounding gate
+     ↓
+Human decision  (FIU lead for hold / escalate / freeze)
+     ↓
+Crime Pattern DNA
+     ↓
+Institutional memory
+     ↺
+Future investigations
+```
+
+Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## What it does
 
