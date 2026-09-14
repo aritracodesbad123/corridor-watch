@@ -15,7 +15,7 @@ flowchart TD
   db[(Cloud SQL / local SQLite)]
   screen[Cheap screen — no Gemini]
   q[Investigation queue]
-  graph[Network construction]
+  net[Network construction]
   det[Deterministic detection]
   dag[Investigation DAG]
   evid[Evidence pack]
@@ -28,9 +28,9 @@ flowchart TD
 
   src --> push --> db
   db --> screen --> q
-  q --> graph --> det --> dag --> evid
+  q --> net --> det --> dag --> evid
   evid --> gem --> gate --> human --> dna --> mem
-  mem -.->|reuse on later networks| graph
+  mem -.->|reuse on later networks| net
   evid --> ui
   gate --> ui
   dna --> ui
