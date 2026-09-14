@@ -1,0 +1,34 @@
+{
+  "n": 4,
+  "detection_rate": 0.5,
+  "cases": [
+    {
+      "txn_id": "HYB-MULE-SMURF",
+      "score": 18.0,
+      "pattern": "elevated_activity",
+      "detected": false,
+      "uncertain": false
+    },
+    {
+      "txn_id": "HYB-MULE-DEVICE",
+      "score": 43.0,
+      "pattern": "high_value",
+      "detected": true,
+      "uncertain": false
+    },
+    {
+      "txn_id": "HYB-SYN-HOP",
+      "score": 43.0,
+      "pattern": "high_value",
+      "detected": true,
+      "uncertain": false
+    },
+    {
+      "txn_id": "HYB-SPLIT-XCOR",
+      "score": 30.0,
+      "pattern": "elevated_activity",
+      "detected": false,
+      "uncertain": false
+    }
+  ]
+}

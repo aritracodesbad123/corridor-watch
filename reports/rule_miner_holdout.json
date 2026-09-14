@@ -1,0 +1,43 @@
+{
+  "total_analyst_decisions_analyzed": 10,
+  "train_n": 7,
+  "holdout_n": 3,
+  "unflagged_negatives": 0,
+  "holdout_precision": null,
+  "mined_rules_count": 3,
+  "mined_rules": [
+    {
+      "rule_id": "MINED_pass_through_ge_85_AND_hold_lt_180",
+      "name": "Rapid Mule Pass-Through Rule",
+      "condition": "pass_through_ratio >= 0.85 AND avg_hold_time_minutes < 180",
+      "target_pattern": "mule_pass_through",
+      "precision_percent": null,
+      "sample_matches": 0,
+      "positive_dispositions": 0,
+      "action_recommendation": "+25 score boost"
+    },
+    {
+      "rule_id": "MINED_shared_dev_ge_2_AND_age_le_14",
+      "name": "Fresh Account Shared Device Ring",
+      "condition": "shared_device_count >= 2 AND account_age_days <= 14",
+      "target_pattern": "shared_device_ring",
+      "precision_percent": null,
+      "sample_matches": 0,
+      "positive_dispositions": 0,
+      "action_recommendation": "+30 score boost"
+    },
+    {
+      "rule_id": "MINED_pass_through_ge_90_AND_shared_dev_ge_1",
+      "name": "High Volume Pass-Through Mule Ring",
+      "condition": "pass_through_ratio >= 0.90 AND shared_device_count >= 1",
+      "target_pattern": "mule_pass_through",
+      "precision_percent": null,
+      "sample_matches": 0,
+      "positive_dispositions": 0,
+      "action_recommendation": "+35 score boost"
+    }
+  ],
+  "requires_human_review": true,
+  "label_source": "analyst_disposition",
+  "note": "Holdout precision is measured on the 30% split. Analyst disposition \u2260 confirmed fraud. Unflagged rows are negatives, not used to invent precision."
+}

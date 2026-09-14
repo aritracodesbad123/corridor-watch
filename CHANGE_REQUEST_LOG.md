@@ -23,6 +23,7 @@
 | **CR-019** | Operations | Request traces, measured SLO + in-process alerts, Command Center SLO card, Cloud SQL PITR/DR status scripts. | **Completed** | v1.11.0 |
 | **CR-020** | Production evidence | Four `production/` reports: measured load paths, DR procedure without invented RPO, threat model mapped to tests, AI validation on synthetic + grounding gates. | **Completed** | v1.11.0 |
 | **CR-021** | Validation suite | Executable `validation/` suite + `reports/SCORECARD.md`. Prove existing controls (grounding, 5.65 TPS SLO, adversarial, DR Target, UX/a11y). No DeepEval dependency. Do not claim 5,000 TPS. | **Completed** | v1.12.0 |
+| **CR-022** | Validation honesty | Reverse CR-021: add real `deepeval` package + BaseMetric wrappers. Hidden oracle, Dist B generator, network recall, hallucination≠cost, injection decision-change, races, investigation enqueue TPS, miner holdout. Never claim 5,000 TPS. | **Completed** | v1.13.0 |
 
 ---
 
@@ -88,3 +89,7 @@
 ### CR-021: Validation suite
 - **Modules**: `validation/`, `validation/run_suite.py`, `reports/SCORECARD.md`, `static/index.html`
 - **Capability**: One seeded suite for detector quality, Gemini grounding/injection (stdlib metrics, not a DeepEval package), reliability, recorded 5.65 TPS SLO boundary, RBAC/PII/provenance, DR Target, and analyst-loop + a11y smoke. Live 100–2k TPS Cloud gates stay skipped unless `CW_SCALE_LIVE=1`.
+
+### CR-022: Validation honesty and DeepEval
+- **Modules**: `validation/`, `evaluation.py`, `risk/tiers.py`, `patterns/matcher.py`, `privacy.py`, `rule_miner.py`, `reports/`
+- **Capability**: Real `deepeval` package + BaseMetric wrappers. Hidden oracle (runtime ignores `fraud_scenario`). Dist B generator. Network recall. Hallucination ≠ cost. Injection decision-change. Concurrent claim races. Investigation enqueue TPS. Rule-miner 70/30 holdout without invented 94% precision. Do not claim 5,000 TPS or 100% Gemini from n=3.

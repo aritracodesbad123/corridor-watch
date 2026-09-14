@@ -257,7 +257,7 @@ def ingest_batch(events: list[tuple[TransactionEvent, str | None]], *, source: s
             flag_rows.append((
                 event.txn_id, event.sender_account_id, event.receiver_account_id,
                 event.amount, event.corridor, event.timestamp, screen.score,
-                event.fraud_scenario if event.fraud_scenario != "normal" else "elevated_activity",
+                (screen.signals[0] if screen.signals else "elevated_activity"),
                 event.fraud_scenario, event.currency, event.purpose, event.source_of_funds,
                 screen.tier.value, net, "open",
             ))
@@ -314,7 +314,7 @@ def _maybe_flag(con, event: TransactionEvent, screen) -> None:
         (
             event.txn_id, event.sender_account_id, event.receiver_account_id,
             event.amount, event.corridor, event.timestamp, screen.score,
-            event.fraud_scenario if event.fraud_scenario != "normal" else "elevated_activity",
+            (screen.signals[0] if screen.signals else "elevated_activity"),
             event.fraud_scenario, event.currency, event.purpose, event.source_of_funds,
             screen.tier.value,
             f"N-{event.sender_account_id[:8]}-{event.receiver_account_id[:8]}",

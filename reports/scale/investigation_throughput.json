@@ -1,0 +1,44 @@
+{
+  "enqueue_tps": 119.77,
+  "completion_tps": null,
+  "time_to_verdict": null,
+  "note": "Enqueue TPS from ingest artifacts. Completions/AI TPS NOT_MEASURED on these probes.",
+  "runs": [
+    {
+      "target": 100,
+      "queued_for_investigation": 233,
+      "elapsed_seconds": 20.599,
+      "enqueue_tps": 11.31,
+      "completions_per_sec": null,
+      "ai_investigations_per_sec": null,
+      "gemini_requests_total": null
+    },
+    {
+      "target": 500,
+      "queued_for_investigation": 546,
+      "elapsed_seconds": 12.277,
+      "enqueue_tps": 44.47,
+      "completions_per_sec": null,
+      "ai_investigations_per_sec": null,
+      "gemini_requests_total": null
+    },
+    {
+      "target": 1000,
+      "queued_for_investigation": 1056,
+      "elapsed_seconds": 12.328,
+      "enqueue_tps": 85.66,
+      "completions_per_sec": null,
+      "ai_investigations_per_sec": null,
+      "gemini_requests_total": null
+    },
+    {
+      "target": 2000,
+      "queued_for_investigation": 2086,
+      "elapsed_seconds": 17.417,
+      "enqueue_tps": 119.77,
+      "completions_per_sec": null,
+      "ai_investigations_per_sec": null,
+      "gemini_requests_total": null
+    }
+  ]
+}

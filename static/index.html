@@ -1716,7 +1716,7 @@ function showView(name){
   document.querySelectorAll(".view-nav button").forEach(el=>el.classList.toggle("on", el.dataset.view===name));
   const el = $("view-"+name);
   if(el) el.classList.add("on");
-  if(name==="command") loadCommand(true).then(()=>loadCommand(false));
+  if(name==="command") loadCommand(true).then(()=>loadCommand(false).catch(()=>{}));
   if(name==="corridors") loadCorridors();
   if(name==="patterns") loadPatterns();
 }
@@ -1728,8 +1728,11 @@ document.querySelectorAll(".view-nav button").forEach(btn=>{
 async function loadCommand(light=false){
   if(!session) return;
   try{
-    const d = await readJson(await fetch(`${API}/command-center${light?"?light=1":""}`, {headers: authHeaders()}), "command unavailable");
-    $("command-stats").innerHTML = [
+    const d = await readJson(await fetch(`${API}/command-center${light?"?light=1":""}`, {
+      headers: authHeaders(),
+      signal: AbortSignal.timeout(light ? 12000 : 20000),
+    }), "command unavailable");
+    if($("command-stats")) $("command-stats").innerHTML = [
       ["Live TPS", d.live_tps],
       ["P95 ingest (ms)", d.p95_ingest_ms ?? d.ingestion_latency_ms?.p95],
       ["Pub/Sub backlog", d.pubsub_backlog],
@@ -1737,10 +1740,10 @@ async function loadCommand(light=false){
       ["Suspicious networks", d.suspicious_networks?.network_investigations ?? d.suspicious_networks?.network_items_reviewed],
       ["Active investigations", d.active_investigations],
     ].map(([k,v])=>`<div class="stat"><div class="muted">${k}</div><div class="n">${v==null?'—' : v}</div></div>`).join("");
-    if(!d.light && d.active_corridors){
+    if($("command-corridors")){
     $("command-corridors").innerHTML = (d.active_corridors||[]).slice(0,6).map(c=>
       `<div class="kv"><span>${c.corridor}</span><span>${c.suspicious_count} / ${c.count} · ${c.risk}</span></div>`
-    ).join("") || "No corridor stats yet.";
+    ).join("") || (d.light ? "Measuring…" : "No corridor stats yet.");
     }
     const ing = d.ingestion||{};
     $("command-ingest").innerHTML = `
@@ -1773,7 +1776,8 @@ async function loadCommand(light=false){
       $("command-slo").innerHTML = sloRows + alertRows;
     }
     const show = d.showcase || {};
-    if(!d.light && $("command-showcase") && d.showcase){
+    if($("command-showcase")){
+      if(!d.light && d.showcase){
       $("command-showcase").innerHTML = `
         <div class="kv"><span>${esc(show.title||"Lotus Ring")}</span><span>${esc(show.hero_txn_id||"")}</span></div>
         <p>${esc(show.story||"")}</p>
@@ -1783,6 +1787,9 @@ async function loadCommand(light=false){
         showView("investigate");
         if(show.hero_txn_id) openCase(show.hero_txn_id);
       };
+      } else if(d.light){
+        $("command-showcase").innerHTML = `<div class="muted">Measuring…</div>`;
+      }
     }
     const mid = d.middle_bank || {};
     if($("command-middle")){
@@ -1833,7 +1840,8 @@ async function loadCommand(light=false){
         <div class="kv"><span>Primary bottleneck</span><span>${esc(scale.primary_bottleneck||"Cloud SQL write path")}</span></div>
         <div class="muted" style="margin-top:8px">${esc(scale.note||"Never treat 5,000 TPS as achieved unless measured_tps ≥ 5000.")}</div>`;
     }
-    if(!d.light && $("command-scorecard") && d.scorecard){
+    if($("command-scorecard")){
+      if(!d.light && d.scorecard){
       $("command-scorecard").innerHTML = `
         <div class="kv"><span>precision / recall</span><span>${det.precision??"—"} / ${det.recall??"—"}</span></div>
         <div class="kv"><span>false-positive rate</span><span>${det.false_positive_rate??sc.false_positives?.benchmark_false_positive_rate??"—"}</span></div>
@@ -1846,10 +1854,16 @@ async function loadCommand(light=false){
         <div class="kv"><span>Pub/Sub backlog</span><span>${ingestBench.pubsub_backlog_start??"—"} → ${ingestBench.pubsub_backlog_end??"—"}</span></div>
         <div class="kv"><span>Cloud Run instances</span><span>${ingestBench.cloud_run_instances??d.cloud_run_instances??"—"}</span></div>
         <div class="muted" style="margin-top:6px">${esc((ingestBench.note||sc.false_positives?.note)||"Numbers are measured, not claimed. in_process ≠ HTTP ≠ Pub/Sub.")}</div>`;
+      } else if(d.light){
+        $("command-scorecard").innerHTML = `<div class="muted">Measuring…</div>`;
+      }
     }
     applyStreamChip(d.live_stream);
   }catch(e){
-    $("command-stats").innerHTML = `<div class="muted">${e.message}</div>`;
+    const msg = `<div class="muted">${esc(e.message || "command unavailable")}</div>`;
+    ["command-stats","command-impact","command-scale","command-corridors","command-ingest","command-slo","command-middle","command-showcase","command-scorecard"].forEach(id=>{
+      if($(id)) $(id).innerHTML = msg;
+    });
   }
 }
 

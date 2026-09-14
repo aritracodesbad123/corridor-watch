@@ -7,7 +7,7 @@ import os
 import re
 
 _INSTRUCTION = re.compile(
-    r"(ignore (all |any )?(previous|prior|above) (instructions|prompts)|"
+    r"(ignore (all |any )?(previous|prior|above)( (instructions|prompts))?|"
     r"you are now|system prompt|disregard (the )?(rules|instructions))",
     re.I,
 )
@@ -39,8 +39,11 @@ def age_band(days) -> str | None:
     return "365+"
 
 
+_BIDI = re.compile(r"[\u202a-\u202e\u2066-\u2069]")
+
+
 def _scrub(text: str) -> str:
-    return _INSTRUCTION.sub("[redacted-instruction]", text)
+    return _INSTRUCTION.sub("[redacted-instruction]", _BIDI.sub("", text))
 
 
 def wrap_untrusted(content) -> dict | None:
@@ -74,5 +77,4 @@ def minimize_txn(txn: dict) -> dict:
         "destination_country": txn.get("destination_country"),
         "account_age_band": age_band(txn.get("account_age_days")),
         "risk_score": txn.get("risk_score"),
-        "fraud_scenario": txn.get("fraud_scenario"),
     }

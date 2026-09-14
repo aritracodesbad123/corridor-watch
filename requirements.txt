@@ -4,8 +4,9 @@ python-multipart==0.0.12
 google-genai>=2.3.0
 networkx==3.3
 faker==28.4.1
-pydantic==2.9.2
-pytest==8.3.3
+pydantic>=2.9.2
+pytest>=8.3.3
 httpx>=0.28.1
 psycopg[binary]>=3.2.0
 google-cloud-pubsub==2.23.1
+deepeval>=1.0

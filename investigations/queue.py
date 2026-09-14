@@ -62,7 +62,7 @@ def claim_next(worker_id: str, limit: int = 1) -> list[dict]:
                 (worker_id, now, now, qid),
             )
             fresh = con.execute("SELECT * FROM investigation_queue WHERE queue_id=?", (qid,)).fetchone()
-            if fresh and fresh["status"] == "CLAIMED":
+            if fresh and fresh["status"] == "CLAIMED" and fresh["worker_id"] == worker_id:
                 claimed.append(dict(fresh))
         con.commit()
     finally:

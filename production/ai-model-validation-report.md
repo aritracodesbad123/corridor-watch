@@ -45,26 +45,21 @@ Do not present 100% precision as production AML performance.
 | Provenance: provider, prompt, evidence/input/output hashes | report + `model_provenance` audit | `test_deterministic_report_records_prompt_version` |
 | Visibility ≠ guilt; do not invent institutions | `GROUNDED_SYSTEM_PROMPT` | `test_unknown_not_presented_as_fact` |
 
-## Live Gemini agreement (2026-09-13)
+## Live Gemini agreement (2026-09-14)
 
-Source: `reports/gemini_agreement.json`. Isolated ingest, three cases. Gate ≥ 0.85.
+Source: `reports/gemini_agreement.json`. Isolated ingest, **100** cases, `gemini-2.5-flash`. Gate agreement ≥ 0.85 on schema-valid reports; p95 ≤ 8 s.
 
-| Case | Deterministic | Gemini | Agree |
-|---|---|---|---|
-| GOLD-LIVE-1 (mule, new account) | hold_payment | hold_payment | yes |
-| GOLD-LIVE-2 (multi-hop, new account) | hold_payment | hold_payment | yes |
-| GOLD-LIVE-3 (normal, old account) | clear | clear | yes |
-
-Agreement **1.0**. p95 latency **13.2 s** (spec wanted ≤ 8 s — not gated in pytest). Cost/case not metered.
-Gemini cannot downgrade a deterministic disposition (`apply_grounding_gate`).
+Agreement **0.949** on **98** schema-valid reports (100 attempted; **2 HTTP 429**). Wilson 95% CI **0.89–0.98**. p95 **18928 ms** — **missed** the 8 s gate. Cost/case **$0.002387**. Tokens/case **1973.3**.
+Do not present this as 100% of 100 calls. Schema fallback is no longer the main loss mode. Gemini cannot downgrade a deterministic disposition (`apply_grounding_gate`).
 
 ## What is not measured
 
 | Item | Status |
 |---|---|
-| Gemini vs deterministic verdict agreement | **measured 1.0** on 3 isolated cases |
-| Hallucination rate on live cases | not metered as a rate |
-| Token usage / cost per case | not measured |
+| Gemini vs deterministic verdict agreement | **measured 0.949 on 98/100 schema-valid**; 2 HTTP 429 |
+| Hallucination rate on live cases | live ungrounded **0.0** on 100 invoked (`reports/hallucination.json`) |
+| Token usage / cost per case | **measured** $0.00241 / 1977.8 tokens on schema-valid cost mean |
+| DeepEval official FaithfulnessMetric (LLM judge) | NOT_MEASURED unless Gemini judge binds |
 | Shadow v1 vs v2 promotion gate | metric exists; no live promotion run |
 | Monthly 99.9% availability | session 5xx only (`/api/metrics` slos) |
 

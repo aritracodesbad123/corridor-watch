@@ -1,1 +1,1 @@
-# Named deepeval after the spec. Metrics are pytest + stdlib — no DeepEval package.
+# Real DeepEval package (CR-022). Custom BaseMetric wrappers keep deterministic scoring.

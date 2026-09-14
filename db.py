@@ -681,7 +681,7 @@ def connect(row_factory: bool = True, purpose: str = "interactive") -> sqlite3.C
                     time.sleep(0.2 * (attempt + 1))
             raise last or DatabaseBusy("database busy")
         return _connect_postgres(row_factory, purpose)
-    con = sqlite3.connect(DB_PATH, timeout=10.0)
+    con = sqlite3.connect(DB_PATH, timeout=10.0, check_same_thread=False)
     con.execute("PRAGMA journal_mode=WAL")
     con.execute("PRAGMA foreign_keys=ON")
     if row_factory:

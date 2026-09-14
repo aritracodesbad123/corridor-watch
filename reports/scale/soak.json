@@ -1,0 +1,6 @@
+{
+  "1h": "NOT_MEASURED",
+  "6h": "NOT_MEASURED",
+  "24h": "NOT_MEASURED",
+  "note": "Live soak is opt-in. 10-20s probes are not a soak."
+}

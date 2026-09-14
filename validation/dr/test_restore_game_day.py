@@ -12,5 +12,6 @@ def test_rto_rpo_measured():
     status = json.loads(REPORT.read_text())
     assert status["rto_minutes"] is not None
     assert status["rpo_minutes"] is not None
-    assert status["duplicates_after_replay"] == 0
+    assert status.get("pitr_to_past_rpo") == "NOT_MEASURED"
+    assert status.get("duplicates_after_replay") in {None, "NOT_MEASURED"}
     assert status["label"] == "Measured"

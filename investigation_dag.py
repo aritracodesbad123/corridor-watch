@@ -88,7 +88,7 @@ def _shared_beneficiaries(con, account_id: str) -> list[dict]:
 
 def _neighborhood(con, sender_id: str, receiver_id: str) -> list[dict]:
     rows = con.execute(
-        """SELECT txn_id, sender_id, receiver_id, amount, corridor, ts, fraud_scenario
+        """SELECT txn_id, sender_id, receiver_id, amount, corridor, ts
            FROM transactions
            WHERE sender_id IN (?,?) OR receiver_id IN (?,?)
            ORDER BY ts DESC LIMIT 25""",

@@ -1,0 +1,45 @@
+{
+  "run_id": "7d9cbebf1338",
+  "timestamp_utc": "2026-09-14T05:29:42.811206+00:00",
+  "git_commit": "8beb0b0deed4938e87516e931ea79ee35a91b524",
+  "environment": "local",
+  "dataset": "deepeval_offline",
+  "dataset_version": "data_gen.seed42",
+  "model": null,
+  "model_version": null,
+  "prompt_version": "investigator-v8",
+  "tool_schema_version": "investigation-report-v1",
+  "case_count": 1,
+  "random_seed": 42,
+  "cases": [
+    {
+      "input": "mule case",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    }
+  ],
+  "package": "deepeval",
+  "official_metrics": "IMPLEMENTED",
+  "judge": "GeminiModel",
+  "ran": false
+}

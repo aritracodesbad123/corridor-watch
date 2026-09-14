@@ -1,2 +1,7 @@
-{"txn_id": "HN-1", "amount": 12000, "account_age_days": 800, "fraud_scenario": "normal", "notes": "old account high-value remittance"}
-{"txn_id": "HN-2", "amount": 4500, "account_age_days": 400, "fraud_scenario": "normal", "notes": "established corridor"}
+{"txn_id": "HN-1", "kind": "remittance", "amount": 12000, "account_age_days": 800, "fraud_scenario": "normal", "notes": "old account high-value remittance"}
+{"txn_id": "HN-2", "kind": "corridor", "amount": 4500, "account_age_days": 400, "fraud_scenario": "normal", "notes": "established corridor"}
+{"txn_id": "HN-3", "kind": "payroll", "amount": 3200, "account_age_days": 1200, "origin_country": "SG", "destination_country": "SG", "notes": "payroll"}
+{"txn_id": "HN-4", "kind": "family", "amount": 800, "account_age_days": 600, "origin_country": "IN", "destination_country": "SG", "notes": "family remittance"}
+{"txn_id": "HN-5", "kind": "treasury", "amount": 25000, "account_age_days": 2000, "origin_country": "SG", "destination_country": "SG", "notes": "corporate treasury"}
+{"txn_id": "HN-6", "kind": "marketplace", "amount": 45, "account_age_days": 500, "origin_country": "US", "destination_country": "US", "notes": "marketplace settlement"}
+{"txn_id": "HN-7", "kind": "travel", "amount": 2100, "account_age_days": 350, "origin_country": "JP", "destination_country": "SG", "notes": "travel"}

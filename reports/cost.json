@@ -1,0 +1,8 @@
+{
+  "usd_per_investigation": 0.002229,
+  "tokens_per_case": 1845.7,
+  "usd_per_1k_txn": null,
+  "usd_per_alert": null,
+  "note": "Per-investigation cost from live Gemini usage. Per-txn/alert NOT_MEASURED.",
+  "hallucination_rate": 0.0
+}

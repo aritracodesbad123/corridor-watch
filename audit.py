@@ -21,6 +21,7 @@ def log_authz(
     new_state: str = "",
     reason: str = "",
     source_ip: str = "",
+    evidence_snapshot: str | None = None,
 ) -> None:
     log(
         case_id,
@@ -34,6 +35,8 @@ def log_authz(
             "new_state": new_state,
             "reason": reason,
             "ip": source_ip,
+            "recommendation_id": evidence_snapshot,
+            "evidence_snapshot": evidence_snapshot,
         },
         actor=actor,
         role=role,

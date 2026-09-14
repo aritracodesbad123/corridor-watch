@@ -20,6 +20,13 @@ Statuses:
 | Deterministic investigation without Gemini | **IMPLEMENTED** | DAG + grounded report; Gemini optional |
 | Investigation queue retry | **IMPLEMENTED** | `QUEUED → CLAIMED → RUNNING → COMPLETED / RETRY / DEAD_LETTER` |
 | Transaction-only baseline vs Corridor Watch | **IMPLEMENTED** | `evaluation.compare_to_transaction_baseline` |
+| Hidden evaluation oracle (runtime ignores `fraud_scenario`) | **VERIFIED** | `validation/oracle/test_leakage.py` |
+| Independent Dist B (not `data_gen`) | **IMPLEMENTED** | `reports/dist_b.json` — not AMLSim |
+| Network account/key-node recall | **IMPLEMENTED** | `reports/network_metrics.json` |
+| DeepEval package + custom metrics | **VERIFIED** | `reports/deepeval.json` |
+| Gemini agreement n≥100 | **VERIFIED** on schema-valid subset | `reports/gemini_agreement.json` invoked 98/100 (2× HTTP 429), schema_valid 98, agreement 0.949 CI 0.89–0.98. p95 **missed** ~19 s vs 8 s |
+| Hallucination rate (live model) | **NOT_MEASURED** | trap/gate measured in `reports/hallucination.json` |
+| Injection decision-change | **IMPLEMENTED** | `reports/injection_decision.json` |
 | Investigation compression | **IMPLEMENTED** | `graph.corridor.investigation_compression` |
 | Pattern DNA match explainability | **IMPLEMENTED** | match strength, matched/missing signals |
 | Evidence-addressable Gemini output | **IMPLEMENTED** | `InvestigationReport` IDs resolve to case evidence |

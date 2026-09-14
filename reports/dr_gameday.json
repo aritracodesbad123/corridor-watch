@@ -5,9 +5,12 @@
   "rto_minutes": 4.5,
   "rto_seconds": 270,
   "rpo_minutes": 0.0,
-  "rpo_note": "gcloud sql instances clone copies current state; no PITR-to-past gap.",
+  "rpo_kind": "current_state_clone",
+  "rpo_note": "gcloud sql instances clone copies current state. This is not a PITR-to-past RPO.",
+  "pitr_to_past_rpo": "NOT_MEASURED",
   "pitr_enabled": "true",
   "earliest_restorable_time": null,
-  "duplicates_after_replay": 0,
+  "duplicates_after_replay": null,
+  "duplicates_note": "NOT_MEASURED — no replay ran",
   "label": "Measured"
 }

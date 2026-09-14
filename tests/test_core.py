@@ -69,6 +69,59 @@ def test_rbac_blocks_privileged_endpoint():
     assert allowed.status_code == 200
 
 
+def test_thinking_off_sets_budget_zero():
+    from agent import MODEL, _thinking_off
+    cfg = _thinking_off()
+    assert cfg is not None
+    assert cfg.include_thoughts is False
+    if str(MODEL).startswith("gemini-3"):
+        assert str(cfg.thinking_level).endswith("MINIMAL")
+    else:
+        assert cfg.thinking_budget == 0
+
+
+def test_investigate_gemini_is_one_call(monkeypatch):
+    import agent
+    from investigations.schemas import InvestigationReport, EvidenceItem
+
+    seen = {"tool": 0, "grounded": 0}
+    fb = InvestigationReport(
+        investigation_summary="summary",
+        risk_hypothesis="hyp",
+        supporting_evidence=[EvidenceItem(evidence_id="E-TXN", type="txn", description="wire", source="ledger")],
+        recommended_disposition="monitor",
+        confidence=40,
+        uncertainty="u",
+        gemini_used=True,
+    )
+
+    monkeypatch.setattr(agent, "gemini_available", lambda: True)
+    monkeypatch.setattr(agent, "run_dag", lambda txn_id, **k: {
+        "run_id": "run",
+        "trace": [],
+        "evidence": {"transaction": {"txn_id": txn_id, "sender_id": "A", "receiver_id": "B"}, "sender_risk": {}},
+        "verdict": {
+            "risk_level": "medium",
+            "risk_score": 50,
+            "primary_pattern": "elevated_activity",
+            "rationale": "dag",
+            "recommended_action": "review",
+            "mode": "deterministic",
+        },
+    })
+    monkeypatch.setattr(agent, "_attach_platform_report", lambda *a, **k: fb)
+    monkeypatch.setattr(agent, "investigate_with_gemini", lambda *a, **k: seen.__setitem__("tool", seen["tool"] + 1) or {"mode": "gemini"})
+    monkeypatch.setattr(agent, "grounded_gemini_report", lambda *a, **k: seen.__setitem__("grounded", seen["grounded"] + 1) or fb)
+    monkeypatch.setattr(agent, "_cache_verdict", lambda *a, **k: None)
+    monkeypatch.setattr(agent, "_investigation_payload", lambda *a, **k: {"ok": True})
+    import audit as audit_mod
+    monkeypatch.setattr(audit_mod, "log", lambda *a, **k: None)
+
+    out = agent.investigate("T-1", mode="gemini")
+    assert out == {"ok": True}
+    assert seen == {"tool": 0, "grounded": 1}
+
+
 def test_rbac_uses_server_identity_for_decisions():
     from main import app
     from db import connect

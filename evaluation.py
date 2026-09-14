@@ -17,6 +17,7 @@ from typing import Any, Iterator
 
 from db import connect, init_schema
 from investigation_dag import run_dag
+from validation.oracle import extract, is_positive, label_of
 
 POSITIVE_SCENARIOS = {
     "mule_pass_through",
@@ -78,10 +79,38 @@ def _clean_synthetic_db() -> Iterator[None]:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
-def run_evaluation(include_trace: bool = False, cut: str = "clean") -> dict[str, Any]:
+@contextmanager
+def _dist_b_db() -> Iterator[None]:
+    """Score generator B, not data_gen."""
+    import db
+    from validation.external import generator_b
+
+    old_db = db.DB_PATH
+    tmpdir = Path(tempfile.mkdtemp(prefix="cw-eval-b-"))
+    tmp = tmpdir / "dist_b.db"
+    db.DB_PATH = tmp
+    try:
+        accounts, txns = generator_b.build()
+        generator_b.write_db(accounts, txns)
+        from graph_features import score_all, write_scores
+        con = connect()
+        scores, _, _ = score_all(con)
+        write_scores(con, scores, txns)
+        con.close()
+        yield
+    finally:
+        db.DB_PATH = old_db
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: set[str] | None = None) -> dict[str, Any]:
     if cut == "clean":
         with _clean_synthetic_db():
             return run_evaluation(include_trace=include_trace, cut="ledger")
+    if cut == "dist_b":
+        from validation.external.generator_b import POSITIVE_B
+        with _dist_b_db():
+            return run_evaluation(include_trace=include_trace, cut="ledger_b", positive=POSITIVE_B)
     init_schema()
     con = connect()
     rows = [dict(r) for r in con.execute(
@@ -92,6 +121,8 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean") -> dict[str,
     if not rows:
         return {"status": "no_data", "message": "Generate the synthetic dataset first."}
 
+    positive = positive or POSITIVE_SCENARIOS
+    labels = extract(rows, positive)
     y_true: list[bool] = []
     y_pred: list[bool] = []
     by_scenario: dict[str, dict[str, int]] = defaultdict(lambda: {"total": 0, "flagged": 0})
@@ -104,11 +135,11 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean") -> dict[str,
     for txn in rows:
         bundle = run_dag(txn["txn_id"], audit_events=False)
         verdict = bundle["verdict"]
-        truth = txn.get("fraud_scenario") in POSITIVE_SCENARIOS
+        truth = is_positive(txn["txn_id"], labels)
         predicted = float(verdict.get("risk_score", 0)) >= 40
         y_true.append(truth)
         y_pred.append(predicted)
-        scenario = txn.get("fraud_scenario") or "normal"
+        scenario = label_of(txn["txn_id"], labels)
         predicted_pattern = verdict.get("primary_pattern")
         if truth:
             positive_total += 1
@@ -134,9 +165,9 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean") -> dict[str,
 
     result = {
         "status": "ok",
-        "benchmark": "synthetic_v1",
-        "ground_truth": "transactions.fraud_scenario",
-        "positive_scenarios": sorted(POSITIVE_SCENARIOS),
+        "benchmark": "dist_b" if cut == "ledger_b" else "synthetic_v1",
+        "ground_truth": "validation.oracle (eval-only; runtime ignores fraud_scenario)",
+        "positive_scenarios": sorted(positive),
         "sample_count": len(rows),
         "metrics": metrics,
         "per_scenario": per_scenario,
@@ -152,9 +183,40 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean") -> dict[str,
     }
     if include_trace:
         result["examples"] = examples
-    result["baseline_comparison"] = compare_to_transaction_baseline(rows)
+    result["baseline_comparison"] = compare_to_transaction_baseline(rows, positive=positive)
     result["impact"] = impact_metrics(result, result["baseline_comparison"])
+    if cut != "ledger_b":
+        result["network_metrics"] = _network_eval(rows, labels)
     return result
+
+
+def _network_eval(rows: list[dict], labels: dict[str, dict]) -> dict[str, Any]:
+    from graph.investigator import bounded_network
+    from graph.network_metrics import score_network
+
+    by_label: dict[str, list[dict]] = defaultdict(list)
+    for txn in rows:
+        lab = label_of(txn["txn_id"], labels)
+        if is_positive(txn["txn_id"], labels):
+            by_label[lab].append(txn)
+    scored = []
+    for lab, cluster in by_label.items():
+        truth_nodes = {t["sender_id"] for t in cluster} | {t["receiver_id"] for t in cluster}
+        truth_edges = [(t["sender_id"], t["receiver_id"]) for t in cluster]
+        seed = cluster[0]
+        pred = bounded_network(seed)
+        scored.append({"label": lab, **score_network(pred, {"nodes": truth_nodes, "edges": truth_edges, "key_nodes": truth_nodes})})
+    if not scored:
+        return {"status": "no_positive_clusters"}
+    rec = sum(s["account_recall"]["recall"] for s in scored) / len(scored)
+    return {
+        "clusters": len(scored),
+        "account_recall": round(rec, 4),
+        "key_node_recall": round(sum(s["key_node_recall"]["recall"] for s in scored) / len(scored), 4),
+        "relationship_reconstruction": round(sum(s["relationship_reconstruction"]["recall"] for s in scored) / len(scored), 4),
+        "path_recovery": round(sum(s["path_recovery"]["recall"] for s in scored) / len(scored), 4),
+        "per_cluster": scored,
+    }
 
 
 def transaction_only_predict(txn: dict) -> bool:
@@ -178,7 +240,7 @@ def transaction_only_predict(txn: dict) -> bool:
     return False
 
 
-def compare_to_transaction_baseline(rows: list[dict] | None = None) -> dict[str, Any]:
+def compare_to_transaction_baseline(rows: list[dict] | None = None, positive: set[str] | None = None) -> dict[str, Any]:
     init_schema()
     con = connect()
     if rows is None:
@@ -200,7 +262,8 @@ def compare_to_transaction_baseline(rows: list[dict] | None = None) -> dict[str,
             item["account_age_days"] = ages.get(item.get("sender_id"))
         item["sender_velocity"] = sender_counts.get(item.get("sender_id")) or 0
         enriched.append(item)
-    y_true = [txn.get("fraud_scenario") in POSITIVE_SCENARIOS for txn in enriched]
+    labels = extract(enriched, positive or POSITIVE_SCENARIOS)
+    y_true = [is_positive(txn["txn_id"], labels) for txn in enriched]
     y_base = [transaction_only_predict(txn) for txn in enriched]
     return {
         "name": "transaction_only",
@@ -373,7 +436,7 @@ def scorecard() -> dict:
             "benchmark_false_positive_rate": metrics.get("false_positive_rate"),
             "analyst_clear_rate": fp_rate,
             "analyst_decisions": decisions,
-            "note": "Benchmark FP is measured on fraud_scenario labels. Analyst clear-rate is measured from recorded dispositions.",
+            "note": "Oracle label (generator/eval-only) ≠ analyst disposition ≠ confirmed-fraud ≠ regulatory finding.",
         },
         "source": "measured",
         "baseline_comparison": baseline or (detection or {}).get("baseline_comparison"),

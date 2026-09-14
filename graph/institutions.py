@@ -1,19 +1,42 @@
 """Institution-level aggregation. Neutral AML language only."""
 from __future__ import annotations
 
+import time
+
 from db import connect, init_schema
 from graph.visibility import home_institution
 
 
+_CACHE: dict = {}
+
+
 def list_institutions() -> list[dict]:
+    now = time.time()
+    cached = _CACHE.get("rows")
+    if cached is not None and now - float(_CACHE.get("ts") or 0) < 20:
+        return cached
     init_schema()
     con = connect()
-    banks = {r["bank_id"]: dict(r) for r in con.execute("SELECT * FROM banks").fetchall()}
-    txns = [dict(r) for r in con.execute(
-        "SELECT origin_bank_id, destination_bank_id, amount, risk_tier, corridor, fraud_scenario FROM transactions"
-    ).fetchall()]
-    accounts = [dict(r) for r in con.execute("SELECT account_id, bank_id FROM accounts").fetchall()]
-    con.close()
+    try:
+        banks = {r["bank_id"]: dict(r) for r in con.execute("SELECT * FROM banks").fetchall()}
+        acct = {
+            r["bank_id"]: int(r["c"])
+            for r in con.execute("SELECT bank_id, COUNT(*) AS c FROM accounts GROUP BY bank_id")
+        }
+        origin = [dict(r) for r in con.execute(
+            """SELECT origin_bank_id AS bank_id, COUNT(*) AS transaction_count,
+                      SUM(CASE WHEN risk_tier IN ('HIGH', 'CRITICAL') THEN 1 ELSE 0 END) AS suspicious_transaction_count,
+                      COALESCE(SUM(CASE WHEN risk_tier IN ('HIGH', 'CRITICAL') THEN amount ELSE 0 END), 0) AS suspicious_transaction_amount
+               FROM transactions WHERE origin_bank_id IS NOT NULL GROUP BY origin_bank_id"""
+        )]
+        dest = [dict(r) for r in con.execute(
+            """SELECT destination_bank_id AS bank_id, COUNT(*) AS transaction_count,
+                      SUM(CASE WHEN risk_tier IN ('HIGH', 'CRITICAL') THEN 1 ELSE 0 END) AS suspicious_transaction_count,
+                      COALESCE(SUM(CASE WHEN risk_tier IN ('HIGH', 'CRITICAL') THEN amount ELSE 0 END), 0) AS suspicious_transaction_amount
+               FROM transactions WHERE destination_bank_id IS NOT NULL GROUP BY destination_bank_id"""
+        )]
+    finally:
+        con.close()
     home = home_institution()
     out = {}
     for bank_id, bank in banks.items():
@@ -23,32 +46,28 @@ def list_institutions() -> list[dict]:
             "country": bank.get("country"),
             "institution_type": bank.get("institution_type"),
             "role": "home" if bank_id == home else "counterparty",
-            "connected_accounts": 0,
+            "connected_accounts": acct.get(bank_id, 0),
             "transaction_count": 0,
             "suspicious_transaction_count": 0,
             "suspicious_transaction_amount": 0.0,
-            "corridors": set(),
+            "corridors": [],
             "note": "Presence in a suspicious graph is not a finding of institutional criminality.",
         }
-    for acc in accounts:
-        bank = acc.get("bank_id")
-        if bank in out:
-            out[bank]["connected_accounts"] += 1
-    for t in txns:
-        for bank in (t.get("origin_bank_id"), t.get("destination_bank_id")):
-            if bank not in out:
-                continue
-            out[bank]["transaction_count"] += 1
-            if t.get("corridor"):
-                out[bank]["corridors"].add(t["corridor"])
-            if t.get("risk_tier") in {"HIGH", "CRITICAL"} or (t.get("fraud_scenario") or "normal") != "normal":
-                out[bank]["suspicious_transaction_count"] += 1
-                out[bank]["suspicious_transaction_amount"] += float(t.get("amount") or 0)
+    for row in origin + dest:
+        bank = row.get("bank_id")
+        if bank not in out:
+            continue
+        out[bank]["transaction_count"] += int(row.get("transaction_count") or 0)
+        out[bank]["suspicious_transaction_count"] += int(row.get("suspicious_transaction_count") or 0)
+        out[bank]["suspicious_transaction_amount"] += float(row.get("suspicious_transaction_amount") or 0)
+    rows = []
     for row in out.values():
-        row["corridors"] = sorted(row["corridors"])
         row["suspicious_transaction_amount"] = round(row["suspicious_transaction_amount"], 2)
         row["exposure"] = "elevated_network_exposure" if row["suspicious_transaction_count"] else "routine"
-    return sorted(out.values(), key=lambda r: (-r["suspicious_transaction_count"], r["institution_id"]))
+        rows.append(row)
+    rows.sort(key=lambda r: (-r["suspicious_transaction_count"], r["institution_id"]))
+    _CACHE.update(ts=now, rows=rows)
+    return rows
 
 
 def institution_network(institution_id: str) -> dict:

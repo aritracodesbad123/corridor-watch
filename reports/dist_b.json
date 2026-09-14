@@ -1,0 +1,85 @@
+{
+  "status": "ok",
+  "benchmark": "dist_b",
+  "ground_truth": "validation.oracle (eval-only; runtime ignores fraud_scenario)",
+  "positive_scenarios": [
+    "burst_smurf",
+    "circular_pass"
+  ],
+  "sample_count": 108,
+  "metrics": {
+    "tp": 28,
+    "fp": 80,
+    "fn": 0,
+    "tn": 0,
+    "precision": 0.2593,
+    "recall": 1.0,
+    "f1": 0.4118,
+    "false_positive_rate": 1.0
+  },
+  "per_scenario": {
+    "burst_smurf": {
+      "total": 16,
+      "flagged": 16,
+      "flag_rate": 1.0
+    },
+    "circular_pass": {
+      "total": 12,
+      "flagged": 12,
+      "flag_rate": 1.0
+    },
+    "normal": {
+      "total": 80,
+      "flagged": 80,
+      "flag_rate": 1.0
+    }
+  },
+  "pattern_accuracy": 0.0,
+  "pattern_confusion": {
+    "burst_smurf->mule_pass_through": 16,
+    "circular_pass->split_transaction_laundering": 12
+  },
+  "quality_gate": {
+    "minimum_recall": 0.9,
+    "minimum_precision": 0.5,
+    "minimum_pattern_accuracy": 0.9,
+    "passed": false
+  },
+  "baseline_comparison": {
+    "name": "transaction_only",
+    "rules": [
+      "amount >= 8000",
+      "account_age_days <= 3 and amount >= 2500",
+      "sender_velocity >= 4 and amount >= 2000"
+    ],
+    "metrics": {
+      "tp": 12,
+      "fp": 0,
+      "fn": 16,
+      "tn": 80,
+      "precision": 1.0,
+      "recall": 0.4286,
+      "f1": 0.6,
+      "false_positive_rate": 0.0
+    },
+    "network_detection": null,
+    "note": "Threshold-only baseline. No graph, Pattern DNA, or Gemini."
+  },
+  "impact": {
+    "investigation_compression": {
+      "flagged_transactions": 108,
+      "baseline_items_reviewed": 108,
+      "network_items_reviewed": 3,
+      "network_investigations": 3,
+      "compression_ratio": 36.0,
+      "unit_of_work": "network_investigation",
+      "note": "Traditional review counts flagged wires. Corridor Watch reviews the collapsed network. Measured, not claimed."
+    },
+    "false_positive_reduction": -1.0,
+    "network_detection_lift": 0.5714,
+    "evidence_coverage": null,
+    "analyst_actionability_rate": null,
+    "time_to_case_ready": null,
+    "note": "Compression and lift are measured on the synthetic ledger, not production banks."
+  }
+}

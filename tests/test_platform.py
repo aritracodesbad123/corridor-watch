@@ -562,3 +562,16 @@ def test_analyst_freeze_returns_fiu_message(isolated_db):
     )
     assert denied.status_code == 403
     assert denied.json()["detail"] == "FIU Lead authorization required"
+
+
+def test_home_snapshot_queries_do_not_materialize_the_ledger(isolated_db):
+    from graph.corridor import investigation_compression
+    from graph.institutions import list_institutions
+
+    ingest_transaction(_event(txn_id="T-HOME-1", amount=15000, account_age_days=1), message_id="m-home")
+    comp = investigation_compression()
+    assert comp["flagged_transactions"] >= 1
+    assert comp["network_investigations"] >= 0
+    rows = list_institutions()
+    assert isinstance(rows, list)
+    assert all("transaction_count" in r for r in rows)

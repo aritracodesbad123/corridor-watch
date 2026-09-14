@@ -68,10 +68,6 @@ def cheap_screen(txn: dict, con=None, *, velocity: bool = True) -> ScreenResult:
             score += 10
             signals.append("unknown_corridor_leg")
 
-    if txn.get("fraud_scenario") and txn.get("fraud_scenario") != "normal":
-        score += 20
-        signals.append(f"labeled_{txn['fraud_scenario']}")
-
     account_age = txn.get("account_age_days")
     if account_age is not None and int(account_age) <= 7:
         score += 18

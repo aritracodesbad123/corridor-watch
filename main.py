@@ -113,6 +113,7 @@ class DecisionRequest(BaseModel):
     # Kept for backwards compatibility with the UI; server authorization always
     # derives identity from the authenticated context.
     analyst_id: str = "analyst_demo"
+    evidence_hash: str | None = None
 
     @field_validator("decision")
     @classmethod
@@ -255,23 +256,28 @@ def list_alerts(
         seed_middle_bank()
     except Exception:
         pass
-    con = connect()
-    rows = [dict(r) for r in con.execute(
-        "SELECT txn_id, sender_id, receiver_id, amount, corridor, ts, risk_score, "
+    order = {"risk": "risk_score DESC, txn_id", "oldest": "ts ASC, txn_id"}.get(sort, "ts DESC, txn_id")
+    cols = (
+        "txn_id, sender_id, receiver_id, amount, corridor, ts, risk_score, "
         "primary_pattern, fraud_scenario, currency, purpose, source_of_funds, "
-        "risk_tier, network_id, workflow_state, showcase FROM flagged_transactions"
+        "risk_tier, network_id, workflow_state, showcase"
+    )
+    con = connect()
+    pinned = [dict(r) for r in con.execute(
+        f"SELECT {cols} FROM flagged_transactions WHERE showcase IS NOT NULL AND showcase != ''"
     ).fetchall()]
-    con.close()
-    rows = [r for r in rows if workflow.visible_to_role(r, auth.role)]
+    rest_sql = f"SELECT {cols} FROM flagged_transactions WHERE COALESCE(showcase, '') = ''"
+    params: list = []
     if corridor:
-        rows = [r for r in rows if (r.get("corridor") or "") == corridor]
-    pinned = [r for r in rows if r.get("showcase")]
-    rest = [r for r in rows if not r.get("showcase")]
+        rest_sql += " AND corridor = ?"
+        params.append(corridor)
+        pinned = [r for r in pinned if (r.get("corridor") or "") == corridor]
+    rest_sql += f" ORDER BY {order} LIMIT 200"
+    rest = [dict(r) for r in con.execute(rest_sql, params).fetchall()]
+    con.close()
+    pinned = [r for r in pinned if workflow.visible_to_role(r, auth.role)]
+    rest = [r for r in rest if workflow.visible_to_role(r, auth.role)]
     pinned.sort(key=lambda r: (0 if r.get("showcase") == "middle_bank" else 1, str(r.get("txn_id") or "")))
-    if sort == "risk":
-        rest.sort(key=lambda r: float(r.get("risk_score") or 0), reverse=True)
-    else:
-        rest.sort(key=lambda r: str(r.get("ts") or ""), reverse=(sort != "oldest"))
     return (pinned + rest)[:200]
 
 
@@ -369,6 +375,12 @@ def analyst_decision(
     if not exists:
         con.close()
         raise HTTPException(404, "alert not found")
+    if body.evidence_hash:
+        from investigations.service import build_investigation
+        current = build_investigation(txn_id, use_gemini=False)
+        if (current.get("report") or {}).get("evidence_hash") != body.evidence_hash:
+            con.close()
+            raise HTTPException(409, "stale recommendation")
     ts = datetime.now(timezone.utc).isoformat()
     analyst_id = auth.analyst_id
     if body.decision in {"hold_payment", "escalate_fiu", "freeze_account"} and auth.role == "analyst":
@@ -394,6 +406,7 @@ def analyst_decision(
         new_state=body.decision,
         reason=body.notes,
         source_ip=(request.client.host if request and request.client else ""),
+        evidence_snapshot=body.evidence_hash,
     )
     try:
         phase2_memory.remember_from_decision(txn_id, body.decision, body.notes)
@@ -765,10 +778,6 @@ def store_benchmark(body: BenchmarkRequest, auth: AuthContext = Depends(require(
 @app.get("/api/command-center")
 def command_center(light: bool = False, auth: AuthContext = Depends(require("command:read"))):
     from graph.corridor import corridor_intelligence, investigation_compression
-    try:
-        seed_middle_bank()
-    except Exception:
-        pass
 
     flagged = high = pending = cases = 0
     wf = {}

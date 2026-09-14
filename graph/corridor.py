@@ -17,48 +17,22 @@ def corridor_intelligence(limit: int = 40) -> list[dict]:
     con = connect()
     try:
         stats = [dict(r) for r in con.execute(
-            """SELECT t.corridor AS corridor,
-                      COALESCE(SUM(t.amount), 0) AS volume,
+            """SELECT corridor,
+                      COALESCE(SUM(amount), 0) AS volume,
                       COUNT(*) AS count,
-                      SUM(CASE WHEN t.risk_tier IN ('HIGH', 'CRITICAL')
-                                OR COALESCE(t.fraud_scenario, 'normal') != 'normal'
-                                OR f.txn_id IS NOT NULL
-                               THEN 1 ELSE 0 END) AS suspicious_count
-               FROM transactions t
-               LEFT JOIN flagged_transactions f ON f.txn_id = t.txn_id
-               GROUP BY t.corridor"""
+                      SUM(CASE WHEN risk_tier IN ('HIGH', 'CRITICAL') THEN 1 ELSE 0 END) AS suspicious_count
+               FROM transactions
+               GROUP BY corridor"""
         ).fetchall()]
-        accounts = {
-            r["corridor"]: int(r["unique_accounts"])
-            for r in con.execute(
-                """SELECT corridor, COUNT(*) AS unique_accounts FROM (
-                       SELECT corridor, sender_id AS aid FROM transactions
-                       UNION
-                       SELECT corridor, receiver_id AS aid FROM transactions
-                   ) u GROUP BY corridor"""
-            )
-        }
+        accounts: dict[str, int] = {}
         patterns: dict[str, list[str]] = {}
         for r in con.execute(
-            """SELECT corridor, fraud_scenario FROM transactions
-               WHERE fraud_scenario IS NOT NULL AND fraud_scenario != 'normal'
-               GROUP BY corridor, fraud_scenario"""
+            """SELECT corridor, primary_pattern FROM flagged_transactions
+               WHERE primary_pattern IS NOT NULL AND primary_pattern != ''
+               GROUP BY corridor, primary_pattern"""
         ):
-            patterns.setdefault(r["corridor"], []).append(r["fraud_scenario"])
-        networks = {
-            r["corridor"]: int(r["network_count"])
-            for r in con.execute(
-                """SELECT corridor, COUNT(DISTINCT network_id) AS network_count FROM (
-                       SELECT t.corridor AS corridor, q.network_id AS network_id
-                       FROM investigation_queue q
-                       JOIN transactions t ON t.txn_id = q.txn_id
-                       WHERE q.network_id IS NOT NULL AND q.network_id != ''
-                       UNION
-                       SELECT corridor, network_id FROM flagged_transactions
-                       WHERE network_id IS NOT NULL AND network_id != ''
-                   ) n GROUP BY corridor"""
-            )
-        }
+            patterns.setdefault(r["corridor"], []).append(r["primary_pattern"])
+        networks: dict[str, int] = {}
     finally:
         con.close()
 
@@ -89,30 +63,21 @@ def investigation_compression(txn_id: str | None = None) -> dict:
     """Related flagged events collapse into fewer network investigations."""
     init_schema()
     con = connect()
-    flagged = [dict(r) for r in con.execute(
-        "SELECT txn_id, sender_id, receiver_id, network_id FROM flagged_transactions"
-    ).fetchall()]
-    queued = [dict(r) for r in con.execute("SELECT txn_id, network_id FROM investigation_queue").fetchall()]
-    con.close()
-    networks = {q["network_id"] for q in queued if q.get("network_id")}
-    networks.update(f.get("network_id") for f in flagged if f.get("network_id"))
-    if not networks and flagged:
-        parent: dict[str, str] = {}
-
-        def find(x: str) -> str:
-            parent.setdefault(x, x)
-            if parent[x] != x:
-                parent[x] = find(parent[x])
-            return parent[x]
-
-        for f in flagged:
-            a, b = f["sender_id"], f["receiver_id"]
-            parent.setdefault(a, a)
-            parent.setdefault(b, b)
-            parent[find(a)] = find(b)
-        networks = {find(f["sender_id"]) for f in flagged}
-    flagged_n = len(flagged)
-    network_n = len(networks)
+    try:
+        flagged_n = int(con.execute("SELECT COUNT(*) AS c FROM flagged_transactions").fetchone()["c"])
+        network_n = int(con.execute(
+            """SELECT COUNT(*) AS c FROM (
+                   SELECT network_id FROM flagged_transactions
+                   WHERE network_id IS NOT NULL AND network_id != ''
+                   UNION
+                   SELECT network_id FROM investigation_queue
+                   WHERE network_id IS NOT NULL AND network_id != ''
+               ) n"""
+        ).fetchone()["c"])
+    finally:
+        con.close()
+    if not network_n:
+        network_n = flagged_n
     return {
         "flagged_transactions": flagged_n,
         "baseline_items_reviewed": flagged_n,

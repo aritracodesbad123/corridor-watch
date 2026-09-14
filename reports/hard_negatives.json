@@ -1,0 +1,15 @@
+{
+  "n": 7,
+  "kinds": [
+    "remittance",
+    "corridor",
+    "payroll",
+    "family",
+    "treasury",
+    "marketplace",
+    "travel"
+  ],
+  "screen_fpr": 0.0,
+  "fpr": 0.0,
+  "dag_fp": 0
+}

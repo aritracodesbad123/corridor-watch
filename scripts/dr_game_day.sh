@@ -55,10 +55,13 @@ path.write_text(json.dumps({
     "rto_minutes": float("$RTO_MIN"),
     "rto_seconds": int("$RTO_SEC"),
     "rpo_minutes": 0.0,
-    "rpo_note": "gcloud sql instances clone copies current state; no PITR-to-past gap.",
+    "rpo_kind": "current_state_clone",
+    "rpo_note": "gcloud sql instances clone copies current state. This is not a PITR-to-past RPO.",
+    "pitr_to_past_rpo": "NOT_MEASURED",
     "pitr_enabled": "$PITR",
     "earliest_restorable_time": "$EARLIEST".strip() or None,
-    "duplicates_after_replay": 0,
+    "duplicates_after_replay": None,
+    "duplicates_note": "NOT_MEASURED — no replay ran",
     "label": "Measured",
 }, indent=2))
 print("wrote", path)

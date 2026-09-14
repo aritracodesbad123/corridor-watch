@@ -5,9 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from validation.datasets.golden import cases
 from validation.deepeval.metrics.aml_correctness import aml_correctness
-
-os.environ.setdefault("CW_GEMINI_LIVE", "1")
 
 ROOT = Path(__file__).resolve().parents[2]
 REPORT = ROOT / "reports" / "gemini_agreement.json"
@@ -50,13 +49,13 @@ def test_gemini_deterministic_agreement(isolated_db, monkeypatch):
     from investigations.service import build_investigation
     from validation.reliability.test_idempotency import _event
 
-    cases = [
-        ("GOLD-LIVE-1", {"txn_id": "GOLD-LIVE-1", "source_event_id": "GOLD-E1", "amount": 15000, "account_age_days": 1, "fraud_scenario": "mule_pass_through"}),
-        ("GOLD-LIVE-2", {"txn_id": "GOLD-LIVE-2", "source_event_id": "GOLD-E2", "amount": 18000, "account_age_days": 2, "fraud_scenario": "multi_hop_chain"}),
-        ("GOLD-LIVE-3", {"txn_id": "GOLD-LIVE-3", "source_event_id": "GOLD-E3", "amount": 4500, "account_age_days": 800, "fraud_scenario": "normal"}),
-    ]
+    golden = cases()
+    n = int(os.getenv("CW_GEMINI_N") or min(100, len(golden)))
+    selected = golden[:n]
     rows = []
-    for txn_id, kwargs in cases:
+    for row in selected:
+        txn_id = row["txn_id"]
+        kwargs = {k: row[k] for k in ("txn_id", "source_event_id", "amount", "account_age_days", "fraud_scenario") if k in row}
         ingest_transaction(_event(**kwargs), message_id=f"m-{txn_id}")
         det = build_investigation(txn_id, use_gemini=False)
         started = time.perf_counter()
@@ -79,7 +78,11 @@ def test_gemini_deterministic_agreement(isolated_db, monkeypatch):
             "prompt_tokens": usage.get("prompt_tokens"),
             "completion_tokens": usage.get("completion_tokens"),
             "cost_usd": usage.get("cost_usd"),
+            "parse_error": usage.get("parse_error"),
+            "finish_reason": usage.get("finish_reason"),
         })
+        REPORT.parent.mkdir(parents=True, exist_ok=True)
+        REPORT.write_text(json.dumps({"partial": True, "n": len(rows), "cases": rows}, indent=2))
 
     invoked = [r for r in rows if r["gemini_error"] is None]
     scored = [r for r in invoked if r["gemini_used"]]
@@ -88,14 +91,33 @@ def test_gemini_deterministic_agreement(isolated_db, monkeypatch):
     p95 = latencies[int(0.95 * (len(latencies) - 1))] if latencies else None
     costs = [r.get("cost_usd") for r in scored if r.get("cost_usd") is not None]
     cost_per = round(sum(costs) / len(costs), 6) if costs else None
+    toks = [(r.get("prompt_tokens") or 0) + (r.get("completion_tokens") or 0) for r in scored]
+    tokens_per = round(sum(toks) / len(toks), 1) if toks else None
+    k = sum(1 for r in scored if r["agree"])
+    n_scored = len(scored)
+    z = 1.96
+    ci = None
+    if n_scored:
+        p = k / n_scored
+        denom = 1 + z ** 2 / n_scored
+        centre = (p + z ** 2 / (2 * n_scored)) / denom
+        spread = z * ((p * (1 - p) / n_scored + z ** 2 / (4 * n_scored * n_scored)) ** 0.5) / denom
+        ci = [round(max(0.0, centre - spread), 4), round(min(1.0, centre + spread), 4)]
     payload = {
         "cases": rows,
         "invoked_n": len(invoked),
         "schema_valid_n": len(scored),
         "agreement": round(agreement, 4) if scored else None,
+        "agreement_ci": ci,
         "p95_latency_ms": p95,
         "cost_per_case_usd": cost_per,
-        "note": "Agreement counts schema-valid Gemini reports vs deterministic disposition. Cost from usage_metadata.",
+        "tokens_per_case": tokens_per,
+        "model": os.getenv("GEMINI_MODEL"),
+        "note": (
+            f"Agreement is schema-valid Gemini vs deterministic. "
+            f"invoked={len(invoked)} schema_valid={len(scored)}. "
+            "p95 is over all invoked latencies. Cost from usage_metadata."
+        ),
     }
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(payload, indent=2))

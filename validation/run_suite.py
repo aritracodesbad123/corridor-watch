@@ -3,15 +3,15 @@ from __future__ import annotations
 
 import json
 import random
+import shutil
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
 
-from validation import SEED
+from validation import ROOT, SEED, experiment_metadata
 
-ROOT = Path(__file__).resolve().parents[1]
 REPORTS = ROOT / "reports"
 
 
@@ -32,6 +32,12 @@ def _deterministic():
         return {"status": "error", "error": str(exc)}
 
 
+def _status(value, *, measured_when=None, label="Verified"):
+    if value is None:
+        return "NOT_MEASURED"
+    return f"{label} {value}" if measured_when is None or measured_when else f"NOT_MEASURED {value}"
+
+
 def main(argv: list[str] | None = None) -> int:
     argv = list(sys.argv[1:] if argv is None else argv)
     report_only = "--report-only" in argv
@@ -44,9 +50,27 @@ def main(argv: list[str] | None = None) -> int:
     gem = _read(REPORTS / "gemini_agreement.json")
     gates = _read(REPORTS / "scale" / "live_gates.json")
     dr = _read(REPORTS / "dr_gameday.json")
+    hall = _read(REPORTS / "hallucination.json")
+    inj = _read(REPORTS / "injection_decision.json")
+    net = _read(REPORTS / "network_metrics.json") or (det.get("network_metrics") or {})
+    dist_b = _read(REPORTS / "dist_b.json")
+    inv = _read(REPORTS / "scale" / "investigation_throughput.json")
+    hold = _read(REPORTS / "rule_miner_holdout.json")
+    races = _read(REPORTS / "races.json")
+    hn = _read(REPORTS / "hard_negatives.json")
+    deepeval = _read(REPORTS / "deepeval.json")
     live_tps = gates.get("max_sustained_consume_tps_passing_gate") or 814.13
+    if det.get("network_metrics") and not (REPORTS / "network_metrics.json").exists():
+        (REPORTS / "network_metrics.json").write_text(json.dumps(det["network_metrics"], indent=2, default=str))
+        net = det["network_metrics"]
+    gem_n = gem.get("schema_valid_n") or gem.get("agreement_n")
     report = {
-        "seed": SEED,
+        **experiment_metadata(
+            dataset=det.get("benchmark") or "synthetic_v1",
+            case_count=det.get("sample_count") or 0,
+            model=gem.get("model"),
+            timestamp_utc=started,
+        ),
         "started_at": started,
         "finished_at": datetime.now(timezone.utc).isoformat(),
         "pytest_exit_code": int(code),
@@ -57,25 +81,46 @@ def main(argv: list[str] | None = None) -> int:
             "path": "pubsub_cloud_run_cloud_sql",
             "label": "Measured",
             "live_gates": "reports/scale/live_gates.json",
+            "investigation_throughput": inv or None,
             "note": "Highest consume that passed its gate. 2k miss. Not 5,000 TPS.",
         },
         "gemini": {
             "grounding": "Verified",
             "agreement": gem.get("agreement"),
-            "agreement_n": gem.get("schema_valid_n"),
+            "agreement_n": gem_n,
+            "agreement_ci": gem.get("agreement_ci"),
             "p95_latency_ms": gem.get("p95_latency_ms"),
             "cost_per_case_usd": gem.get("cost_per_case_usd"),
+            "tokens_per_case": gem.get("tokens_per_case"),
+            "hallucination_rate": hall.get("hallucination_rate"),
+            "unsupported_claim_rate": hall.get("unsupported_claim_rate"),
             "artifact": "reports/gemini_agreement.json",
         },
+        "network": net,
+        "dist_b": dist_b,
+        "injection": inj,
+        "hard_negatives": hn,
+        "races": races,
+        "rule_miner": hold,
+        "deepeval": {"imported": bool(deepeval), "artifact": "reports/deepeval.json" if deepeval else None},
         "dr": {
-            "rpo": dr.get("rpo_minutes", "Target — not yet timed"),
-            "rto": dr.get("rto_minutes", "Target — not yet timed"),
+            "rpo": dr.get("rpo_minutes"),
+            "rto": dr.get("rto_minutes"),
+            "rpo_kind": dr.get("rpo_kind", "current_state_clone"),
+            "pitr_to_past_rpo": dr.get("pitr_to_past_rpo", "NOT_MEASURED"),
+            "duplicates_after_replay": dr.get("duplicates_after_replay"),
             "label": dr.get("label", "Target — not yet timed"),
         },
     }
     (REPORTS / "validation_report.json").write_text(json.dumps(report, indent=2, default=str))
     _write_markdown(report, gates)
-    _write_scorecard(report, gates, gem, dr)
+    _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval)
+    dest = ROOT / "validation" / "results" / f"run_{started.replace(':', '').replace('-', '')[:15]}"
+    dest.mkdir(parents=True, exist_ok=True)
+    for name in ("SCORECARD.md", "VALIDATION_REPORT.md", "validation_report.json"):
+        src = REPORTS / name
+        if src.exists():
+            shutil.copy2(src, dest / name)
     return 0 if int(code) == 0 else int(code)
 
 
@@ -83,6 +128,7 @@ def _write_markdown(report: dict, gates: dict) -> None:
     det = report.get("deterministic") or {}
     metrics = det.get("metrics") or {}
     gem = report.get("gemini") or {}
+    net = report.get("network") or {}
     runs = gates.get("runs") or []
     scale_rows = "\n".join(
         f"| {r.get('target'):,} | {r.get('publish_tps')} | {r.get('achieved_tps')} | {r.get('gate')} | {'passed' if r.get('passed') else 'missed'} |"
@@ -91,11 +137,14 @@ def _write_markdown(report: dict, gates: dict) -> None:
     (ROOT / "reports" / "VALIDATION_REPORT.md").write_text(
         f"""# Validation report
 
-Seed `{report['seed']}`. Pytest exit `{report['pytest_exit_code']}`.
+run_id `{report.get('run_id')}` commit `{report.get('git_commit')}`. Seed `{report['random_seed']}`. Pytest exit `{report['pytest_exit_code']}`.
 
 ## Deterministic
 status={det.get('status')} f1={metrics.get('f1')} fpr={metrics.get('false_positive_rate')} samples={det.get('sample_count')}
-Clean `data_gen` cut. Gate F1 ≥ 0.85.
+{det.get('ground_truth')}. Gate F1 ≥ 0.85.
+
+## Network
+account_recall={net.get('account_recall')} key_node_recall={net.get('key_node_recall')} reconstruction={net.get('relationship_reconstruction')}
 
 ## Scale (Pub/Sub → Cloud Run → Cloud SQL)
 
@@ -103,52 +152,92 @@ Clean `data_gen` cut. Gate F1 ≥ 0.85.
 |---|---:|---:|---:|---|
 {scale_rows}
 
-Max sustained TPS under a passing gate: **{report['scale']['max_sustained_tps_under_slo']}**. Not 5,000 TPS.
+Max sustained ingest TPS under a passing gate: **{report['scale']['max_sustained_tps_under_slo']}**. Not 5,000 TPS.
+Investigation enqueue TPS: {(report['scale'].get('investigation_throughput') or {}).get('enqueue_tps')}. Completions NOT_MEASURED.
 
 ## Gemini
-agreement={gem.get('agreement')} p95_ms={gem.get('p95_latency_ms')} cost/case={gem.get('cost_per_case_usd')}
+agreement={gem.get('agreement')} n={gem.get('agreement_n')} ci={gem.get('agreement_ci')} p95_ms={gem.get('p95_latency_ms')}
+cost/case={gem.get('cost_per_case_usd')} tokens/case={gem.get('tokens_per_case')}
+hallucination={gem.get('hallucination_rate')} unsupported={gem.get('unsupported_claim_rate')}
 
 ## DR
-RPO={report['dr']['rpo']} / RTO={report['dr']['rto']} ({report['dr']['label']})
+RTO={report['dr']['rto']} current-state clone RPO={report['dr']['rpo']} ({report['dr']['rpo_kind']}).
+PITR-to-past RPO={report['dr']['pitr_to_past_rpo']}. replay_duplicates={report['dr']['duplicates_after_replay']}.
 """
     )
 
 
-def _write_scorecard(report: dict, gates: dict, gem: dict, dr: dict) -> None:
+def _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn, dist_b, deepeval) -> None:
     det = report.get("deterministic") or {}
     metrics = det.get("metrics") or {}
     f1 = metrics.get("f1")
     det_status = "Verified" if det.get("quality_gate", {}).get("passed") else "Implemented"
     runs = {r.get("target"): r for r in (gates.get("runs") or [])}
+
     def _row(target: int) -> str:
         r = runs.get(target) or {}
         if not r:
             return "—"
         return f"{'Verified' if r.get('passed') else 'Missed'} **{r.get('achieved_tps')}** (gate {r.get('gate')})"
-    rpo = dr.get("rpo_minutes")
-    rto = dr.get("rto_minutes")
-    dr_label = (
-        f"Measured RPO {rpo} min / RTO {rto} min"
-        if rpo is not None and rto is not None
-        else "Target — not yet timed"
+
+    n = gem.get("schema_valid_n")
+    invoked = gem.get("invoked_n")
+    ci = gem.get("agreement_ci")
+    agree = gem.get("agreement")
+    agree_row = (
+        f"Verified **{agree}** schema_valid n={n} / invoked {invoked} CI={ci} (gate 0.85)"
+        if agree is not None
+        else "NOT_MEASURED"
     )
+    p95 = gem.get("p95_latency_ms")
+    p95_row = (
+        f"{'Verified' if p95 is not None and p95 <= 8000 else 'Missed'} {p95} ms (gate 8000)"
+        if p95 is not None
+        else "NOT_MEASURED"
+    )
+    hall_v = hall.get("hallucination_rate")
+    hall_n = hall.get("live_n")
+    uns_v = hall.get("unsupported_claim_rate")
+    hall_status = (
+        f"Verified {hall_v} (live ungrounded n={hall_n}; trap/gate)"
+        if hall_v is not None
+        else "NOT_MEASURED"
+    )
+    rto = dr.get("rto_minutes")
+    rpo = dr.get("rpo_minutes")
+    dr_label = f"Measured RTO {rto} min; clone RPO {rpo} min (current-state). PITR-to-past NOT_MEASURED"
+    if rto is None:
+        dr_label = "Target — not yet timed"
+    deepeval_row = "Verified import + custom BaseMetric" if deepeval else "NOT_MEASURED"
     (ROOT / "reports" / "SCORECARD.md").write_text(
         f"""# Corridor Watch — validation scorecard
 
-Seed `{report['seed']}`. Do not upgrade a row without a new artifact.
+run_id `{report.get('run_id')}` commit `{report.get('git_commit')}`. Seed `{report.get('random_seed')}`.
+Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`.
 
 | Claim | Status | Evidence |
 |---|---|---|
-| Detector F1 | {det_status} {f1 if f1 is not None else ""} | `validation/deterministic/test_detection.py` / clean `data_gen` cut |
+| Detector F1 | {det_status} {f1 if f1 is not None else ""} | `validation/deterministic/test_detection.py` / hidden oracle |
+| Dist B F1 | {_status((dist_b.get('metrics') or {}).get('f1'))} | `reports/dist_b.json` |
+| Network account recall | {_status(net.get('account_recall'))} | `reports/network_metrics.json` |
 | Gemini grounding | Verified | `validation/deepeval/test_grounding.py` |
-| Gemini vs deterministic agreement | Verified **{gem.get('agreement')}** (gate 0.85) | `reports/gemini_agreement.json` |
-| Hallucination rate / cost per case | Verified ${gem.get('cost_per_case_usd')} (gate $0.05) | `reports/gemini_agreement.json` |
-| Gemini p95 | Verified {gem.get('p95_latency_ms')} ms (gate 8000) | `reports/gemini_agreement.json` |
+| Gemini vs deterministic agreement | {agree_row} | `reports/gemini_agreement.json` |
+| Hallucination rate | {hall_status} | `reports/hallucination.json` |
+| Unsupported claim rate | {_status(uns_v)} | `reports/hallucination.json` |
+| Gemini cost per case | {_status(gem.get('cost_per_case_usd'), label='Verified $') if gem.get('cost_per_case_usd') is not None else 'NOT_MEASURED'} | `reports/gemini_agreement.json` |
+| Gemini tokens per case | {_status(gem.get('tokens_per_case'))} | `reports/gemini_agreement.json` |
+| Gemini p95 | {p95_row} | `reports/gemini_agreement.json` |
+| Injection decision-change | {_status(inj.get('decision_change_rate'))} | `reports/injection_decision.json` |
+| DeepEval package | {deepeval_row} | `reports/deepeval.json` |
 | 100 TPS consume | {_row(100)} | `reports/scale/test_100_tps.json` |
 | 500 TPS consume | {_row(500)} | `reports/scale/test_500_tps.json` |
 | 1,000 TPS consume | {_row(1000)} | `reports/scale/test_1000_tps.json` |
 | 2,000 TPS consume | {_row(2000)} | `reports/scale/test_2000_tps.json` |
-| Max sustained TPS under SLO | Measured {report['scale']['max_sustained_tps_under_slo']} | passing 1k gate; 2k miss |
+| Max sustained ingest TPS under SLO | Measured {report['scale']['max_sustained_tps_under_slo']} | passing 1k gate; 2k miss |
+| Investigation enqueue TPS | {_status(inv.get('enqueue_tps'))} | `reports/scale/investigation_throughput.json` |
+| Hard-negative FPR | {_status(hn.get('fpr'))} | `reports/hard_negatives.json` |
+| Concurrent race failures | {_status(races.get('failures'))} | `reports/races.json` |
+| Rule-miner holdout precision | {_status(hold.get('holdout_precision'))} | `reports/rule_miner_holdout.json` |
 | RTO/RPO | {dr_label} | `reports/dr_gameday.json` |
 | 5,000 TPS | Target | not claimed as achieved |
 | Idempotent ingest | Verified | `validation/reliability/test_idempotency.py` |
@@ -158,7 +247,7 @@ Seed `{report['seed']}`. Do not upgrade a row without a new artifact.
 | PII tokens at Gemini boundary | Verified | `validation/security/test_pii_minimization.py` |
 
 Suite root is `validation/` (not `evaluation/`) because `evaluation.py` already exists.
-DeepEval folder name only — metrics are pytest/stdlib.
+DeepEval is the real package plus custom BaseMetric wrappers. Official FaithfulnessMetric is NOT_MEASURED unless a Gemini judge binds.
 """
     )
 

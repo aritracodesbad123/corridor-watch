@@ -245,7 +245,7 @@ def deterministic_report(
     if graph_only is not None and screen is not None:
         extra = f" Neighborhood composite {float(graph_only):.0f}; ingest screen {float(screen):.0f}."
     hypothesis = (
-        f"Primary hypothesis: {(risk or {}).get('primary_pattern') or txn.get('primary_pattern') or txn.get('fraud_scenario') or 'elevated_activity'} "
+        f"Primary hypothesis: {(risk or {}).get('primary_pattern') or txn.get('primary_pattern') or 'elevated_activity'} "
         f"behavior with graph risk {score:.0f} ({source}).{extra}"
     )
     contradicting = []

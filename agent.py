@@ -298,7 +298,35 @@ def _call_with_retry(c, **kwargs):
             raise
 
 
-def _generate_content(c, *, model: str, contents: Any, tools: list[dict] | None = None):
+def _thinking_off():
+    """Turn thinking as far down as this SDK/model allows."""
+    from google.genai import types
+    fields = getattr(types.ThinkingConfig, "model_fields", {})
+    kwargs: dict[str, Any] = {}
+    three = str(MODEL).startswith("gemini-3")
+    # 3.x rejects thinking_budget=0; 2.5 treats 0 as DISABLED.
+    if not three and "thinking_budget" in fields:
+        kwargs["thinking_budget"] = 0
+    if "thinking_level" in fields:
+        kwargs["thinking_level"] = types.ThinkingLevel.MINIMAL
+    if "include_thoughts" in fields:
+        kwargs["include_thoughts"] = False
+    if not kwargs:
+        return None
+    try:
+        return types.ThinkingConfig(**kwargs)
+    except Exception:
+        return None
+
+
+def _generate_content(
+    c,
+    *,
+    model: str,
+    contents: Any,
+    tools: list[dict] | None = None,
+    max_output_tokens: int = 2048,
+):
     """Fallback for google-genai 1.x / any Client without Interactions."""
     from google.genai import types
     config_kwargs: dict[str, Any] = {}
@@ -311,13 +339,12 @@ def _generate_content(c, *, model: str, contents: Any, tools: list[dict] | None 
                 parameters=tool.get("parameters") or {"type": "object", "properties": {}},
             ))
         config_kwargs["tools"] = [types.Tool(function_declarations=declarations)]
-    config_kwargs.setdefault("max_output_tokens", 2048)
+    config_kwargs.setdefault("max_output_tokens", max_output_tokens)
     config_kwargs.setdefault("temperature", 0)
     config_kwargs.setdefault("response_mime_type", "application/json")
-    try:
-        config_kwargs.setdefault("thinking_config", types.ThinkingConfig(thinking_budget=0))
-    except Exception:
-        pass
+    thinking = _thinking_off()
+    if thinking is not None:
+        config_kwargs.setdefault("thinking_config", thinking)
     response = c.models.generate_content(
         model=model,
         contents=contents,
@@ -331,12 +358,17 @@ def _record_usage(response) -> dict[str, Any]:
     um = getattr(response, "usage_metadata", None)
     prompt = int(getattr(um, "prompt_token_count", 0) or 0)
     completion = int(getattr(um, "candidates_token_count", 0) or getattr(um, "output_token_count", 0) or 0)
+    thoughts = int(getattr(um, "thoughts_token_count", 0) or 0)
     cost = round(prompt * _FLASH_IN_PER_TOKEN + completion * _FLASH_OUT_PER_TOKEN, 6)
+    cand = (getattr(response, "candidates", None) or [None])[0]
+    finish = str(getattr(cand, "finish_reason", "") or "")
     _LAST_USAGE.clear()
     _LAST_USAGE.update({
         "prompt_tokens": prompt,
         "completion_tokens": completion,
+        "thoughts_tokens": thoughts,
         "cost_usd": cost,
+        "finish_reason": finish,
     })
     return _LAST_USAGE
 
@@ -360,18 +392,75 @@ def _function_calls_from_response(response) -> list[tuple[str, dict]]:
 
 def _complete_text(c, prompt: str) -> str:
     """Single-shot completion used by the grounded report path."""
-    response = _generate_content(c, model=MODEL, contents=prompt)
+    response = _generate_content(c, model=MODEL, contents=prompt, max_output_tokens=4096)
     return getattr(response, "text", None) or ""
+
+
+_DISPOSITIONS = {
+    "clear": "clear", "cleared": "clear", "approve": "clear", "no_action": "clear",
+    "monitor": "monitor", "review": "monitor", "watch": "monitor", "manual_review": "monitor",
+    "hold": "hold_payment", "hold_payment": "hold_payment", "hold payment": "hold_payment",
+    "escalate": "escalate_fiu", "escalate_fiu": "escalate_fiu", "fiu": "escalate_fiu",
+    "freeze": "freeze_account", "freeze_account": "freeze_account",
+}
+
+
+def _clip(v, n: int, default: str = "") -> str:
+    if isinstance(v, str):
+        s = v
+    elif v is None:
+        s = default
+    else:
+        s = str(v)
+    return s[:n]
+
+
+def _str_list(v, n_items: int, n_len: int) -> list[str]:
+    if isinstance(v, str):
+        v = [v]
+    if not isinstance(v, list):
+        return []
+    out = []
+    for x in v[:n_items]:
+        if isinstance(x, str) and x.strip():
+            out.append(x[:n_len])
+        elif isinstance(x, dict):
+            s = str(x.get("text") or x.get("pattern_id") or x.get("check") or "")
+            if s:
+                out.append(s[:n_len])
+    return out
+
+
+def _unit_conf(v) -> float:
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return 1.0
+    if f > 1:
+        f = f / 100.0 if f <= 100 else 1.0
+    return max(0.0, min(1.0, f))
+
+
+def _pct_conf(v, default: int) -> int:
+    if v is None:
+        return default
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return default
+    if 0 <= f <= 1:
+        return int(round(f * 100))
+    return max(0, min(100, int(round(f))))
 
 
 def _coerce_evidence_item(item: dict) -> dict:
     return {
-        "evidence_id": item.get("evidence_id") or "E-TXN",
-        "type": item.get("type") or "note",
-        "description": (item.get("description") or "")[:200],
-        "source": item.get("source") or "ledger",
-        "source_ref": item.get("source_ref") or "",
-        "confidence": item.get("confidence") if item.get("confidence") is not None else 1.0,
+        "evidence_id": str(item.get("evidence_id") or "E-TXN")[:32],
+        "type": str(item.get("type") or "note")[:64],
+        "description": _clip(item.get("description"), 200),
+        "source": str(item.get("source") or "ledger")[:64],
+        "source_ref": str(item.get("source_ref") or "")[:64],
+        "confidence": _unit_conf(item.get("confidence") if item.get("confidence") is not None else 1.0),
     }
 
 
@@ -392,27 +481,39 @@ def _parse_grounded_json(text: str, fallback: InvestigationReport) -> dict:
                 cut = cut[:idx]
     if not isinstance(raw, dict):
         raise ValueError("no json object")
-    conf = raw.get("confidence")
-    if isinstance(conf, float):
-        raw["confidence"] = int(round(conf * 100)) if 0 <= conf <= 1 else int(round(conf))
-    raw["investigation_summary"] = raw.get("investigation_summary") or fallback.investigation_summary
-    raw["risk_hypothesis"] = raw.get("risk_hypothesis") or fallback.risk_hypothesis
-    raw.setdefault("uncertainty", fallback.uncertainty or "")
-    raw.setdefault("recommended_disposition", fallback.recommended_disposition)
+    disp = raw.get("recommended_disposition")
+    if isinstance(disp, list) and disp:
+        disp = disp[0]
+    key = str(disp or "").strip().lower().replace("-", "_")
+    raw["recommended_disposition"] = _DISPOSITIONS.get(key) or fallback.recommended_disposition
+    raw["investigation_summary"] = _clip(raw.get("investigation_summary"), 2000, fallback.investigation_summary) or fallback.investigation_summary
+    raw["risk_hypothesis"] = _clip(raw.get("risk_hypothesis"), 1200, fallback.risk_hypothesis) or fallback.risk_hypothesis
+    raw["uncertainty"] = _clip(raw.get("uncertainty"), 800, fallback.uncertainty or "")
+    raw["confidence"] = _pct_conf(raw.get("confidence"), fallback.confidence)
     pats = raw.get("matched_patterns") or []
     raw["matched_patterns"] = [
-        p if isinstance(p, str) else (p.get("pattern_id") or "")
+        (p if isinstance(p, str) else (p.get("pattern_id") or ""))[:64]
         for p in pats
         if (isinstance(p, str) and p) or (isinstance(p, dict) and p.get("pattern_id"))
-    ]
-    raw.setdefault("alternative_explanations", raw.get("alternative_explanations") or ["Insufficient evidence for a single typology."])
-    raw.setdefault("recommended_next_checks", raw.get("recommended_next_checks") or ["Review ledger neighborhood."])
+    ][:12]
+    raw["alternative_explanations"] = _str_list(raw.get("alternative_explanations"), 8, 240) or ["Insufficient evidence for a single typology."]
+    raw["recommended_next_checks"] = _str_list(raw.get("recommended_next_checks"), 10, 240) or ["Review ledger neighborhood."]
     raw["supporting_evidence"] = [_coerce_evidence_item(x) for x in (raw.get("supporting_evidence") or [])[:8] if isinstance(x, dict)]
     raw["contradicting_evidence"] = [_coerce_evidence_item(x) for x in (raw.get("contradicting_evidence") or [])[:8] if isinstance(x, dict)]
     if not raw["supporting_evidence"] and fallback.supporting_evidence:
         raw["supporting_evidence"] = [e.model_dump() for e in fallback.supporting_evidence[:3]]
-    if raw.get("confidence") is None:
-        raw["confidence"] = fallback.confidence
+    vis = raw.get("network_visibility_score")
+    if vis is not None:
+        try:
+            f = float(vis)
+            raw["network_visibility_score"] = None if f < 0 or f > 1 else f
+        except (TypeError, ValueError):
+            raw.pop("network_visibility_score", None)
+    if not isinstance(raw.get("unknown_areas"), list):
+        raw["unknown_areas"] = fallback.unknown_areas
+    else:
+        raw["unknown_areas"] = _str_list(raw.get("unknown_areas"), 12, 120)
+    raw.pop("visibility_counts", None)
     return raw
 
 
@@ -654,7 +755,7 @@ def grounded_gemini_report(
         report = InvestigationReport.model_validate(raw)
     except Exception as exc:
         _LAST_USAGE["parse_error"] = str(exc)
-        fallback.uncertainty = "Gemini output failed schema validation; deterministic report retained."
+        fallback.uncertainty = f"Gemini output failed schema validation ({exc}). Deterministic report retained."[:800]
         return fallback
     report = apply_grounding_gate(report, allowed_ids, fallback, matches)
     report.model_version = get_settings().gemini_model
@@ -731,24 +832,19 @@ def investigate(txn_id: str, mode: str = "auto") -> dict[str, Any]:
 
     try:
         txn = dag_bundle["evidence"]["transaction"]
-        gem = investigate_with_gemini(txn, dag_bundle)
-        try:
-            report = grounded_gemini_report(
-                txn,
-                [EvidenceItem.model_validate(e) for e in report.supporting_evidence],
-                [{"pattern_id": p, "name": p, "version": 1, "score": 1} for p in report.matched_patterns],
-                dag_bundle["evidence"].get("sender_risk") or {},
-                {"features": dag_bundle["evidence"].get("evidence_pack") or {}, "network_id": txn_id},
-                report,
-            )
-        except Exception:
-            pass
+        report = grounded_gemini_report(
+            txn,
+            [EvidenceItem.model_validate(e) for e in report.supporting_evidence],
+            [{"pattern_id": p, "name": p, "version": 1, "score": 1} for p in report.matched_patterns],
+            dag_bundle["evidence"].get("sender_risk") or {},
+            {"features": dag_bundle["evidence"].get("evidence_pack") or {}, "network_id": txn_id},
+            report,
+        )
         merged = {
             **det,
-            **gem,
-            "pattern_scores": det.get("pattern_scores") or gem.get("pattern_scores"),
+            "rationale": (report.investigation_summary or det.get("rationale") or "")[:1200],
             "dag_risk_score": det.get("risk_score"),
-            "mode": gem.get("mode", "gemini"),
+            "mode": "gemini" if report.gemini_used else "deterministic_fallback",
             "investigation_report": report.model_dump(),
         }
     except DatabaseBusy:

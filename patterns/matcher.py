@@ -14,18 +14,17 @@ def observed_signals(txn: dict, network: dict, risk: dict | None = None) -> set[
     signals: set[str] = set()
     features = (network or {}).get("features") or {}
     risk = risk or {}
-    scenario = txn.get("fraud_scenario") or txn.get("primary_pattern") or ""
-    if features.get("fan_in", 0) >= 4 or scenario in {"mule_pass_through", "split_transaction_laundering"}:
+    if features.get("fan_in", 0) >= 4:
         signals.update({"incoming_spike", "fan_in"})
-    if features.get("fan_out", 0) >= 2 or scenario == "mule_pass_through":
+    if features.get("fan_out", 0) >= 2:
         signals.add("rapid_fanout")
-    if features.get("shared_device_groups", 0) >= 1 or scenario == "shared_device_ring":
+    if features.get("shared_device_groups", 0) >= 1:
         signals.add("shared_device")
     if features.get("shared_beneficiary_groups", 0) >= 1:
         signals.add("shared_beneficiary")
     if features.get("cross_border", 0) >= 1:
         signals.add("cross_border")
-    if features.get("institution_count", 0) >= 3 or scenario == "multi_hop_chain":
+    if features.get("institution_count", 0) >= 3:
         signals.update({"cross_institution", "multi_hop", "owned_intermediates"})
     if (txn.get("origin_country") == "??") or (txn.get("corridor") or "").startswith("??"):
         signals.add("unknown_origin")
@@ -38,10 +37,6 @@ def observed_signals(txn: dict, network: dict, risk: dict | None = None) -> set[
     ptr = risk.get("pass_through_ratio")
     if ptr is not None and float(ptr) >= 0.9:
         signals.add("high_pass_through")
-    if scenario == "synthetic_identity":
-        signals.update({"young_account", "new_device", "abnormal_velocity"})
-    if scenario == "split_transaction_laundering":
-        signals.update({"structuring", "burst_window", "overseas_exit"})
     if features.get("txn_count", 0) >= 3:
         signals.add("burst_send")
     return signals
