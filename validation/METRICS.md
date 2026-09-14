@@ -7,7 +7,8 @@ Every SCORECARD row maps here. Do not upgrade a claim without the named artifact
 | Detector F1 | 2PR/(P+R) on risk≥40 vs hidden oracle | 0–1 | clean-cut rows | ≥0.85 | `reports/validation_report.json` | deterministic | yes on that cut | Generator A; labels eval-only |
 | Detector FPR | FP/(FP+TN) | 0–1 | same | ≤0.10 | same | deterministic | yes | same |
 | Dist B F1 | same on generator B (frozen seed 7) | 0–1 | Dist B rows | recorded | `reports/dist_b.json` (baseline `dist_b_before.json`) | deterministic | small n | Not AMLSim; do not tune on seed 7 |
-| Dist C F1 | same on generator C (frozen seed 23, one-shot) | 0–1 | Dist C rows | recorded | `reports/dist_c.json` (freeze `dist_c_freeze.json`) | deterministic | small n | Unseen fraud names; do not retune on seed 23 |
+| Dist C F1 | same on generator C (frozen seed 23, one-shot, pinned) | 0–1 | Dist C rows | recorded | `reports/dist_c.json` (freeze `dist_c_freeze.json`) | deterministic | small n | Do not retune on seed 23; do not overwrite |
+| Dist D F1 | same on generator D (frozen seed 37, one-shot) | 0–1 | Dist D rows | recall≥0.90 precision≥0.80 FPR≤0.10 (missed; measured F1 0.7397) | `reports/dist_d.json` (freeze `dist_d_freeze.json`) | deterministic | small n | Post-fix holdout; mill pass-through FPs; do not retune on seed 37 |
 | Network account recall | \|pred∩truth\|/\|truth\| nodes per connected component | 0–1 | flagged networks | recorded | `reports/network_metrics.json` | deterministic | medium | Component = one investigation, not every mule in the ledger |
 | Network v2 anchor/critical/path/recall@K | investigation-useful subset | 0–1 | Dist B + hard-neg clusters | recorded | `reports/network_evaluation_v2.json` | deterministic | medium | Does not replace account recall |
 | Gemini agreement | agree/n vs deterministic disposition | 0–1 | `agreement_n` | ≥0.85 | `reports/gemini_agreement.json` | LLM | only if n≥100 | n=3 is not 100% |

@@ -147,6 +147,20 @@ def behavioral_risk(sessions_by_account, account_id) -> float:
     return round(min(max(scores), 100), 1)
 
 
+def collecting(features: dict) -> bool:
+    """Fan-in is mule/smurf only with pass-through, youth, short hold, or burst velocity.
+
+    Slow inbound to an old sink (tuition, charity, merchant) is collection.
+    # ponytail: vel>=4 is the Dist B burst_smurf signature; raise if a public dataset needs a ROC
+    """
+    return (
+        float(features.get("pass_through_ratio") or 0) >= 0.3
+        or int(features.get("account_age_days") or 0) <= 7
+        or float(features.get("avg_hold_time_minutes") or 99999) < 180
+        or float(features.get("corridor_velocity_score") or 0) >= 4
+    )
+
+
 def pattern_scores(features: dict, account: dict) -> dict[str, float]:
     age = features["account_age_days"]
     ptr = features["pass_through_ratio"]
@@ -160,11 +174,14 @@ def pattern_scores(features: dict, account: dict) -> dict[str, float]:
     income = account.get("stated_income_usd") or 0
     occ = (account.get("occupation") or "").lower()
 
-    mule = min(100, fan_in * 8 + ptr * 35 + (25 if hold < 180 else 0) + (15 if age <= 7 else 0))
     # ponytail: source-only velocity is disbursement (payroll/treasury), not smurf
     inbound = fan_in >= 3 or ptr >= 0.3
+    sink = collecting(features)
+    fan_mule = fan_in * 8 if sink else 0.0
+    fan_split = fan_in * 7 if sink else 0.0
+    mule = min(100, fan_mule + ptr * 35 + (25 if hold < 180 else 0) + (15 if age <= 7 else 0))
     split_vel = vel * 8 if inbound else 0.0
-    split = min(100, fan_in * 7 + shared_ben * 12 + split_vel + (10 if age <= 30 and inbound else 0))
+    split = min(100, fan_split + shared_ben * 12 + split_vel + (10 if age <= 30 and inbound and sink else 0))
     shared = min(100, shared_dev * 18 + beh * 0.35 + (20 if age <= 14 else 0))
     synth = 0
     if age <= 7:
@@ -188,7 +205,8 @@ def pattern_scores(features: dict, account: dict) -> dict[str, float]:
 
 def composite_score(features: dict, patterns: dict) -> tuple[float, str]:
     base = 0
-    base += min(features["fan_in_count"] * 5, 25)
+    fan_in = features["fan_in_count"] if collecting(features) else 0
+    base += min(fan_in * 5, 25)
     base += min(features["pass_through_ratio"] * 30, 30)
     base += 15 if features["account_age_days"] <= 7 else (8 if features["account_age_days"] <= 30 else 0)
     base += min(features["shared_device_count"] * 8, 20)

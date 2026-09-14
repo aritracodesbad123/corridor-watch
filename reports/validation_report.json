@@ -1,7 +1,7 @@
 {
-  "run_id": "146d77ab27ef",
-  "timestamp_utc": "2026-09-14T09:36:45.901166+00:00",
-  "git_commit": "a4de7e1817a8255bbea14028b1126ab553e1d62f",
+  "run_id": "b772ab46da8e",
+  "timestamp_utc": "2026-09-14T09:50:21.445061+00:00",
+  "git_commit": "8323b0486fc19d8b2c8b32a8200cce39d7269438",
   "environment": "local",
   "dataset": "synthetic_v1",
   "dataset_version": "data_gen.seed42",
@@ -11,8 +11,8 @@
   "tool_schema_version": "investigation-report-v1",
   "case_count": 586,
   "random_seed": 42,
-  "started_at": "2026-09-14T09:36:45.901166+00:00",
-  "finished_at": "2026-09-14T09:36:49.258941+00:00",
+  "started_at": "2026-09-14T09:50:21.445061+00:00",
+  "finished_at": "2026-09-14T09:50:25.162498+00:00",
   "pytest_exit_code": 0,
   "deterministic": {
     "status": "ok",
@@ -128,12 +128,12 @@
       "path_recovery": 1.0,
       "per_cluster": [
         {
-          "label": "synthetic_identity",
+          "label": "split_transaction_laundering",
           "account_recall": {
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 7,
+            "tp": 13,
             "fp": 0,
             "fn": 0
           },
@@ -141,7 +141,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 6,
+            "tp": 12,
             "fp": 0,
             "fn": 0
           },
@@ -149,7 +149,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 7,
+            "tp": 13,
             "fp": 0,
             "fn": 0
           },
@@ -157,7 +157,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 6,
+            "tp": 12,
             "fp": 0,
             "fn": 0
           },
@@ -189,16 +189,16 @@
           "recall_at_10": 0.0,
           "recall_at_20": 0.0,
           "recall_at_50": 0.0,
-          "predicted_nodes": 7,
-          "truth_nodes": 7
+          "predicted_nodes": 13,
+          "truth_nodes": 13
         },
         {
-          "label": "synthetic_identity",
+          "label": "split_transaction_laundering",
           "account_recall": {
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 5,
+            "tp": 13,
             "fp": 0,
             "fn": 0
           },
@@ -206,7 +206,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 4,
+            "tp": 12,
             "fp": 0,
             "fn": 0
           },
@@ -214,7 +214,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 5,
+            "tp": 13,
             "fp": 0,
             "fn": 0
           },
@@ -222,7 +222,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 4,
+            "tp": 12,
             "fp": 0,
             "fn": 0
           },
@@ -254,8 +254,73 @@
           "recall_at_10": 0.0,
           "recall_at_20": 0.0,
           "recall_at_50": 0.0,
-          "predicted_nodes": 5,
-          "truth_nodes": 5
+          "predicted_nodes": 13,
+          "truth_nodes": 13
+        },
+        {
+          "label": "split_transaction_laundering",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 13,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 12,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 13,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 12,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 13,
+          "truth_nodes": 13
         },
         {
           "label": "synthetic_identity",
@@ -328,7 +393,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 4,
+            "tp": 7,
             "fp": 0,
             "fn": 0
           },
@@ -336,7 +401,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 3,
+            "tp": 6,
             "fp": 0,
             "fn": 0
           },
@@ -344,7 +409,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 4,
+            "tp": 7,
             "fp": 0,
             "fn": 0
           },
@@ -352,7 +417,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 3,
+            "tp": 6,
             "fp": 0,
             "fn": 0
           },
@@ -384,8 +449,8 @@
           "recall_at_10": 0.0,
           "recall_at_20": 0.0,
           "recall_at_50": 0.0,
-          "predicted_nodes": 4,
-          "truth_nodes": 4
+          "predicted_nodes": 7,
+          "truth_nodes": 7
         },
         {
           "label": "synthetic_identity",
@@ -453,12 +518,12 @@
           "truth_nodes": 4
         },
         {
-          "label": "split_transaction_laundering",
+          "label": "synthetic_identity",
           "account_recall": {
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 13,
+            "tp": 5,
             "fp": 0,
             "fn": 0
           },
@@ -466,7 +531,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 12,
+            "tp": 4,
             "fp": 0,
             "fn": 0
           },
@@ -474,7 +539,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 13,
+            "tp": 5,
             "fp": 0,
             "fn": 0
           },
@@ -482,7 +547,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 12,
+            "tp": 4,
             "fp": 0,
             "fn": 0
           },
@@ -514,16 +579,16 @@
           "recall_at_10": 0.0,
           "recall_at_20": 0.0,
           "recall_at_50": 0.0,
-          "predicted_nodes": 13,
-          "truth_nodes": 13
+          "predicted_nodes": 5,
+          "truth_nodes": 5
         },
         {
-          "label": "split_transaction_laundering",
+          "label": "synthetic_identity",
           "account_recall": {
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 13,
+            "tp": 4,
             "fp": 0,
             "fn": 0
           },
@@ -531,7 +596,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 12,
+            "tp": 3,
             "fp": 0,
             "fn": 0
           },
@@ -539,7 +604,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 13,
+            "tp": 4,
             "fp": 0,
             "fn": 0
           },
@@ -547,7 +612,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 12,
+            "tp": 3,
             "fp": 0,
             "fn": 0
           },
@@ -579,16 +644,16 @@
           "recall_at_10": 0.0,
           "recall_at_20": 0.0,
           "recall_at_50": 0.0,
-          "predicted_nodes": 13,
-          "truth_nodes": 13
+          "predicted_nodes": 4,
+          "truth_nodes": 4
         },
         {
-          "label": "split_transaction_laundering",
+          "label": "mule_pass_through",
           "account_recall": {
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 13,
+            "tp": 9,
             "fp": 0,
             "fn": 0
           },
@@ -596,7 +661,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 12,
+            "tp": 8,
             "fp": 0,
             "fn": 0
           },
@@ -604,7 +669,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 13,
+            "tp": 9,
             "fp": 0,
             "fn": 0
           },
@@ -612,7 +677,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 12,
+            "tp": 8,
             "fp": 0,
             "fn": 0
           },
@@ -644,8 +709,73 @@
           "recall_at_10": 0.0,
           "recall_at_20": 0.0,
           "recall_at_50": 0.0,
-          "predicted_nodes": 13,
-          "truth_nodes": 13
+          "predicted_nodes": 9,
+          "truth_nodes": 9
+        },
+        {
+          "label": "mule_pass_through",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 10,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 9,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 10,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 9,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 10,
+          "truth_nodes": 10
         },
         {
           "label": "mule_pass_through",
@@ -778,12 +908,12 @@
           "truth_nodes": 11
         },
         {
-          "label": "mule_pass_through",
+          "label": "shared_device_ring",
           "account_recall": {
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 10,
+            "tp": 2,
             "fp": 0,
             "fn": 0
           },
@@ -791,7 +921,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 9,
+            "tp": 1,
             "fp": 0,
             "fn": 0
           },
@@ -799,7 +929,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 10,
+            "tp": 2,
             "fp": 0,
             "fn": 0
           },
@@ -807,7 +937,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 9,
+            "tp": 1,
             "fp": 0,
             "fn": 0
           },
@@ -839,16 +969,16 @@
           "recall_at_10": 0.0,
           "recall_at_20": 0.0,
           "recall_at_50": 0.0,
-          "predicted_nodes": 10,
-          "truth_nodes": 10
+          "predicted_nodes": 2,
+          "truth_nodes": 2
         },
         {
-          "label": "mule_pass_through",
+          "label": "shared_device_ring",
           "account_recall": {
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 9,
+            "tp": 2,
             "fp": 0,
             "fn": 0
           },
@@ -856,7 +986,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 8,
+            "tp": 1,
             "fp": 0,
             "fn": 0
           },
@@ -864,7 +994,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 9,
+            "tp": 2,
             "fp": 0,
             "fn": 0
           },
@@ -872,7 +1002,7 @@
             "precision": 1.0,
             "recall": 1.0,
             "f1": 1.0,
-            "tp": 8,
+            "tp": 1,
             "fp": 0,
             "fn": 0
           },
@@ -904,8 +1034,853 @@
           "recall_at_10": 0.0,
           "recall_at_20": 0.0,
           "recall_at_50": 0.0,
-          "predicted_nodes": 9,
-          "truth_nodes": 9
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
+        },
+        {
+          "label": "shared_device_ring",
+          "account_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "relationship_reconstruction": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "key_node_recall": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 2,
+            "fp": 0,
+            "fn": 0
+          },
+          "path_recovery": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "tp": 1,
+            "fp": 0,
+            "fn": 0
+          },
+          "anchor_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_node_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "critical_edge_recall": {
+            "precision": 0,
+            "recall": 0,
+            "f1": 0,
+            "tp": 0,
+            "fp": 0,
+            "fn": 0
+          },
+          "investigation_path_recovery": 1.0,
+          "recall_at_10": 0.0,
+          "recall_at_20": 0.0,
+          "recall_at_50": 0.0,
+          "predicted_nodes": 2,
+          "truth_nodes": 2
         },
         {
           "label": "multi_hop_chain",
@@ -1101,981 +2076,6 @@
           "recall_at_50": 0.0,
           "predicted_nodes": 4,
           "truth_nodes": 4
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
-        },
-        {
-          "label": "shared_device_ring",
-          "account_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "relationship_reconstruction": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "key_node_recall": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 2,
-            "fp": 0,
-            "fn": 0
-          },
-          "path_recovery": {
-            "precision": 1.0,
-            "recall": 1.0,
-            "f1": 1.0,
-            "tp": 1,
-            "fp": 0,
-            "fn": 0
-          },
-          "anchor_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_node_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "critical_edge_recall": {
-            "precision": 0,
-            "recall": 0,
-            "f1": 0,
-            "tp": 0,
-            "fp": 0,
-            "fn": 0
-          },
-          "investigation_path_recovery": 1.0,
-          "recall_at_10": 0.0,
-          "recall_at_20": 0.0,
-          "recall_at_50": 0.0,
-          "predicted_nodes": 2,
-          "truth_nodes": 2
         }
       ]
     }
@@ -4191,9 +4191,9 @@
     ]
   },
   "dist_b": {
-    "run_id": "df24a0df42aa",
-    "timestamp_utc": "2026-09-14T09:16:27.072664+00:00",
-    "git_commit": "7d22cff27eaa6d6074d46de6f1bd8ab879ffd3a0",
+    "run_id": "4f6abc7ebc8b",
+    "timestamp_utc": "2026-09-14T09:48:03.414152+00:00",
+    "git_commit": "8323b0486fc19d8b2c8b32a8200cce39d7269438",
     "environment": "local",
     "dataset": "dist_b",
     "dataset_version": "data_gen.seed42",
@@ -4500,6 +4500,139 @@
       "frozen_seed": 23,
       "flag_threshold": 40,
       "graph_features_sha256_12": "26fbe680d558",
+      "note": "Recorded before scoring. Do not edit graph_features.py to pass this seed."
+    },
+    "one_shot": true,
+    "do_not_tune": true
+  },
+  "dist_d": {
+    "run_id": "1d405ffd71a5",
+    "timestamp_utc": "2026-09-14T09:49:26.773725+00:00",
+    "git_commit": "8323b0486fc19d8b2c8b32a8200cce39d7269438",
+    "environment": "local",
+    "dataset": "dist_d",
+    "dataset_version": "generator_d.seed37",
+    "model": null,
+    "model_version": null,
+    "prompt_version": "investigator-v8",
+    "tool_schema_version": "investigation-report-v1",
+    "case_count": 80,
+    "random_seed": 37,
+    "status": "ok",
+    "benchmark": "dist_d",
+    "ground_truth": "validation.oracle (eval-only; runtime ignores fraud_scenario)",
+    "positive_scenarios": [
+      "burst_sink",
+      "drain_wake",
+      "invoice_loop",
+      "nested_shell"
+    ],
+    "sample_count": 80,
+    "metrics": {
+      "tp": 27,
+      "fp": 19,
+      "fn": 0,
+      "tn": 34,
+      "precision": 0.587,
+      "recall": 1.0,
+      "f1": 0.7397,
+      "false_positive_rate": 0.3585
+    },
+    "per_scenario": {
+      "ambiguous_clinic": {
+        "total": 9,
+        "flagged": 0,
+        "flag_rate": 0.0
+      },
+      "ambiguous_tithe": {
+        "total": 8,
+        "flagged": 0,
+        "flag_rate": 0.0
+      },
+      "burst_sink": {
+        "total": 14,
+        "flagged": 14,
+        "flag_rate": 1.0
+      },
+      "drain_wake": {
+        "total": 6,
+        "flagged": 6,
+        "flag_rate": 1.0
+      },
+      "invoice_loop": {
+        "total": 3,
+        "flagged": 3,
+        "flag_rate": 1.0
+      },
+      "nested_shell": {
+        "total": 4,
+        "flagged": 4,
+        "flag_rate": 1.0
+      },
+      "normal": {
+        "total": 36,
+        "flagged": 19,
+        "flag_rate": 0.5278
+      }
+    },
+    "pattern_accuracy": 0.0,
+    "pattern_confusion": {
+      "burst_sink->mule_pass_through": 14,
+      "drain_wake->mule_pass_through": 6,
+      "invoice_loop->mule_pass_through": 2,
+      "invoice_loop->multi_hop_chain": 1,
+      "nested_shell->mule_pass_through": 4
+    },
+    "quality_gate": {
+      "minimum_recall": 0.9,
+      "minimum_precision": 0.5,
+      "minimum_pattern_accuracy": 0.9,
+      "passed": false
+    },
+    "baseline_comparison": {
+      "name": "transaction_only",
+      "rules": [
+        "amount >= 8000",
+        "account_age_days <= 3 and amount >= 2500",
+        "sender_velocity >= 4 and amount >= 2000"
+      ],
+      "metrics": {
+        "tp": 12,
+        "fp": 9,
+        "fn": 15,
+        "tn": 44,
+        "precision": 0.5714,
+        "recall": 0.4444,
+        "f1": 0.5,
+        "false_positive_rate": 0.1698
+      },
+      "network_detection": null,
+      "note": "Threshold-only baseline. No graph, Pattern DNA, or Gemini."
+    },
+    "impact": {
+      "investigation_compression": {
+        "flagged_transactions": 46,
+        "baseline_items_reviewed": 46,
+        "network_items_reviewed": 46,
+        "network_investigations": 46,
+        "compression_ratio": 1.0,
+        "unit_of_work": "network_investigation",
+        "note": "Traditional review counts flagged wires. Corridor Watch reviews the collapsed network. Measured, not claimed."
+      },
+      "false_positive_reduction": -0.1887,
+      "network_detection_lift": 0.5556,
+      "evidence_coverage": null,
+      "analyst_actionability_rate": null,
+      "time_to_case_ready": null,
+      "note": "Compression and lift are measured on the synthetic ledger, not production banks."
+    },
+    "freeze": {
+      "frozen_before_run": true,
+      "one_shot": true,
+      "do_not_tune": true,
+      "frozen_seed": 37,
+      "flag_threshold": 40,
+      "graph_features_sha256_12": "50938d088d57",
       "note": "Recorded before scoring. Do not edit graph_features.py to pass this seed."
     },
     "one_shot": true,
@@ -4813,9 +4946,9 @@
     ]
   },
   "hard_negatives": {
-    "run_id": "c8045460f678",
-    "timestamp_utc": "2026-09-14T09:16:27.154534+00:00",
-    "git_commit": "7d22cff27eaa6d6074d46de6f1bd8ab879ffd3a0",
+    "run_id": "c9885ca9d49a",
+    "timestamp_utc": "2026-09-14T09:48:03.588680+00:00",
+    "git_commit": "8323b0486fc19d8b2c8b32a8200cce39d7269438",
     "environment": "local",
     "dataset": "hard_negatives",
     "dataset_version": "data_gen.seed42",
@@ -4878,9 +5011,9 @@
     "note": "Networks, not single wires. Runtime ignores fraud_scenario."
   },
   "network_v2": {
-    "run_id": "9cd09cb73634",
-    "timestamp_utc": "2026-09-14T09:16:27.371712+00:00",
-    "git_commit": "7d22cff27eaa6d6074d46de6f1bd8ab879ffd3a0",
+    "run_id": "12e51994ae61",
+    "timestamp_utc": "2026-09-14T09:48:03.879290+00:00",
+    "git_commit": "8323b0486fc19d8b2c8b32a8200cce39d7269438",
     "environment": "local",
     "dataset": "network_v2",
     "dataset_version": "data_gen.seed42",
@@ -4888,7 +5021,7 @@
     "model_version": null,
     "prompt_version": "investigator-v8",
     "tool_schema_version": "investigation-report-v1",
-    "case_count": 0,
+    "case_count": 6,
     "random_seed": 42,
     "clusters": 6,
     "account_recall": 1.0,

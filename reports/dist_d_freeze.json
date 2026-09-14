@@ -1,0 +1,21 @@
+{
+  "run_id": "786d3040824f",
+  "timestamp_utc": "2026-09-14T09:49:26.433451+00:00",
+  "git_commit": "8323b0486fc19d8b2c8b32a8200cce39d7269438",
+  "environment": "local",
+  "dataset": "dist_d_freeze",
+  "dataset_version": "data_gen.seed42",
+  "model": null,
+  "model_version": null,
+  "prompt_version": "investigator-v8",
+  "tool_schema_version": "investigation-report-v1",
+  "case_count": 0,
+  "random_seed": 37,
+  "frozen_before_run": true,
+  "one_shot": true,
+  "do_not_tune": true,
+  "frozen_seed": 37,
+  "flag_threshold": 40,
+  "graph_features_sha256_12": "50938d088d57",
+  "note": "Recorded before scoring. Do not edit graph_features.py to pass this seed."
+}

@@ -49,6 +49,59 @@ def test_source_only_high_velocity_stays_below_flag_threshold():
     assert patterns["split_transaction_laundering"] < 35
 
 
+def test_slow_old_sink_is_collection_not_mule():
+    from graph_features import FLAG_THRESHOLD, collecting, composite_score, pattern_scores
+    sink = {
+        "account_age_days": 1900,
+        "pass_through_ratio": 0.0,
+        "fan_in_count": 10,
+        "avg_hold_time_minutes": 99999.0,
+        "shared_device_count": 0,
+        "shared_beneficiary_count": 0,
+        "multi_hop_chain_depth": 0,
+        "corridor_velocity_score": 0.03,
+        "behavioral_risk": 0.0,
+    }
+    assert collecting(sink) is False
+    score, _ = composite_score(sink, pattern_scores(sink, {}))
+    assert score < FLAG_THRESHOLD
+
+
+def test_burst_inbound_sink_still_flags():
+    from graph_features import FLAG_THRESHOLD, collecting, composite_score, pattern_scores
+    burst = {
+        "account_age_days": 1800,
+        "pass_through_ratio": 0.0,
+        "fan_in_count": 16,
+        "avg_hold_time_minutes": 99999.0,
+        "shared_device_count": 0,
+        "shared_beneficiary_count": 0,
+        "multi_hop_chain_depth": 0,
+        "corridor_velocity_score": 64.0,
+        "behavioral_risk": 0.0,
+    }
+    assert collecting(burst) is True
+    score, _ = composite_score(burst, pattern_scores(burst, {}))
+    assert score >= FLAG_THRESHOLD
+
+
+def test_pass_through_mule_still_flags():
+    from graph_features import FLAG_THRESHOLD, composite_score, pattern_scores
+    mule = {
+        "account_age_days": 3,
+        "pass_through_ratio": 1.0,
+        "fan_in_count": 1,
+        "avg_hold_time_minutes": 25.0,
+        "shared_device_count": 0,
+        "shared_beneficiary_count": 0,
+        "multi_hop_chain_depth": 1,
+        "corridor_velocity_score": 1.0,
+        "behavioral_risk": 0.0,
+    }
+    score, _ = composite_score(mule, pattern_scores(mule, {}))
+    assert score >= FLAG_THRESHOLD
+
+
 def test_schema_bootstrap_is_idempotent(tmp_path, monkeypatch):
     db_path = tmp_path / "test.db"
     import db

@@ -27,6 +27,7 @@
 | **CR-023** | Five score-gap fixes | Dist B source-only velocity no longer counts as split; hard-negative *networks*; investigation-useful network v2; DeepEval n≥100 `ran:true`; investigation *completion* TPS. Frozen Dist B seed 7. Never claim 5,000 TPS. | **Completed** | v1.14.0 |
 | **CR-024** | Judge remaining three | DeepEval 200+ mixed kinds `ran:true`; Dist B vs hard-neg topology diagnosis on frozen seed 7 (before F1 0.4118 kept); canonical `FINAL_VALIDATION_REPORT.md` with one run ID per experiment. Never claim 5,000 TPS. | **Completed** | v1.15.0 |
 | **CR-025** | Dist C holdout | Independent generator C, freeze detector, run once on seed 23. No detector retune. Never claim 5,000 TPS. | **Completed** | v1.16.0 |
+| **CR-026** | Collecting guard + Dist D | Fan-in counts only with ptr/youth/short-hold/burst-vel. Dist C artifact pinned. Dist D seed 37 one-shot gate. Never claim 5,000 TPS. | **Completed** | v1.17.0 |
 
 ---
 
@@ -108,3 +109,7 @@
 ### CR-025: Dist C one-shot holdout
 - **Modules**: `validation/external/generator_c.py`, `validation/external/test_dist_c.py`, `evaluation.py`
 - **Capability**: Independent Dist C (seed 23) with novel normals, altered topology, new amounts, unseen fraud names, partial visibility, noise, ambiguous inbound. Freeze `graph_features.py` fingerprint before scoring. Run once. Do not retune. Do not claim 5,000 TPS.
+
+### CR-026: Collecting guard + Dist D
+- **Modules**: `graph_features.py`, `validation/external/generator_d.py`, `validation/external/test_dist_d.py`
+- **Capability**: Fan-in contributes to mule/split/composite only if pass-through, age≤7, hold<180, or corridor velocity≥4. Dist C seed-23 json is pinned. Dist D seed 37 is the post-fix one-shot gate. Do not retune on 23 or 37. Do not claim 5,000 TPS.

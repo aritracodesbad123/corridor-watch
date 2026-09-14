@@ -1,7 +1,7 @@
 {
-  "run_id": "c8045460f678",
-  "timestamp_utc": "2026-09-14T09:16:27.154534+00:00",
-  "git_commit": "7d22cff27eaa6d6074d46de6f1bd8ab879ffd3a0",
+  "run_id": "c9885ca9d49a",
+  "timestamp_utc": "2026-09-14T09:48:03.588680+00:00",
+  "git_commit": "8323b0486fc19d8b2c8b32a8200cce39d7269438",
   "environment": "local",
   "dataset": "hard_negatives",
   "dataset_version": "data_gen.seed42",

@@ -1,19 +1,19 @@
 # Corridor Watch — final validation report
 
-Suite wrap run `146d77ab27ef` commit `a4de7e1817a8` ts `2026-09-14T09:36:45.901166+00:00` — `reports/validation_report.json`. Seed `42`.
+Suite wrap run `b772ab46da8e` commit `8323b0486fc1` ts `2026-09-14T09:50:21.445061+00:00` — `reports/validation_report.json`. Seed `42`.
 Each experiment below keeps its own run ID / commit / timestamp. Do not collapse them into one number.
 Dictionary: `validation/METRICS.md`. Scoreboard: `reports/SCORECARD.md`.
 
 ## Benchmark A (generator A / hidden oracle)
 
-run `146d77ab27ef` commit `a4de7e1817a8` ts `2026-09-14T09:36:45.901166+00:00` — `reports/validation_report.json`
+run `b772ab46da8e` commit `8323b0486fc1` ts `2026-09-14T09:50:21.445061+00:00` — `reports/validation_report.json`
 
 - n=586 F1=1.0 FPR=0.0
 - Runtime ignores `fraud_scenario`. Gate F1 ≥ 0.85.
 
 ## Benchmark B (independent Dist B, frozen seed 7)
 
-run `df24a0df42aa` commit `7d22cff27eaa` ts `2026-09-14T09:16:27.072664+00:00` — `reports/dist_b.json`
+run `4f6abc7ebc8b` commit `8323b0486fc1` ts `2026-09-14T09:48:03.414152+00:00` — `reports/dist_b.json`
 Before (same seed, pre-fix): precision=0.2593 F1=0.4118 FPR=1.0 (`reports/dist_b_before.json`).
 After: precision=1.0 F1=1.0 FPR=0.0 TP=28 FP=0 FN=0 TN=80.
 
@@ -45,17 +45,30 @@ Freeze: `reports/dist_c_freeze.json`. Detector was not retuned on this seed. Thr
 - Normals: bipartite market, remittance mesh, FX hedge, JPY payroll, noise, ambiguous tuition/charity inbound.
 - Do not treat a later retune against seed 23 as generalization.
 
+Fan-in without pass-through, youth, short hold, or burst velocity is collection (tuition/charity/merchant), not a mule. That rule was fitted on Dist B + hard-neg + a seed-31 probe, **not** on frozen C.
+
+## Benchmark D (independent Dist D, frozen seed 37, one-shot)
+
+run `1d405ffd71a5` commit `8323b0486fc1` ts `2026-09-14T09:49:26.773725+00:00` — `reports/dist_d.json`
+
+Freeze: `reports/dist_d_freeze.json`. Gate: recall ≥ 0.90, precision ≥ 0.80, FPR ≤ 0.10. Do not retune on seed 37.
+
+- n=80 precision=0.587 recall=1.0 F1=0.7397 FPR=0.3585
+- Unseen fraud: invoice_loop, nested_shell, drain_wake, burst_sink.
+- Normals: tripartite farm-mill-shop, dividends, CHF trade, noise, ambiguous clinic/tithe.
+- Clinic/tithe inbound: 0 flagged (collecting guard). Gate missed on precision/FPR: 19/36 `normal` flagged — mill pass-through (farm→mill→shop) has `ptr>=0.3`, so fan-in still counts. Detector was not retuned on D.
+
 ## Hard negatives
 
-run `c8045460f678` commit `7d22cff27eaa` ts `2026-09-14T09:16:27.154534+00:00` — `reports/hard_negative_results.json`
+run `c9885ca9d49a` commit `8323b0486fc1` ts `2026-09-14T09:48:03.588680+00:00` — `reports/hard_negative_results.json`
 
 - n=71 FPR=0.0 precision=1.0 recall=1.0
 - 10 legit archetypes + fraud twins. Not 7 isolated wires.
 
 ## Network v2 (investigation-useful)
 
-Full-graph account recall run `146d77ab27ef` commit `a4de7e1817a8` ts `2026-09-14T09:36:45.901166+00:00` — `reports/network_metrics.json`: account=1.0
-v2 run `9cd09cb73634` commit `7d22cff27eaa` ts `2026-09-14T09:16:27.371712+00:00` — `reports/network_evaluation_v2.json`: anchor=0.8333 critical-node=1.0 critical-edge=1.0 path=0.6667 recall@10=1.0
+Full-graph account recall run `b772ab46da8e` commit `8323b0486fc1` ts `2026-09-14T09:50:21.445061+00:00` — `reports/network_metrics.json`: account=1.0
+v2 run `12e51994ae61` commit `8323b0486fc1` ts `2026-09-14T09:48:03.879290+00:00` — `reports/network_evaluation_v2.json`: anchor=0.8333 critical-node=1.0 critical-edge=1.0 path=0.6667 recall@10=1.0
 
 Old full-graph line and v2 are different metrics. Do not substitute.
 
@@ -142,4 +155,5 @@ run `unstamped` commit `not-recorded` ts `not-recorded` — `reports/dr_gameday.
 - Pattern accuracy on Dist B can be 0 even when F1 is 1.0 (`burst_smurf` → `mule_pass_through`). Detection F1 is the scored metric.
 - Policy B Gemini completion is 0.36 TPS on n=10. Not a fleet number.
 - PITR-to-past RPO is NOT_MEASURED.
-- Dist C one-shot (seed 23): recall=1.0 FPR=0.7568 F1=0.5. High fan-in legit (tuition/charity/market) still flags. Detector was not retuned.
+- Dist C one-shot (seed 23, pinned): recall=1.0 FPR=0.7568 F1=0.5. Not overwritten after the collecting-guard change.
+- Dist D one-shot (seed 37): recall=1.0 precision=0.587 FPR=0.3585 F1=0.7397. Missed precision≥0.80 / FPR≤0.10 (mill pass-through FPs). Detector was not retuned on D.
