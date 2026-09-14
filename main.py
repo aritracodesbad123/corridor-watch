@@ -60,7 +60,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="Corridor Watch", version="1.11.0", lifespan=lifespan)
+app = FastAPI(title="Corridor Watch", version="1.12.0", lifespan=lifespan)
 _allowed_origins = [o.strip() for o in os.getenv("CORRIDOR_WATCH_ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware, allow_origins=_allowed_origins, allow_methods=["GET", "POST"], allow_headers=["*"]
@@ -1109,25 +1109,39 @@ def ingest_many(body: IngestBatchRequest, _: None = Depends(_require_ingest_toke
     return ingest_batch(events, source="http")
 
 
+def _decode_pubsub_message(message: dict, fallback: dict | None = None):
+    import base64
+    from pubsub.schemas import TransactionEvent
+    raw = (message or {}).get("data") or ""
+    t0 = time.perf_counter()
+    decoded = json.loads(base64.b64decode(raw).decode("utf-8")) if raw else (fallback or {}).get("transaction")
+    METRICS.observe("ingest_decode", (time.perf_counter() - t0) * 1000.0)
+    t1 = time.perf_counter()
+    mid = (message or {}).get("messageId") or (message or {}).get("message_id")
+    if isinstance(decoded, list):
+        events = [(TransactionEvent.model_validate(item), (item or {}).get("txn_id")) for item in decoded]
+        METRICS.observe("ingest_validate", (time.perf_counter() - t1) * 1000.0)
+        return events, mid
+    event = TransactionEvent.model_validate(decoded)
+    METRICS.observe("ingest_validate", (time.perf_counter() - t1) * 1000.0)
+    return event, mid
+
+
 @app.post("/api/pubsub/push")
 def pubsub_push(body: dict, _: None = Depends(_require_ingest_token)):
     """Google Pub/Sub push endpoint. Gemini is never called here."""
-    import base64
-    from pubsub.ingestion import ingest_transaction
-    from pubsub.schemas import TransactionEvent
+    from pubsub.ingestion import ingest_batch, ingest_transaction
     from pydantic import ValidationError
 
-    message = body.get("message") or {}
-    message_id = message.get("messageId") or message.get("message_id")
-    raw = message.get("data") or ""
+    batch = body.get("messages")
     try:
-        t0 = time.perf_counter()
-        decoded = json.loads(base64.b64decode(raw).decode("utf-8")) if raw else body.get("transaction")
-        METRICS.observe("ingest_decode", (time.perf_counter() - t0) * 1000.0)
-        t1 = time.perf_counter()
-        event = TransactionEvent.model_validate(decoded)
-        METRICS.observe("ingest_validate", (time.perf_counter() - t1) * 1000.0)
-    except (ValueError, ValidationError) as e:
+        if batch:
+            events = [_decode_pubsub_message(m) for m in batch]
+            return ingest_batch(events, source="pubsub")
+        event, message_id = _decode_pubsub_message(body.get("message") or {}, body)
+        if isinstance(event, list):
+            return ingest_batch(event, source="pubsub")
+    except (ValueError, ValidationError, TypeError) as e:
         METRICS.inc("transactions_failed_total")
         raise HTTPException(400, f"malformed Pub/Sub message: {e}") from e
     return ingest_transaction(event, message_id=message_id, source="pubsub")

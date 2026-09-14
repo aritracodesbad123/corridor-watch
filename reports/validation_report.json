@@ -1,0 +1,134 @@
+{
+  "seed": 42,
+  "started_at": "2026-09-14T04:42:24.646385+00:00",
+  "finished_at": "2026-09-14T04:42:28.208489+00:00",
+  "pytest_exit_code": 0,
+  "deterministic": {
+    "status": "ok",
+    "benchmark": "synthetic_v1",
+    "ground_truth": "transactions.fraud_scenario",
+    "positive_scenarios": [
+      "mule_pass_through",
+      "multi_hop_chain",
+      "shared_device_ring",
+      "split_transaction_laundering",
+      "synthetic_identity"
+    ],
+    "sample_count": 586,
+    "metrics": {
+      "tp": 117,
+      "fp": 0,
+      "fn": 0,
+      "tn": 469,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "false_positive_rate": 0.0
+    },
+    "per_scenario": {
+      "mule_pass_through": {
+        "total": 36,
+        "flagged": 36,
+        "flag_rate": 1.0
+      },
+      "multi_hop_chain": {
+        "total": 9,
+        "flagged": 9,
+        "flag_rate": 1.0
+      },
+      "normal": {
+        "total": 469,
+        "flagged": 0,
+        "flag_rate": 0.0
+      },
+      "shared_device_ring": {
+        "total": 15,
+        "flagged": 15,
+        "flag_rate": 1.0
+      },
+      "split_transaction_laundering": {
+        "total": 36,
+        "flagged": 36,
+        "flag_rate": 1.0
+      },
+      "synthetic_identity": {
+        "total": 21,
+        "flagged": 21,
+        "flag_rate": 1.0
+      }
+    },
+    "pattern_accuracy": 0.9915,
+    "pattern_confusion": {
+      "mule_pass_through->mule_pass_through": 36,
+      "multi_hop_chain->multi_hop_chain": 8,
+      "multi_hop_chain->shared_device_ring": 1,
+      "shared_device_ring->shared_device_ring": 15,
+      "split_transaction_laundering->split_transaction_laundering": 36,
+      "synthetic_identity->synthetic_identity": 21
+    },
+    "quality_gate": {
+      "minimum_recall": 0.9,
+      "minimum_precision": 0.5,
+      "minimum_pattern_accuracy": 0.9,
+      "passed": true
+    },
+    "baseline_comparison": {
+      "name": "transaction_only",
+      "rules": [
+        "amount >= 8000",
+        "account_age_days <= 3 and amount >= 2500",
+        "sender_velocity >= 4 and amount >= 2000"
+      ],
+      "metrics": {
+        "tp": 12,
+        "fp": 0,
+        "fn": 105,
+        "tn": 469,
+        "precision": 1.0,
+        "recall": 0.1026,
+        "f1": 0.186,
+        "false_positive_rate": 0.0
+      },
+      "network_detection": null,
+      "note": "Threshold-only baseline. No graph, Pattern DNA, or Gemini."
+    },
+    "impact": {
+      "investigation_compression": {
+        "flagged_transactions": 117,
+        "baseline_items_reviewed": 117,
+        "network_items_reviewed": 30,
+        "network_investigations": 30,
+        "compression_ratio": 3.9,
+        "unit_of_work": "network_investigation",
+        "note": "Traditional review counts flagged wires. Corridor Watch reviews the collapsed network. Measured, not claimed."
+      },
+      "false_positive_reduction": 0.0,
+      "network_detection_lift": 0.8974,
+      "evidence_coverage": null,
+      "analyst_actionability_rate": null,
+      "time_to_case_ready": null,
+      "note": "Compression and lift are measured on the synthetic ledger, not production banks."
+    }
+  },
+  "scale": {
+    "max_sustained_tps_under_slo": 814.13,
+    "max_measured_consume_tps": 1212.57,
+    "path": "pubsub_cloud_run_cloud_sql",
+    "label": "Measured",
+    "live_gates": "reports/scale/live_gates.json",
+    "note": "Highest consume that passed its gate. 2k miss. Not 5,000 TPS."
+  },
+  "gemini": {
+    "grounding": "Verified",
+    "agreement": 1.0,
+    "agreement_n": 3,
+    "p95_latency_ms": 7754.5,
+    "cost_per_case_usd": 0.002229,
+    "artifact": "reports/gemini_agreement.json"
+  },
+  "dr": {
+    "rpo": 0.0,
+    "rto": 4.5,
+    "label": "Measured"
+  }
+}

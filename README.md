@@ -152,7 +152,7 @@ Graph anomaly detection is table stakes — Corridor Watch provides the reasonin
 
 ## 🧪 Evaluation & Reliability
 
-The repository now includes `evaluation.py` plus `tests/` so the core detector can be measured independently of Gemini availability. The benchmark uses the synthetic generator's `fraud_scenario` label as ground truth and reports:
+Claims and measured numbers live in [reports/SCORECARD.md](reports/SCORECARD.md). The repository includes `evaluation.py`, `tests/`, and `validation/` so the core detector and Gemini grounding gates can be measured independently of a live model. The benchmark uses the synthetic generator's `fraud_scenario` label as ground truth and reports:
 
 - precision / recall / F1 / false-positive rate
 - per-typology flag rate
@@ -163,7 +163,8 @@ Run:
 
 ```bash
 python -c "from evaluation import run_evaluation; import json; print(json.dumps(run_evaluation(), indent=2))"
-pytest -q
+.venv/bin/pytest -q
+python -m validation.run_suite
 ```
 
 The evaluation harness disables DAG audit writes so benchmark runs do not pollute the case audit trail. The synthetic benchmark is intentionally treated as a **development benchmark**, not proof of production performance.

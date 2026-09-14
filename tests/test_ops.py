@@ -68,3 +68,52 @@ def test_metrics_endpoint_includes_alerts(isolated_db):
     assert "alerts" in body
     assert "db_pool" in body
     assert "trace" in body
+
+
+def test_pubsub_push_accepts_message_batch(isolated_db):
+    import base64
+    import json
+    from main import app
+
+    def _msg(txn_id: str) -> dict:
+        payload = {
+            "txn_id": txn_id,
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "sender_account_id": "A",
+            "receiver_account_id": "B",
+            "amount": 100,
+            "origin_country": "IN",
+            "destination_country": "SG",
+        }
+        return {"messageId": f"m-{txn_id}", "data": base64.b64encode(json.dumps(payload).encode()).decode()}
+
+    client = TestClient(app)
+    res = client.post("/api/pubsub/push", json={"messages": [_msg("T-BAT-1"), _msg("T-BAT-2")]})
+    assert res.status_code == 200, res.text
+    assert res.json()["accepted"] == 2
+
+    packed = [
+        {
+            "txn_id": "T-PACK-1",
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "sender_account_id": "A",
+            "receiver_account_id": "B",
+            "amount": 100,
+            "origin_country": "IN",
+            "destination_country": "SG",
+        },
+        {
+            "txn_id": "T-PACK-2",
+            "timestamp": "2026-01-01T00:00:00+00:00",
+            "sender_account_id": "A",
+            "receiver_account_id": "B",
+            "amount": 100,
+            "origin_country": "IN",
+            "destination_country": "SG",
+        },
+    ]
+    res = client.post("/api/pubsub/push", json={
+        "message": {"messageId": "m-pack", "data": base64.b64encode(json.dumps(packed).encode()).decode()},
+    })
+    assert res.status_code == 200, res.text
+    assert res.json()["accepted"] == 2

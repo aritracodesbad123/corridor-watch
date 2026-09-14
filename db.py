@@ -742,6 +742,20 @@ def insert_or_ignore(con: Any, table: str, columns: Sequence[str], values: Seque
     return int(count or 0) > 0
 
 
+def insert_many_or_ignore(con: Any, table: str, columns: Sequence[str], rows: Sequence[Sequence[Any]], conflict: str) -> None:
+    if not rows:
+        return
+    cols = ", ".join(columns)
+    one = "(" + ", ".join("?" * len(columns)) + ")"
+    values_sql = ", ".join(one for _ in rows)
+    flat = [v for row in rows for v in row]
+    if get_settings().is_postgres:
+        sql = f"INSERT INTO {table} ({cols}) VALUES {values_sql} ON CONFLICT ({conflict}) DO NOTHING"
+    else:
+        sql = f"INSERT OR IGNORE INTO {table} ({cols}) VALUES {values_sql}"
+    con.execute(sql, flat)
+
+
 def upsert(con: Any, table: str, pk: str | Sequence[str], data: dict[str, Any]) -> None:
     """Portable insert-or-replace for SQLite and PostgreSQL."""
     keys = list(data.keys())

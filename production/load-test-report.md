@@ -27,6 +27,19 @@ The publisher held the target. Consume stayed SQL/connector-bound (503s when the
 
 **Maximum sustainable TPS under SLO on the live path: not established.** 5.65 TPS at a 200 target is a measurement, not a capacity claim.
 
+## Live consume gates (2026-09-13, this session)
+
+Source: `reports/scale/live_gates.json` and `reports/scale/test_*_tps.json`. Short probes (20 s at 100 TPS, 5 s above). Queue was already backlogged (~23k).
+
+| Target | Published | Publish TPS | Consume TPS | P50 | P95 | Gate | Result |
+|---|---:|---:|---:|---:|---:|---:|---|
+| 100 | 2,000 | 99.97 | **4.46** | 1.7s | 16.3s | ≥ 95 | missed |
+| 500 | 2,500 | 355.35 | **4.79** | 0.47s | 16.3s | ≥ 400 | missed |
+| 1,000 | 5,000 | 408.34 | **4.16** | 0.97s | 16.3s | ≥ 800 | missed |
+| 2,000 | 10,000 | 205.10 | **4.13** | 2.0s | 16.3s | ≥ 1,500 | missed |
+
+Publisher can hold ~100 TPS. Consume stayed **~4–5 TPS**. Do not claim 5,000 TPS.
+
 ## Local in-process (not Cloud Run)
 
 Source: `benchmarks/latest.json` (`mode: in_process`, 2026-09-12).

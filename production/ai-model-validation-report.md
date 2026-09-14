@@ -45,14 +45,27 @@ Do not present 100% precision as production AML performance.
 | Provenance: provider, prompt, evidence/input/output hashes | report + `model_provenance` audit | `test_deterministic_report_records_prompt_version` |
 | Visibility ≠ guilt; do not invent institutions | `GROUNDED_SYSTEM_PROMPT` | `test_unknown_not_presented_as_fact` |
 
+## Live Gemini agreement (2026-09-13)
+
+Source: `reports/gemini_agreement.json`. Isolated ingest, three cases. Gate ≥ 0.85.
+
+| Case | Deterministic | Gemini | Agree |
+|---|---|---|---|
+| GOLD-LIVE-1 (mule, new account) | hold_payment | hold_payment | yes |
+| GOLD-LIVE-2 (multi-hop, new account) | hold_payment | hold_payment | yes |
+| GOLD-LIVE-3 (normal, old account) | clear | clear | yes |
+
+Agreement **1.0**. p95 latency **13.2 s** (spec wanted ≤ 8 s — not gated in pytest). Cost/case not metered.
+Gemini cannot downgrade a deterministic disposition (`apply_grounding_gate`).
+
 ## What is not measured
 
 | Item | Status |
 |---|---|
-| Gemini vs deterministic verdict agreement | not measured |
-| Hallucination rate on live cases | not measured |
+| Gemini vs deterministic verdict agreement | **measured 1.0** on 3 isolated cases |
+| Hallucination rate on live cases | not metered as a rate |
 | Token usage / cost per case | not measured |
-| Shadow v1 vs v2 promotion gate | not implemented |
+| Shadow v1 vs v2 promotion gate | metric exists; no live promotion run |
 | Monthly 99.9% availability | session 5xx only (`/api/metrics` slos) |
 
 Promote a new Gemini model after agreement, grounding, latency, and escalation rates are measured — not because the model name changed.

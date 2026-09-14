@@ -22,6 +22,7 @@
 | **CR-018** | Production security | Optional OIDC bearer, MFA step-up for high-risk actions, authz audit, PII tokens at the Gemini boundary, grounding gate + model provenance. | **Completed** | v1.10.0 |
 | **CR-019** | Operations | Request traces, measured SLO + in-process alerts, Command Center SLO card, Cloud SQL PITR/DR status scripts. | **Completed** | v1.11.0 |
 | **CR-020** | Production evidence | Four `production/` reports: measured load paths, DR procedure without invented RPO, threat model mapped to tests, AI validation on synthetic + grounding gates. | **Completed** | v1.11.0 |
+| **CR-021** | Validation suite | Executable `validation/` suite + `reports/SCORECARD.md`. Prove existing controls (grounding, 5.65 TPS SLO, adversarial, DR Target, UX/a11y). No DeepEval dependency. Do not claim 5,000 TPS. | **Completed** | v1.12.0 |
 
 ---
 
@@ -83,3 +84,7 @@
 ### CR-020: Production evidence
 - **Modules**: `production/load-test-report.md`, `production/disaster-recovery-report.md`, `production/security-threat-model.md`, `production/ai-model-validation-report.md`
 - **Capability**: Present only measured ingest (5.65 TPS Pub/Sub consume; 1,912 TPS is in-process). Keep 5,000 TPS, RPO/RTO, and Gemini agreement rates as TARGET. Map security and AI controls to existing tests.
+
+### CR-021: Validation suite
+- **Modules**: `validation/`, `validation/run_suite.py`, `reports/SCORECARD.md`, `static/index.html`
+- **Capability**: One seeded suite for detector quality, Gemini grounding/injection (stdlib metrics, not a DeepEval package), reliability, recorded 5.65 TPS SLO boundary, RBAC/PII/provenance, DR Target, and analyst-loop + a11y smoke. Live 100–2k TPS Cloud gates stay skipped unless `CW_SCALE_LIVE=1`.

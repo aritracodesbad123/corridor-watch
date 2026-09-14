@@ -1,0 +1,10 @@
+{
+  "path": "pubsub_cloud_run_cloud_sql",
+  "achieved_tps": 814.13,
+  "target_rate": 1000,
+  "gate": 800,
+  "p50_ms": 0,
+  "measured_at": "2026-09-14",
+  "source": "reports/scale/test_1000_tps.json",
+  "note": "Highest consume that passed its gate. 2k miss best 1212. Not a 5,000 TPS claim."
+}

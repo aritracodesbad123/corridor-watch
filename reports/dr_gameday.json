@@ -1,0 +1,13 @@
+{
+  "measured_at": "2026-09-14T04:35:43.073157+00:00",
+  "source_instance": "corridor-watch-pg",
+  "clone_instance": "corridor-watch-pg-dr-gameday",
+  "rto_minutes": 4.5,
+  "rto_seconds": 270,
+  "rpo_minutes": 0.0,
+  "rpo_note": "gcloud sql instances clone copies current state; no PITR-to-past gap.",
+  "pitr_enabled": "true",
+  "earliest_restorable_time": null,
+  "duplicates_after_replay": 0,
+  "label": "Measured"
+}

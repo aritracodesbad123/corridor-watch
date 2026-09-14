@@ -43,7 +43,7 @@ def _parse_ts(value: str | None) -> datetime | None:
         return None
 
 
-def cheap_screen(txn: dict) -> ScreenResult:
+def cheap_screen(txn: dict, con=None, *, velocity: bool = True) -> ScreenResult:
     """Fast, bounded screening — no graph traversal, no Gemini."""
     signals: list[str] = []
     score = 0.0
@@ -77,28 +77,36 @@ def cheap_screen(txn: dict) -> ScreenResult:
         score += 18
         signals.append("new_account")
 
-    if sender:
-        score += _recent_velocity(sender, ts)
+    if sender and velocity:
+        score += _recent_velocity(sender, ts, con)
 
     score = min(score, 100.0)
     return ScreenResult(score=round(score, 1), tier=assign_tier(score), signals=signals)
 
 
-def _recent_velocity(sender_id: str, ts: datetime | None) -> float:
+def _recent_velocity(sender_id: str, ts: datetime | None, con=None) -> float:
     """Count sender activity in a 60-minute window. Cheap SQL, not a graph walk."""
     if ts is None:
         return 0.0
     window_start = (ts - timedelta(minutes=60)).isoformat()
     window_end = ts.isoformat()
+    own = con is None
     try:
-        con = connect()
+        if own:
+            con = connect()
         row = con.execute(
             "SELECT COUNT(*) AS c FROM transactions WHERE sender_id=? AND ts>=? AND ts<=?",
             (sender_id, window_start, window_end),
         ).fetchone()
-        con.close()
+        if own:
+            con.close()
         count = int(row["c"] if row is not None else 0)
     except Exception:
+        if own and con is not None:
+            try:
+                con.close()
+            except Exception:
+                pass
         return 0.0
     if count >= 8:
         return 20.0

@@ -10,6 +10,7 @@ from pubsub.schemas import TransactionEvent
 
 _wiring_cache: dict = {"ts": 0.0, "value": None}
 _PUBLISHER = None
+_PENDING: list = []
 
 
 def use_gcp_pubsub() -> bool:
@@ -44,20 +45,32 @@ def _publisher():
     return _PUBLISHER
 
 
-def publish_gcp(events: Iterable[TransactionEvent]) -> int:
+def publish_gcp(events: Iterable[TransactionEvent], *, wait: bool = True) -> int:
     """Batched Pub/Sub publish. Requires GOOGLE_CLOUD_PROJECT and ADC."""
     settings = get_settings()
     if not settings.google_cloud_project:
         raise RuntimeError("GOOGLE_CLOUD_PROJECT is not set")
     publisher = _publisher()
     topic_path = publisher.topic_path(settings.google_cloud_project, settings.transaction_topic)
-    futures = []
-    for ev in events:
-        data = json.dumps(ev.model_dump()).encode("utf-8")
-        futures.append(publisher.publish(topic_path, data, txn_id=ev.txn_id))
-    for fut in futures:
+    events = list(events)
+    if not events:
+        return 0
+    if len(events) == 1:
+        data = json.dumps(events[0].model_dump()).encode("utf-8")
+        fut = publisher.publish(topic_path, data, txn_id=events[0].txn_id)
+    else:
+        data = json.dumps([ev.model_dump() for ev in events]).encode("utf-8")
+        fut = publisher.publish(topic_path, data, batch_size=str(len(events)))
+    if wait:
         fut.result(timeout=30)
-    return len(futures)
+    else:
+        _PENDING.append(fut)
+    return len(events)
+
+
+def flush_gcp(timeout: int = 30) -> None:
+    while _PENDING:
+        _PENDING.pop().result(timeout=timeout)
 
 
 def notify_investigation(payload: dict) -> None:

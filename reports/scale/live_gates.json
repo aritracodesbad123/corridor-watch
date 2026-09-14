@@ -1,0 +1,14 @@
+{
+  "measured_at": "2026-09-14T04:30:00Z",
+  "path": "pubsub_cloud_run_cloud_sql",
+  "url": "https://corridor-watch-6kmkxbsbwq-as.a.run.app",
+  "note": "Ledger processed / publish+drain. 5,000 TPS is not claimed.",
+  "runs": [
+    {"target": 100, "duration_s": 20, "published": 2000, "publish_tps": 99.97, "achieved_tps": 97.59, "gate": 95, "passed": true, "source": "reports/scale/test_100_tps.json"},
+    {"target": 500, "duration_s": 10, "published": 5000, "publish_tps": 499.75, "achieved_tps": 407.96, "gate": 400, "passed": true, "source": "reports/scale/test_500_tps.json"},
+    {"target": 1000, "duration_s": 10, "published": 10000, "publish_tps": 999.5, "achieved_tps": 814.13, "gate": 800, "passed": true, "source": "reports/scale/test_1000_tps.json"},
+    {"target": 2000, "duration_s": 10, "published": 20000, "publish_tps": 1999.64, "achieved_tps": 1148.32, "gate": 1500, "passed": false, "note": "Latest 1148. Best 2k probe 1212. SQL-bound on loaded ledger. Not 5,000 TPS.", "source": "reports/scale/test_2000_tps.json"}
+  ],
+  "max_sustained_consume_tps_passing_gate": 814.13,
+  "max_measured_consume_tps": 1212.57
+}

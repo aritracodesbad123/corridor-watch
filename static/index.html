@@ -124,6 +124,7 @@
   .tabs{display:flex;flex-wrap:nowrap;gap:0;border-bottom:1px solid var(--line);margin:0 -22px 14px;padding:0 22px;overflow-x:auto;overflow-y:hidden}
   .tab{padding:8px 12px;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;flex-shrink:0;white-space:nowrap}
   .tab.on{color:var(--text);border-bottom-color:var(--teal)}
+  .tab:focus-visible,.row:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
   .panel-block{display:none}.panel-block.on{display:block}
   .side .card{margin:10px;border-radius:6px}
   .side .btn-row{padding:0 10px 10px}
@@ -396,7 +397,7 @@
   </div>
   <div class="sidenav-foot">
     <div id="system-chip">System online</div>
-    <div class="ver">v1.11.0</div>
+    <div class="ver">v1.12.0</div>
   </div>
 </aside>
 <div class="app-main">
@@ -449,8 +450,8 @@
     <p>Explore connections, uncover hidden flows, and investigate suspicious activity across the financial corridor.</p>
   </div>
   <div class="explorer-filters">
-    <select id="explorer-risk"><option value="">All risk levels</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
-    <input id="explorer-search" type="text" placeholder="Search entity, account, or corridor"/>
+    <select id="explorer-risk" aria-label="Filter by risk level"><option value="">All risk levels</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+    <input id="explorer-search" type="text" placeholder="Search entity, account, or corridor" aria-label="Search entity, account, or corridor"/>
     <button type="button" id="btn-explorer-run">Run query</button>
   </div>
   <div class="explorer-grid">
@@ -514,7 +515,7 @@
         <option value="oldest">Oldest first</option>
       </select>
     </div>
-    <div id="rows"></div>
+    <div id="rows" role="list" aria-label="Triage queue"></div>
   </div>
   <div class="detail" id="detail"><div class="empty">Select a flagged transaction to open the case.</div></div>
   <div class="side" id="side">
@@ -641,7 +642,7 @@ async function loadAlerts(){
   const keep = current;
   $("queue-count").textContent = `${alerts.length} alert${alerts.length===1?"":"s"}`;
   $("rows").innerHTML = alerts.map(a => `
-    <div class="row ${a.txn_id===keep?'active':''} ${a.showcase==='middle_bank'?'middle-bank':(a.showcase?'showcase':'')}" data-id="${a.txn_id}">
+    <div class="row ${a.txn_id===keep?'active':''} ${a.showcase==='middle_bank'?'middle-bank':(a.showcase?'showcase':'')}" role="listitem" tabindex="0" data-id="${a.txn_id}" aria-label="${esc(a.corridor||'alert')} ${esc(a.txn_id)}">
       <div class="risk-bar ${riskClass(a.risk_score)}">${Math.round(a.risk_score)}</div>
       <div style="min-width:0">
         <div class="row-corridor">${a.corridor} · $${Number(a.amount).toLocaleString()}</div>
@@ -649,7 +650,12 @@ async function loadAlerts(){
         <div class="pat">${showcaseLabel(a.showcase)}${a.primary_pattern||''} · ${a.workflow_state||'open'}</div>
       </div>
     </div>`).join("");
-  $("rows").querySelectorAll(".row").forEach(r => r.addEventListener("click", () => openCase(r.dataset.id)));
+  $("rows").querySelectorAll(".row").forEach(r => {
+    r.addEventListener("click", () => openCase(r.dataset.id));
+    r.addEventListener("keydown", ev => {
+      if(ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); openCase(r.dataset.id); }
+    });
+  });
 }
 
 function showcaseLabel(flag){
@@ -718,8 +724,12 @@ function attachMapZoom(viewportId){
 
 function money(n){
   const v = Number(n||0);
-  if(v >= 1000) return `$${(v/1000).toFixed(v>=10000?0:1)}k`;
-  return `$${Math.round(v)}`;
+  const abs = Math.abs(v);
+  const scale = abs >= 1e9 ? [1e9, "B"] : abs >= 1e6 ? [1e6, "M"] : abs >= 1e3 ? [1e3, "K"] : null;
+  if(!scale) return `$${Math.round(v)}`;
+  const scaled = v / scale[0];
+  const digits = Math.abs(scaled) >= 10 ? 0 : 1;
+  return `$${scaled.toFixed(digits)}${scale[1]}`;
 }
 
 // ---- safe binary-to-text encoding for embedding JSON in HTML attributes ----
@@ -837,7 +847,7 @@ function renderMoneyFlowDag(net){
     const label = (n.id||"").slice(0,8);
     const sub = n.country || "?";
     const nodeData = encodeNodeData(n);
-    return `<g class="flow-node" data-node="${nodeData}">
+    return `<g class="flow-node" role="img" aria-label="Account ${label} ${sub} risk ${Math.round(risk)}" data-node="${nodeData}">
       <rect x="${p.x-34}" y="${p.y-18}" rx="6" width="68" height="36" fill="${fill}" stroke="${stroke}" stroke-width="1.5" ${dash?`stroke-dasharray="${dash}"`:""}/>
       <text x="${p.x}" y="${p.y-2}" text-anchor="middle" fill="#E8ECF1" font-size="10" font-family="IBM Plex Mono">${label}</text>
       <text x="${p.x}" y="${p.y+12}" text-anchor="middle" fill="#A8B2C2" font-size="9" font-family="IBM Plex Mono">${sub} · ${Math.round(risk)}</text>
@@ -966,17 +976,17 @@ async function openCase(txnId){
   const rRisk = d.receiver.risk_features||{};
 
   $("detail").innerHTML = `
-    <div class="tabs">
-      <div class="tab on" data-tab="overview">Overview</div>
-      <div class="tab" data-tab="network">Money flow</div>
-      <div class="tab" data-tab="map">Corridor map</div>
-      <div class="tab" data-tab="behavior">Behavioral</div>
-      <div class="tab" data-tab="verdict">Verdict</div>
-      <div class="tab" data-tab="debate">AI Debate</div>
-      <div class="tab" data-tab="docverify">Doc Verifier</div>
-      <div class="tab" data-tab="whatif">What-If</div>
-      <div class="tab" data-tab="sar">SAR Filing</div>
-      <div class="tab" data-tab="decision">Workflow</div>
+    <div class="tabs" role="tablist" aria-label="Case sections">
+      <div class="tab on" role="tab" tabindex="0" aria-selected="true" data-tab="overview">Overview</div>
+      <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="network">Money flow</div>
+      <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="map">Corridor map</div>
+      <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="behavior">Behavioral</div>
+      <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="verdict">Verdict</div>
+      <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="debate">AI Debate</div>
+      <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="docverify">Doc Verifier</div>
+      <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="whatif">What-If</div>
+      <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="sar">SAR Filing</div>
+      <div class="tab" role="tab" tabindex="-1" aria-selected="false" data-tab="decision">Workflow</div>
     </div>
     <div class="panel-block on" id="tab-overview">
       <div class="case-id">CASE ${t.txn_id} · ${t.primary_pattern||''} · ${t.workflow_state||d.workflow_state||'open'}${t.showcase==='middle_bank'?' · MIDDLE BANK':(t.showcase?' · LOTUS RING':'')}
@@ -1168,11 +1178,25 @@ async function openCase(txnId){
   `;
 
   $("detail").querySelectorAll(".tab").forEach(tab=>{
-    tab.addEventListener("click", ()=>{
-      $("detail").querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+    const activate = ()=>{
+      $("detail").querySelectorAll(".tab").forEach(x=>{
+        x.classList.remove("on");
+        x.setAttribute("aria-selected","false");
+        x.tabIndex = -1;
+      });
       $("detail").querySelectorAll(".panel-block").forEach(x=>x.classList.remove("on"));
       tab.classList.add("on");
+      tab.setAttribute("aria-selected","true");
+      tab.tabIndex = 0;
       $("tab-"+tab.dataset.tab).classList.add("on");
+    };
+    tab.addEventListener("click", activate);
+    tab.addEventListener("keydown", ev=>{
+      const tabs = [...$("detail").querySelectorAll(".tab")];
+      const i = tabs.indexOf(tab);
+      if(ev.key==="Enter" || ev.key===" "){ ev.preventDefault(); activate(); }
+      if(ev.key==="ArrowRight"){ ev.preventDefault(); (tabs[(i+1)%tabs.length]||tab).focus(); }
+      if(ev.key==="ArrowLeft"){ ev.preventDefault(); (tabs[(i-1+tabs.length)%tabs.length]||tab).focus(); }
     });
   });
 

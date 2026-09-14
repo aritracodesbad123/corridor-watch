@@ -7,9 +7,13 @@ core detection metrics. The output is suitable for a demo scorecard and CI.
 from __future__ import annotations
 
 import json
+import shutil
+import tempfile
 from collections import Counter, defaultdict
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Any
+from pathlib import Path
+from typing import Any, Iterator
 
 from db import connect, init_schema
 from investigation_dag import run_dag
@@ -40,7 +44,44 @@ def _binary_metrics(y_true: list[bool], y_pred: list[bool]) -> dict[str, float |
     }
 
 
-def run_evaluation(include_trace: bool = False) -> dict[str, Any]:
+@contextmanager
+def _clean_synthetic_db() -> Iterator[None]:
+    """Score the generator cut, not the mixed demo ledger."""
+    import db
+    import data_gen
+
+    old_db = db.DB_PATH
+    old_gen = data_gen.DB_PATH
+    tmpdir = Path(tempfile.mkdtemp(prefix="cw-eval-"))
+    tmp = tmpdir / "synthetic_v1.db"
+    db.DB_PATH = tmp
+    data_gen.DB_PATH = tmp
+    data_gen.DEVICES.clear()
+    data_gen.BENEFICIARIES.clear()
+    data_gen.ACCOUNT_DEVICES.clear()
+    data_gen.ACCOUNT_BENEFS.clear()
+    data_gen.SESSIONS.clear()
+    data_gen.random.seed(42)
+    data_gen.Faker.seed(42)
+    try:
+        accounts, txns = data_gen.build()
+        data_gen.write_db(accounts, txns)
+        from graph_features import score_all, write_scores
+        con = connect()
+        scores, _, _ = score_all(con)
+        write_scores(con, scores, txns)
+        con.close()
+        yield
+    finally:
+        db.DB_PATH = old_db
+        data_gen.DB_PATH = old_gen
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
+def run_evaluation(include_trace: bool = False, cut: str = "clean") -> dict[str, Any]:
+    if cut == "clean":
+        with _clean_synthetic_db():
+            return run_evaluation(include_trace=include_trace, cut="ledger")
     init_schema()
     con = connect()
     rows = [dict(r) for r in con.execute(

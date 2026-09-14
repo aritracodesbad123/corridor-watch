@@ -1,0 +1,52 @@
+{
+  "cases": [
+    {
+      "txn_id": "GOLD-LIVE-1",
+      "deterministic": "hold_payment",
+      "gemini": "hold_payment",
+      "agree": true,
+      "gemini_used": true,
+      "grounded": true,
+      "uncertainty": "The visible network is incomplete (55% visibility), meaning significant parts of the transaction's context, including other accounts, institutions, and activities, are unknown. The origin and destination countries for the accounts are not explicitly provided.",
+      "gemini_error": null,
+      "latency_ms": 9534.6,
+      "prompt_tokens": 1168,
+      "completion_tokens": 866,
+      "cost_usd": 0.002515
+    },
+    {
+      "txn_id": "GOLD-LIVE-2",
+      "deterministic": "hold_payment",
+      "gemini": "hold_payment",
+      "agree": true,
+      "gemini_used": true,
+      "grounded": true,
+      "uncertainty": "The network visibility is 55% (E-VIS), indicating a significant portion of the transaction network is unknown. This limits the ability to fully assess the multi-hop chain. The nature of the external boundary accounts (BOUNDARY-01, BOUNDARY-02) is also unknown.",
+      "gemini_error": null,
+      "latency_ms": 7754.5,
+      "prompt_tokens": 1084,
+      "completion_tokens": 735,
+      "cost_usd": 0.002163
+    },
+    {
+      "txn_id": "GOLD-LIVE-3",
+      "deterministic": "clear",
+      "gemini": "clear",
+      "agree": true,
+      "gemini_used": true,
+      "grounded": true,
+      "uncertainty": "Incomplete network visibility (55%) limits full understanding of transaction context and counterparties, as two institutional boundaries remain unknown.",
+      "gemini_error": null,
+      "latency_ms": 6023.7,
+      "prompt_tokens": 1000,
+      "completion_tokens": 684,
+      "cost_usd": 0.00201
+    }
+  ],
+  "invoked_n": 3,
+  "schema_valid_n": 3,
+  "agreement": 1.0,
+  "p95_latency_ms": 7754.5,
+  "cost_per_case_usd": 0.002229,
+  "note": "Agreement counts schema-valid Gemini reports vs deterministic disposition. Cost from usage_metadata."
+}

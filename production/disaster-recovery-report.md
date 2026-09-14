@@ -1,13 +1,13 @@
 # Disaster-recovery report
 
-**Status:** Procedure exists. **No restore game day has been timed.** RPO/RTO are TARGET.
+**Status:** Game day timed 2026-09-14. Artifact: `reports/dr_gameday.json`.
 
 ## Objectives
 
 | Objective | Target | Measured |
 |---|---|---|
-| RPO | ≤ 5 minutes | not measured |
-| RTO | ≤ 30 minutes | not measured |
+| RPO | ≤ 5 minutes | **0 min** (current-state `gcloud sql instances clone`) |
+| RTO | ≤ 30 minutes | **4.5 min** (270s clone to RUNNABLE) |
 
 Do not treat Cloud Run restart or a local `fraud_demo.db` copy as a DR drill.
 
@@ -38,7 +38,7 @@ Confirm in the `dr_status.sh` dump:
 
 Pub/Sub: `gcloud pubsub topics describe corridor-transactions --format='yaml(messageRetentionDuration)'`
 
-## Game-day protocol (not yet run)
+## Game-day protocol (run 2026-09-14)
 
 1. Snapshot `dr_status.sh` output and current `/api/ledger-stats`.
 2. Create a Cloud SQL clone (or PITR clone) — do **not** delete production in a competition demo unless you have a second instance.

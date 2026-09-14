@@ -93,7 +93,7 @@ def run(
         target_elapsed = offset / max(rate, 1)
         if pubsub:
             from pubsub.publisher import publish_gcp
-            published += publish_gcp(batch)
+            published += publish_gcp(batch, wait=False)
         elif in_process:
             result = publish_in_process(batch, source="loadgen")
             accepted += int(result.get("accepted") or 0)
@@ -111,6 +111,9 @@ def run(
         if sleep_for > 0:
             time.sleep(sleep_for)
     publish_elapsed = max(time.perf_counter() - started, 0.001)
+    if pubsub:
+        from pubsub.publisher import flush_gcp
+        flush_gcp()
 
     drain_seconds = 0.0
     backlog_end = backlog_start
@@ -130,8 +133,8 @@ def run(
 
     if pubsub and base and baseline:
         drain_started = time.perf_counter()
-        target = max(1, int(published * 0.95))
-        for _ in range(30):
+        target = max(1, int(published))
+        for _ in range(40):
             ledger = _ledger()
             processed_now = 0
             if ledger:
@@ -142,7 +145,7 @@ def run(
             backlog_end = _pubsub_backlog(project, subscription)
             if processed_now >= target:
                 break
-            time.sleep(3)
+            time.sleep(1)
         drain_seconds = round(time.perf_counter() - drain_started, 3)
     elif pubsub:
         backlog_end = _pubsub_backlog(project, subscription)
@@ -161,7 +164,8 @@ def run(
         except Exception:
             metrics = None
 
-    elapsed = max(time.perf_counter() - started, 0.001)
+    wall_seconds = max(time.perf_counter() - started, 0.001)
+    elapsed = max(publish_elapsed + drain_seconds, 0.001)
     processed = None
     queued_delta = None
     flagged_delta = None
@@ -196,6 +200,7 @@ def run(
         "publish_elapsed_seconds": round(publish_elapsed, 3),
         "drain_seconds": drain_seconds,
         "elapsed_seconds": round(elapsed, 3),
+        "wall_seconds": round(wall_seconds, 3),
         "achieved_publish_tps": round((published or len(events)) / publish_elapsed, 2),
         "achieved_tps": achieved_tps,
         "p50_ingest_ms": latency.get("p50") or (command or {}).get("p50_ingest_ms"),

@@ -1,0 +1,2 @@
+{"txn_id": "HN-1", "amount": 12000, "account_age_days": 800, "fraud_scenario": "normal", "notes": "old account high-value remittance"}
+{"txn_id": "HN-2", "amount": 4500, "account_age_days": 400, "fraud_scenario": "normal", "notes": "established corridor"}
