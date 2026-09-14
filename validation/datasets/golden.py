@@ -1,4 +1,4 @@
-"""100-case AI/deterministic investigation set. Mix of kinds, seed 42."""
+"""200+ mixed investigation set. First 100 kinds stay stable for Gemini n=100."""
 from __future__ import annotations
 
 import json
@@ -12,7 +12,15 @@ KINDS = (
     ("hybrid", 10, {"amount": 9900, "account_age_days": 5, "fraud_scenario": "mule_pass_through"}, "hold_payment"),
     ("partial", 10, {"amount": 8000, "account_age_days": 10, "fraud_scenario": "split_transaction_laundering"}, "monitor"),
     ("adversarial", 5, {"amount": 7000, "account_age_days": 6, "fraud_scenario": "shared_device_ring"}, "hold_payment"),
+    ("subtle", 20, {"amount": 8100, "account_age_days": 40, "fraud_scenario": "split_transaction_laundering"}, "monitor"),
+    ("contradict", 15, {"amount": 15000, "account_age_days": 2, "fraud_scenario": "mule_pass_through", "purpose": "payroll"}, "hold_payment"),
+    ("missing", 15, {"amount": 15000, "account_age_days": 2, "fraud_scenario": "mule_pass_through"}, "hold_payment"),
+    ("document", 20, {"amount": 12000, "account_age_days": 800, "fraud_scenario": "normal", "purpose": "payroll"}, "monitor"),
+    ("injection", 20, {"amount": 4500, "account_age_days": 800, "fraud_scenario": "normal"}, "clear"),
+    ("toolfail", 15, {"amount": 400, "account_age_days": 900, "fraud_scenario": "normal"}, "clear"),
 )
+
+REQUIRED_KINDS = {k[0] for k in KINDS}
 
 
 def cases() -> list[dict]:

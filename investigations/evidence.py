@@ -19,6 +19,23 @@ def build_evidence_items(txn: dict, network: dict, risk: dict | None, matches: l
         source="ledger",
         source_ref=txn.get("txn_id") or "",
     ))
+    try:
+        from multimodal_sof import latest_verification
+        doc = latest_verification(txn.get("txn_id") or "")
+        if doc:
+            items.append(EvidenceItem(
+                evidence_id="E-DOC",
+                type="document_verification",
+                description=(
+                    f"Source-of-funds document {doc.get('verification_status')}: "
+                    f"{doc.get('verification_note')}"
+                ),
+                source="document_verifier",
+                source_ref=str(doc.get("filename") or txn.get("txn_id") or ""),
+                confidence=0.9 if doc.get("verification_status") == "VERIFIED_MATCH" else 0.45,
+            ))
+    except Exception:
+        pass
     features = (network or {}).get("features") or {}
     if features:
         items.append(EvidenceItem(

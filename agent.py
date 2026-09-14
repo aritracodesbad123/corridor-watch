@@ -801,23 +801,6 @@ def _attach_platform_report(txn_id: str, dag_bundle: dict, verdict: dict) -> Inv
     network = bounded_network(txn)
     matches = match_patterns(txn, network, risk)
     evidence = build_evidence_items(txn, network, risk, matches)
-    try:
-        from multimodal_sof import latest_verification
-        doc = latest_verification(txn_id)
-        if doc:
-            evidence.append(EvidenceItem(
-                evidence_id="E-DOC",
-                type="document_verification",
-                description=(
-                    f"Source-of-funds document {doc.get('verification_status')}: "
-                    f"{doc.get('verification_note')}"
-                ),
-                source="document_verifier",
-                source_ref=str(doc.get("filename") or txn_id),
-                confidence=0.9 if doc.get("verification_status") == "VERIFIED_MATCH" else 0.45,
-            ))
-    except Exception:
-        pass
     return deterministic_report(txn, evidence, matches, risk, network)
 
 

@@ -2,6 +2,7 @@ import json
 from pathlib import Path
 
 from graph_features import FLAG_THRESHOLD, score_all
+from validation import stamped
 from validation.external.generator_b import write_db
 from validation.external.hard_negatives import POSITIVE, build
 from validation.oracle import extract, is_positive, label_of
@@ -57,7 +58,7 @@ def test_hard_negative_networks_vs_fraud_twins(tmp_path, monkeypatch):
     }
     reports = ROOT / "reports"
     reports.mkdir(exist_ok=True)
-    (reports / "hard_negative_results.json").write_text(json.dumps(payload, indent=2))
+    (reports / "hard_negative_results.json").write_text(json.dumps(stamped(payload, dataset="hard_negatives", random_seed=19), indent=2))
     (reports / "hard_negative_report.md").write_text(
         f"# Hard-negative network benchmark\n\n"
         f"n={payload['n']} archetypes={payload['archetypes']}\n\n"

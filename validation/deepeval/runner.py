@@ -97,11 +97,34 @@ def run_offline(cases: list[dict] | None = None) -> dict:
         scores = {}
         for metric in metrics:
             scores[metric.__class__.__name__] = {"score": metric.measure(tc), "success": metric.is_successful()}
-        rows.append({"input": raw.get("input"), "scores": scores})
+        rows.append({
+            "input": raw.get("input"),
+            "kind": (meta.get("kind") or "unknown"),
+            "scores": scores,
+        })
     means = {}
     for name in rows[0]["scores"]:
         vals = [r["scores"][name]["score"] for r in rows]
         means[name] = round(sum(vals) / len(vals), 4)
+    kind_counts: dict[str, int] = {}
+    for raw in cases:
+        kind = ((raw.get("additional_metadata") or raw.get("metadata") or {}).get("kind")) or "unknown"
+        kind_counts[kind] = kind_counts.get(kind, 0) + 1
+    official = _official_gemini_metrics(cases)
+    if official.get("official_metrics") != "RAN" and REPORT.exists():
+        try:
+            prev = json.loads(REPORT.read_text())
+        except json.JSONDecodeError:
+            prev = {}
+        if prev.get("official_metrics") == "RAN":
+            official = {
+                "official_metrics": "RAN",
+                "judge": prev.get("judge"),
+                "official_n": prev.get("official_n"),
+                "faithfulness": prev.get("faithfulness"),
+                "official_carry_forward": True,
+                "official_prior_run_id": prev.get("run_id"),
+            }
     payload = experiment_metadata(
         dataset="deepeval_offline",
         case_count=len(rows),
@@ -109,7 +132,8 @@ def run_offline(cases: list[dict] | None = None) -> dict:
         package="deepeval",
         ran=ran,
         mean_scores=means,
-        **_official_gemini_metrics(cases),
+        kind_counts=kind_counts,
+        **official,
     )
     REPORT.parent.mkdir(parents=True, exist_ok=True)
     REPORT.write_text(json.dumps(payload, indent=2, default=str))

@@ -35,3 +35,9 @@ def experiment_metadata(**extra) -> dict:
     }
     meta.update(extra)
     return meta
+
+
+def stamped(payload: dict, **extra) -> dict:
+    extra.setdefault("case_count", payload.get("case_count") or payload.get("n") or payload.get("sample_count") or 0)
+    extra.setdefault("dataset", payload.get("benchmark") or payload.get("dataset") or extra.get("dataset") or "synthetic_v1")
+    return {**experiment_metadata(**extra), **payload}

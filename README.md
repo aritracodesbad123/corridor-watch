@@ -152,7 +152,7 @@ Graph anomaly detection is table stakes — Corridor Watch provides the reasonin
 
 ## 🧪 Evaluation & Reliability
 
-Claims and measured numbers live in [reports/SCORECARD.md](reports/SCORECARD.md). The repository includes `evaluation.py`, `tests/`, and `validation/` so the core detector and Gemini grounding gates can be measured independently of a live model. The benchmark uses the synthetic generator's `fraud_scenario` label as ground truth and reports:
+Claims and measured numbers live in [FINAL_VALIDATION_REPORT.md](FINAL_VALIDATION_REPORT.md) and [reports/SCORECARD.md](reports/SCORECARD.md). The repository includes `evaluation.py`, `tests/`, and `validation/` so the core detector and Gemini grounding gates can be measured independently of a live model. The benchmark uses the synthetic generator's `fraud_scenario` label as ground truth and reports:
 
 - precision / recall / F1 / false-positive rate
 - per-typology flag rate

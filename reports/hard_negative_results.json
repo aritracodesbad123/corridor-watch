@@ -1,4 +1,16 @@
 {
+  "run_id": "c8045460f678",
+  "timestamp_utc": "2026-09-14T09:16:27.154534+00:00",
+  "git_commit": "7d22cff27eaa6d6074d46de6f1bd8ab879ffd3a0",
+  "environment": "local",
+  "dataset": "hard_negatives",
+  "dataset_version": "data_gen.seed42",
+  "model": null,
+  "model_version": null,
+  "prompt_version": "investigator-v8",
+  "tool_schema_version": "investigation-report-v1",
+  "case_count": 71,
+  "random_seed": 19,
   "n": 71,
   "archetypes": [
     "CHARITY",

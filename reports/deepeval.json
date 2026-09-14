@@ -1,7 +1,7 @@
 {
-  "run_id": "e41f9f71d8eb",
-  "timestamp_utc": "2026-09-14T08:50:08.116797+00:00",
-  "git_commit": "36e7365f32c227dedfbc43a9a651f6a7830d88d6",
+  "run_id": "147e429d8a39",
+  "timestamp_utc": "2026-09-14T09:16:26.450799+00:00",
+  "git_commit": "7d22cff27eaa6d6074d46de6f1bd8ab879ffd3a0",
   "environment": "local",
   "dataset": "deepeval_offline",
   "dataset_version": "data_gen.seed42",
@@ -9,11 +9,12 @@
   "model_version": null,
   "prompt_version": "investigator-v8",
   "tool_schema_version": "investigation-report-v1",
-  "case_count": 100,
+  "case_count": 205,
   "random_seed": 42,
   "cases": [
     {
       "input": "GOLD-MULE-001",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -39,6 +40,7 @@
     },
     {
       "input": "GOLD-MULE-002",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -64,6 +66,7 @@
     },
     {
       "input": "GOLD-MULE-003",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -89,6 +92,7 @@
     },
     {
       "input": "GOLD-MULE-004",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -114,6 +118,7 @@
     },
     {
       "input": "GOLD-MULE-005",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -139,6 +144,7 @@
     },
     {
       "input": "GOLD-MULE-006",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -164,6 +170,7 @@
     },
     {
       "input": "GOLD-MULE-007",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -189,6 +196,7 @@
     },
     {
       "input": "GOLD-MULE-008",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -214,6 +222,7 @@
     },
     {
       "input": "GOLD-MULE-009",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -239,6 +248,7 @@
     },
     {
       "input": "GOLD-MULE-010",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -264,6 +274,7 @@
     },
     {
       "input": "GOLD-MULE-011",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -289,6 +300,7 @@
     },
     {
       "input": "GOLD-MULE-012",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -314,6 +326,7 @@
     },
     {
       "input": "GOLD-MULE-013",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -339,6 +352,7 @@
     },
     {
       "input": "GOLD-MULE-014",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -364,6 +378,7 @@
     },
     {
       "input": "GOLD-MULE-015",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -389,6 +404,7 @@
     },
     {
       "input": "GOLD-MULE-016",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -414,6 +430,7 @@
     },
     {
       "input": "GOLD-MULE-017",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -439,6 +456,7 @@
     },
     {
       "input": "GOLD-MULE-018",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -464,6 +482,7 @@
     },
     {
       "input": "GOLD-MULE-019",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -489,6 +508,7 @@
     },
     {
       "input": "GOLD-MULE-020",
+      "kind": "mule",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -514,6 +534,7 @@
     },
     {
       "input": "GOLD-HOP-001",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -539,6 +560,7 @@
     },
     {
       "input": "GOLD-HOP-002",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -564,6 +586,7 @@
     },
     {
       "input": "GOLD-HOP-003",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -589,6 +612,7 @@
     },
     {
       "input": "GOLD-HOP-004",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -614,6 +638,7 @@
     },
     {
       "input": "GOLD-HOP-005",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -639,6 +664,7 @@
     },
     {
       "input": "GOLD-HOP-006",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -664,6 +690,7 @@
     },
     {
       "input": "GOLD-HOP-007",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -689,6 +716,7 @@
     },
     {
       "input": "GOLD-HOP-008",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -714,6 +742,7 @@
     },
     {
       "input": "GOLD-HOP-009",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -739,6 +768,7 @@
     },
     {
       "input": "GOLD-HOP-010",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -764,6 +794,7 @@
     },
     {
       "input": "GOLD-HOP-011",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -789,6 +820,7 @@
     },
     {
       "input": "GOLD-HOP-012",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -814,6 +846,7 @@
     },
     {
       "input": "GOLD-HOP-013",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -839,6 +872,7 @@
     },
     {
       "input": "GOLD-HOP-014",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -864,6 +898,7 @@
     },
     {
       "input": "GOLD-HOP-015",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -889,6 +924,7 @@
     },
     {
       "input": "GOLD-HOP-016",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -914,6 +950,7 @@
     },
     {
       "input": "GOLD-HOP-017",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -939,6 +976,7 @@
     },
     {
       "input": "GOLD-HOP-018",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -964,6 +1002,7 @@
     },
     {
       "input": "GOLD-HOP-019",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -989,6 +1028,7 @@
     },
     {
       "input": "GOLD-HOP-020",
+      "kind": "hop",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1014,6 +1054,7 @@
     },
     {
       "input": "GOLD-NORMAL-001",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1039,6 +1080,7 @@
     },
     {
       "input": "GOLD-NORMAL-002",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1064,6 +1106,7 @@
     },
     {
       "input": "GOLD-NORMAL-003",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1089,6 +1132,7 @@
     },
     {
       "input": "GOLD-NORMAL-004",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1114,6 +1158,7 @@
     },
     {
       "input": "GOLD-NORMAL-005",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1139,6 +1184,7 @@
     },
     {
       "input": "GOLD-NORMAL-006",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1164,6 +1210,7 @@
     },
     {
       "input": "GOLD-NORMAL-007",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1189,6 +1236,7 @@
     },
     {
       "input": "GOLD-NORMAL-008",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1214,6 +1262,7 @@
     },
     {
       "input": "GOLD-NORMAL-009",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1239,6 +1288,7 @@
     },
     {
       "input": "GOLD-NORMAL-010",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1264,6 +1314,7 @@
     },
     {
       "input": "GOLD-NORMAL-011",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1289,6 +1340,7 @@
     },
     {
       "input": "GOLD-NORMAL-012",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1314,6 +1366,7 @@
     },
     {
       "input": "GOLD-NORMAL-013",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1339,6 +1392,7 @@
     },
     {
       "input": "GOLD-NORMAL-014",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1364,6 +1418,7 @@
     },
     {
       "input": "GOLD-NORMAL-015",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1389,6 +1444,7 @@
     },
     {
       "input": "GOLD-NORMAL-016",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1414,6 +1470,7 @@
     },
     {
       "input": "GOLD-NORMAL-017",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1439,6 +1496,7 @@
     },
     {
       "input": "GOLD-NORMAL-018",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1464,6 +1522,7 @@
     },
     {
       "input": "GOLD-NORMAL-019",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1489,6 +1548,7 @@
     },
     {
       "input": "GOLD-NORMAL-020",
+      "kind": "normal",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1514,6 +1574,7 @@
     },
     {
       "input": "GOLD-HARDNEG-001",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1539,6 +1600,7 @@
     },
     {
       "input": "GOLD-HARDNEG-002",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1564,6 +1626,7 @@
     },
     {
       "input": "GOLD-HARDNEG-003",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1589,6 +1652,7 @@
     },
     {
       "input": "GOLD-HARDNEG-004",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1614,6 +1678,7 @@
     },
     {
       "input": "GOLD-HARDNEG-005",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1639,6 +1704,7 @@
     },
     {
       "input": "GOLD-HARDNEG-006",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1664,6 +1730,7 @@
     },
     {
       "input": "GOLD-HARDNEG-007",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1689,6 +1756,7 @@
     },
     {
       "input": "GOLD-HARDNEG-008",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1714,6 +1782,7 @@
     },
     {
       "input": "GOLD-HARDNEG-009",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1739,6 +1808,7 @@
     },
     {
       "input": "GOLD-HARDNEG-010",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1764,6 +1834,7 @@
     },
     {
       "input": "GOLD-HARDNEG-011",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1789,6 +1860,7 @@
     },
     {
       "input": "GOLD-HARDNEG-012",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1814,6 +1886,7 @@
     },
     {
       "input": "GOLD-HARDNEG-013",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1839,6 +1912,7 @@
     },
     {
       "input": "GOLD-HARDNEG-014",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1864,6 +1938,7 @@
     },
     {
       "input": "GOLD-HARDNEG-015",
+      "kind": "hardneg",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1889,6 +1964,7 @@
     },
     {
       "input": "GOLD-HYBRID-001",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1914,6 +1990,7 @@
     },
     {
       "input": "GOLD-HYBRID-002",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1939,6 +2016,7 @@
     },
     {
       "input": "GOLD-HYBRID-003",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1964,6 +2042,7 @@
     },
     {
       "input": "GOLD-HYBRID-004",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -1989,6 +2068,7 @@
     },
     {
       "input": "GOLD-HYBRID-005",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2014,6 +2094,7 @@
     },
     {
       "input": "GOLD-HYBRID-006",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2039,6 +2120,7 @@
     },
     {
       "input": "GOLD-HYBRID-007",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2064,6 +2146,7 @@
     },
     {
       "input": "GOLD-HYBRID-008",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2089,6 +2172,7 @@
     },
     {
       "input": "GOLD-HYBRID-009",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2114,6 +2198,7 @@
     },
     {
       "input": "GOLD-HYBRID-010",
+      "kind": "hybrid",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2139,6 +2224,7 @@
     },
     {
       "input": "GOLD-PARTIAL-001",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2164,6 +2250,7 @@
     },
     {
       "input": "GOLD-PARTIAL-002",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2189,6 +2276,7 @@
     },
     {
       "input": "GOLD-PARTIAL-003",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2214,6 +2302,7 @@
     },
     {
       "input": "GOLD-PARTIAL-004",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2239,6 +2328,7 @@
     },
     {
       "input": "GOLD-PARTIAL-005",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2264,6 +2354,7 @@
     },
     {
       "input": "GOLD-PARTIAL-006",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2289,6 +2380,7 @@
     },
     {
       "input": "GOLD-PARTIAL-007",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2314,6 +2406,7 @@
     },
     {
       "input": "GOLD-PARTIAL-008",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2339,6 +2432,7 @@
     },
     {
       "input": "GOLD-PARTIAL-009",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2364,6 +2458,7 @@
     },
     {
       "input": "GOLD-PARTIAL-010",
+      "kind": "partial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2389,6 +2484,7 @@
     },
     {
       "input": "GOLD-ADVERSARIAL-001",
+      "kind": "adversarial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2414,6 +2510,7 @@
     },
     {
       "input": "GOLD-ADVERSARIAL-002",
+      "kind": "adversarial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2439,6 +2536,7 @@
     },
     {
       "input": "GOLD-ADVERSARIAL-003",
+      "kind": "adversarial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2464,6 +2562,7 @@
     },
     {
       "input": "GOLD-ADVERSARIAL-004",
+      "kind": "adversarial",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2489,6 +2588,2737 @@
     },
     {
       "input": "GOLD-ADVERSARIAL-005",
+      "kind": "adversarial",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-001",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-002",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-003",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-004",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-005",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-006",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-007",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-008",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-009",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-010",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-011",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-012",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-013",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-014",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-015",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-016",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-017",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-018",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-019",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-SUBTLE-020",
+      "kind": "subtle",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-001",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-002",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-003",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-004",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-005",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-006",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-007",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-008",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-009",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-010",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-011",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-012",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-013",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-014",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-CONTRADICT-015",
+      "kind": "contradict",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-001",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-002",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-003",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-004",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-005",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-006",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-007",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-008",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-009",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-010",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-011",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-012",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-013",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-014",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-MISSING-015",
+      "kind": "missing",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-001",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-002",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-003",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-004",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-005",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-006",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-007",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-008",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-009",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-010",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-011",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-012",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-013",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-014",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-015",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-016",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-017",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-018",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-019",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-DOCUMENT-020",
+      "kind": "document",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-001",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-002",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-003",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-004",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-005",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-006",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-007",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-008",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-009",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-010",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-011",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-012",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-013",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-014",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-015",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-016",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-017",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-018",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-019",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-INJECTION-020",
+      "kind": "injection",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-001",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-002",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-003",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-004",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-005",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-006",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-007",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-008",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-009",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-010",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-011",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-012",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-013",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-014",
+      "kind": "toolfail",
+      "scores": {
+        "EvidenceGroundingMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "UnsupportedClaimsMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "AmlCorrectnessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "EvidenceCompletenessMetric": {
+          "score": 1.0,
+          "success": true
+        },
+        "VerdictStabilityMetric": {
+          "score": 1.0,
+          "success": true
+        }
+      }
+    },
+    {
+      "input": "GOLD-TOOLFAIL-015",
+      "kind": "toolfail",
       "scores": {
         "EvidenceGroundingMetric": {
           "score": 1.0,
@@ -2521,6 +5351,21 @@
     "AmlCorrectnessMetric": 1.0,
     "EvidenceCompletenessMetric": 1.0,
     "VerdictStabilityMetric": 1.0
+  },
+  "kind_counts": {
+    "mule": 20,
+    "hop": 20,
+    "normal": 20,
+    "hardneg": 15,
+    "hybrid": 10,
+    "partial": 10,
+    "adversarial": 5,
+    "subtle": 20,
+    "contradict": 15,
+    "missing": 15,
+    "document": 20,
+    "injection": 20,
+    "toolfail": 15
   },
   "official_metrics": "RAN",
   "judge": "FaithfulnessMetric/GeminiModel",

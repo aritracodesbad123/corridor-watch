@@ -1,6 +1,6 @@
 # Validation report
 
-run_id `0b70b801de90` commit `36e7365f32c227dedfbc43a9a651f6a7830d88d6`. Seed `42`. Pytest exit `0`.
+run_id `cedb4b314656` commit `7d22cff27eaa6d6074d46de6f1bd8ab879ffd3a0`. Seed `42`. Pytest exit `0`.
 
 ## Deterministic
 status=ok f1=1.0 fpr=0.0 samples=586
@@ -19,8 +19,10 @@ account_recall=1.0 key_node_recall=1.0 reconstruction=1.0
 | 2,000 | 1999.64 | 1148.32 | 1500 | missed |
 
 Max sustained ingest TPS under a passing gate: **814.13**. Not 5,000 TPS.
-Investigation enqueue TPS: 119.77.
-Investigation completion TPS (Policy A): 74.76.
+Investigation enqueue TPS: 119.77 (`reports/scale/investigation_throughput.json`).
+Investigation completion TPS (Policy A): 74.76 (`reports/investigation_throughput_v2.json`).
+
+Canonical narrative with one run ID per experiment: `FINAL_VALIDATION_REPORT.md`.
 
 ## Gemini
 agreement=1.0 n=100 ci=[0.963, 1.0] p95_ms=4025.4

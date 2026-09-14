@@ -25,6 +25,7 @@
 | **CR-021** | Validation suite | Executable `validation/` suite + `reports/SCORECARD.md`. Prove existing controls (grounding, 5.65 TPS SLO, adversarial, DR Target, UX/a11y). No DeepEval dependency. Do not claim 5,000 TPS. | **Completed** | v1.12.0 |
 | **CR-022** | Validation honesty | Reverse CR-021: add real `deepeval` package + BaseMetric wrappers. Hidden oracle, Dist B generator, network recall, hallucination≠cost, injection decision-change, races, investigation enqueue TPS, miner holdout. Never claim 5,000 TPS. | **Completed** | v1.13.0 |
 | **CR-023** | Five score-gap fixes | Dist B source-only velocity no longer counts as split; hard-negative *networks*; investigation-useful network v2; DeepEval n≥100 `ran:true`; investigation *completion* TPS. Frozen Dist B seed 7. Never claim 5,000 TPS. | **Completed** | v1.14.0 |
+| **CR-024** | Judge remaining three | DeepEval 200+ mixed kinds `ran:true`; Dist B vs hard-neg topology diagnosis on frozen seed 7 (before F1 0.4118 kept); canonical `FINAL_VALIDATION_REPORT.md` with one run ID per experiment. Never claim 5,000 TPS. | **Completed** | v1.15.0 |
 
 ---
 
@@ -98,3 +99,7 @@
 ### CR-023: Five score-gap fixes
 - **Modules**: `graph_features.py`, `validation/external/`, `graph/network_metrics.py`, `validation/deepeval/`, `validation/scale/`, `reports/`
 - **Capability**: Dist B FPR from source-only velocity (forensics then detector). Hard-negative network archetypes + fraud twins. Investigation-useful network metrics beside full-graph account recall. DeepEval on ≥100 investigation reports (`ran: true` only then). Investigation completion TPS / time-to-verdict (Policy A/B). Frozen Dist B test seed 7; threshold sweep on seed 11 only. Do not claim 5,000 TPS.
+
+### CR-024: Remaining three (DeepEval mix, Dist B diagnosis, canonical report)
+- **Modules**: `validation/datasets/golden.py`, `validation/deepeval/`, `validation/run_suite.py`, `FINAL_VALIDATION_REPORT.md`
+- **Capability**: 200+ mixed investigation reports (normal/obvious/subtle/hardneg/partial/contradict/missing/document/injection/toolfail/hybrid). Dist B vs hard-neg topology diagnosis on frozen seed 7; keep before F1 0.4118 / FPR 1.0. One run ID / commit / timestamp per experiment in `FINAL_VALIDATION_REPORT.md`. Do not claim 5,000 TPS.

@@ -24,7 +24,7 @@ Statuses:
 | Independent Dist B (not `data_gen`) | **VERIFIED** F1 1.0 / FPR 0.0 on frozen seed 7 (was F1 0.4118 / FPR 1.0) | `reports/dist_b.json` vs `reports/dist_b_before.json`. Threshold sweep used seed 11 only. |
 | Network account/key-node recall | **VERIFIED** 1.0 per connected component | `reports/network_metrics.json` (was ~0.17 when every mule in the ledger was one “truth” graph) |
 | Network v2 investigation-useful | **IMPLEMENTED** | `reports/network_evaluation_v2.json` — anchor 0.83, critical-node 1.0, path 0.67, recall@10 1.0 |
-| DeepEval package + custom metrics | **VERIFIED** n=100 investigation reports `ran: true` | `reports/deepeval.json`. Official FaithfulnessMetric **RAN** n=10 score 1.0. AmlCorrectness mean **1.0**. |
+| DeepEval package + custom metrics | **VERIFIED** n≥200 mixed investigation reports `ran: true` | `reports/deepeval.json`. Kinds include normal, obvious/subtle fraud, hardneg, partial, contradict, missing, document, injection, toolfail, hybrid. Official FaithfulnessMetric **RAN** n=10 score 1.0 (carry-forward if live judge not re-run). |
 | Gemini agreement n≥100 | **VERIFIED** | `reports/gemini_agreement.json` invoked 100/100, schema_valid 100, agreement 1.0 CI 0.963–1.0. p95 **4025 ms** (gate 8000) on `gemini-2.5-flash`, prompt investigator-v9. |
 | Hallucination / unsupported / entity / numerical | **VERIFIED** trap/gate (live hallucination **NOT_MEASURED** as a model rate) | `reports/hallucination.json` — post-gate unsupported 0.0; entity and numerical traps caught |
 | Injection decision-change | **VERIFIED** 0.0 on n=50 | `reports/injection_decision.json` |

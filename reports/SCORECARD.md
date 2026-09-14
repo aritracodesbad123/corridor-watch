@@ -1,6 +1,6 @@
 # Corridor Watch — validation scorecard
 
-run_id `0b70b801de90` commit `36e7365f32c227dedfbc43a9a651f6a7830d88d6`. Seed `42`.
+run_id `cedb4b314656` commit `7d22cff27eaa6d6074d46de6f1bd8ab879ffd3a0`. Seed `42`.
 Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`.
 
 | Claim | Status | Evidence |
@@ -22,7 +22,7 @@ Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`
 | Gemini tokens per case | Verified 1397.3 | `reports/gemini_agreement.json` |
 | Gemini p95 | Verified 4025.4 ms (gate 8000) | `reports/gemini_agreement.json` |
 | Injection decision-change | Verified 0.0 | `reports/injection_decision.json` |
-| DeepEval package | Verified n=100 BaseMetric (official RAN) | `reports/deepeval.json` |
+| DeepEval package | Verified n=205 kinds=13 BaseMetric (official RAN) | `reports/deepeval.json` |
 | 100 TPS consume | Verified **97.59** (gate 95) | `reports/scale/test_100_tps.json` |
 | 500 TPS consume | Verified **407.96** (gate 400) | `reports/scale/test_500_tps.json` |
 | 1,000 TPS consume | Verified **814.13** (gate 800) | `reports/scale/test_1000_tps.json` |
@@ -44,4 +44,4 @@ Do not upgrade a row without a new artifact. Dictionary: `validation/METRICS.md`
 | PII tokens at Gemini boundary | Verified | `validation/security/test_pii_minimization.py` |
 
 Suite root is `validation/` (not `evaluation/`) because `evaluation.py` already exists.
-DeepEval is Verified only when `reports/deepeval.json` has `ran: true` on ≥100 investigation reports. Official FaithfulnessMetric stays NOT_MEASURED unless a Gemini judge actually ran.
+DeepEval is Verified only when `reports/deepeval.json` has `ran: true` on ≥100 mixed investigation reports. Canonical narrative: `FINAL_VALIDATION_REPORT.md`. Official FaithfulnessMetric stays NOT_MEASURED unless a Gemini judge actually ran.

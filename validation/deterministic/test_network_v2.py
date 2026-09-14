@@ -8,6 +8,7 @@ from graph_features import score_all, write_scores
 from validation.external.generator_b import POSITIVE_B, SEED, build as build_b, write_db
 from validation.external.hard_negatives import POSITIVE as HN_POS
 from validation.external.hard_negatives import build as build_hn
+from validation import stamped
 from validation.oracle import extract, is_positive, label_of
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -92,7 +93,7 @@ def test_investigation_useful_network_metrics(tmp_path, monkeypatch):
         "note": "Existing full-graph account recall kept in reports/network_metrics.json. These rows are investigation-useful.",
     }
     reports = ROOT / "reports"
-    (reports / "network_evaluation_v2.json").write_text(json.dumps(payload, indent=2, default=str))
+    (reports / "network_evaluation_v2.json").write_text(json.dumps(stamped(payload, dataset="network_v2", case_count=payload["clusters"]), indent=2, default=str))
     (reports / "network_evaluation_v2.md").write_text(
         f"# Network evaluation v2\n\n"
         f"anchor={payload['anchor_recall']} critical_node={payload['critical_node_recall']} "

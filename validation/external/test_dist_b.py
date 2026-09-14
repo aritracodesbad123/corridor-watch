@@ -4,7 +4,7 @@ from pathlib import Path
 
 from evaluation import run_evaluation
 from graph_features import FLAG_THRESHOLD, composite_score, pattern_scores
-from validation import ROOT
+from validation import ROOT, stamped
 from validation.external.generator_b import POSITIVE_B, SEED, build
 
 REPORTS = ROOT / "reports"
@@ -86,6 +86,15 @@ def test_distribution_b_false_positive_forensics(tmp_path, monkeypatch):
         f"# Dist B false-positive analysis\n\n"
         f"Frozen test seed `{SEED}`. Validation seed `11` (threshold sweep only).\n\n"
         f"{payload['root_cause']}\n\n"
+        f"Hard-negative FPR is 0% on payroll/treasury/marketplace networks because those "
+        f"graphs are source-only *or* old-account disbursement without inbound fan-in. "
+        f"Generator B 'normal' is the same topology (payroll star) plus high corridor "
+        f"velocity. Before the inbound guard, velocity was scored as split regardless of "
+        f"fan-in, so Dist B FPR was 100% while hard-negatives already stayed below flag.\n\n"
+        f"Ruled out: temporal shift, account-age, shared devices, feature leakage, "
+        f"beneficiary concentration. Cause: graph topology + benchmark construction "
+        f"(source-only velocity counted as smurfing).\n\n"
+        f"One change: `split_vel = vel * 8` only when `fan_in >= 3` or `pass_through >= 0.3`.\n\n"
         f"- legitimate n={payload['n_legitimate']}\n"
         f"- would flag before fix={payload['would_flag_before_fix']}\n"
         f"- flagged now={payload['flagged_now']}\n"
@@ -148,7 +157,7 @@ def test_distribution_b_is_not_data_gen():
     assert set(result["positive_scenarios"]) == POSITIVE_B
     assert "mule_pass_through" not in result["per_scenario"]
     result["baseline_cut"] = "reports/dist_b_before.json"
-    (REPORTS / "dist_b.json").write_text(json.dumps(result, indent=2, default=str))
+    (REPORTS / "dist_b.json").write_text(json.dumps(stamped(result, dataset="dist_b", random_seed=SEED), indent=2, default=str))
     assert result["sample_count"] >= 50
     assert result["metrics"]["recall"] >= 0.9
     assert result["metrics"]["false_positive_rate"] < 1.0

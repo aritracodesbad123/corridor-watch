@@ -27,5 +27,5 @@ Every SCORECARD row maps here. Do not upgrade a claim without the named artifact
 | RTO | clone RUNNABLE − start | min | 1 game day | recorded | `reports/dr_gameday.json` | measured | n=1 | Current-state clone |
 | PITR-to-past RPO | restore gap | min | — | — | same | NOT_MEASURED | no | Do not treat clone RPO as PITR |
 | Replay duplicates | count after replay | count | — | — | same | NOT_MEASURED | no | Hardcoded 0 retired |
-| DeepEval BaseMetric n | cases scored / ran flag | count | ≥100 | ran:true | `reports/deepeval.json` | deterministic wrappers | yes at n≥100 | Official FaithfulnessMetric separate |
+| DeepEval BaseMetric n | cases scored / ran flag | count | ≥100 mixed kinds | ran:true | `reports/deepeval.json` | deterministic wrappers | yes at n≥100 | Official FaithfulnessMetric separate; empty runner is ran:false n=1 |
 | 5,000 TPS | — | TPS | — | TARGET | none | TARGET | no | Never claim achieved |
