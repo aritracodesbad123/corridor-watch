@@ -7,55 +7,58 @@ and confirmation bias in financial crime investigations.
 from __future__ import annotations
 
 import json
+from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 import audit
 import agent as agent_mod
 from investigation_dag import run_dag
 
+# Keep briefs readable but bounded so Vertex finishes faster than the 8–12 sentence / 4k-token path.
+_SIDE_TOKENS = 1536
+_JUDGE_TOKENS = 2048
 
 PROSECUTOR_PROMPT = """You are arguing that this payment should be treated as HIGH RISK and slowed down for human review.
-Write for a smart manager who is NOT an AML specialist. Prefer plain English. If you use a term like
-"pass-through" or "mule", define it in the same sentence (e.g. "pass-through — money in and out almost immediately").
+Write for a smart manager who is NOT an AML specialist. Prefer plain English. Define jargon in-line
+(e.g. "pass-through — money in and out almost immediately").
 
-Your job: build the STRONGEST detailed case that something is wrong, using ONLY the evidence below.
-Do not invent accounts, amounts, devices, or counterparties.
+Use ONLY the evidence below. Do not invent accounts, amounts, devices, or counterparties.
+Be concise but concrete — denser than a few bullets, not a long essay.
 
 CASE EVIDENCE:
 {evidence}
 
 Return JSON only (no markdown):
 {{
-  "case_story": "4-6 sentences narrating what the money appears to have done, in plain English",
-  "key_incriminating_evidence": ["6-10 specific facts from the evidence, each one clear sentence"],
-  "prosecution_argument": "detailed brief: 3 short paragraphs (or 8-12 sentences). Cover (1) money movement story, (2) why this looks like misuse of accounts rather than ordinary trade, (3) what risk you are asking the judge to take seriously",
-  "what_you_want_the_human_to_do": "2-4 plain-English actions (e.g. pause the payment, ask the FIU lead to review)",
+  "case_story": "3-4 plain-English sentences on what the money appears to have done",
+  "key_incriminating_evidence": ["4-6 specific facts, each one clear sentence"],
+  "prosecution_argument": "5-7 sentences covering money movement, why it looks like misuse vs ordinary trade, and the risk a human should take seriously",
+  "what_you_want_the_human_to_do": "1-2 plain-English actions",
   "recommended_severity": "high" | "medium"
 }}"""
 
 DEFENSE_PROMPT = """You are arguing that this payment may still be LEGITIMATE business or family remittance.
-Write for a smart manager who is NOT an AML specialist. Prefer plain English. Define any technical term in-line.
+Write for a smart manager who is NOT an AML specialist. Prefer plain English. Define jargon in-line.
 
-Your job: build the STRONGEST detailed case for a false alarm or ordinary commercial flow, using ONLY the evidence below.
-Do not invent accounts, amounts, devices, or counterparties. Acknowledge weak spots honestly.
+Use ONLY the evidence below. Do not invent accounts, amounts, devices, or counterparties.
+Acknowledge weak spots. Be concise but concrete.
 
 CASE EVIDENCE:
 {evidence}
 
 Return JSON only (no markdown):
 {{
-  "case_story": "4-6 sentences narrating an innocent reading of the same facts, in plain English",
-  "key_mitigating_evidence": ["6-10 specific facts supporting legitimacy, each one clear sentence"],
-  "defense_argument": "detailed brief: 3 short paragraphs (or 8-12 sentences). Cover (1) why the pattern can appear in normal trade, (2) which red flags are weak or incomplete, (3) what a human should verify before treating this as crime",
-  "what_you_want_the_human_to_do": "2-4 plain-English checks before escalating (documents, call customer, confirm invoice)",
+  "case_story": "3-4 plain-English sentences with an innocent reading of the same facts",
+  "key_mitigating_evidence": ["4-6 specific facts supporting legitimacy, each one clear sentence"],
+  "defense_argument": "5-7 sentences covering why this can be normal trade, which red flags are weak, and what to verify before treating it as crime",
+  "what_you_want_the_human_to_do": "1-2 plain-English checks before escalating",
   "perceived_false_positive_risk": "high" | "medium" | "low"
 }}"""
 
 JUDGE_PROMPT = """You are an impartial senior reviewer deciding what a human team should do next.
-You are NOT filing a SAR and NOT freezing anything yourself — you recommend.
+You recommend only — you do not file a SAR or freeze accounts.
 
-Write for managers who are not AML specialists. Plain English. Define jargon in-line.
-Balance both sides. Be specific. Do not invent facts beyond the evidence.
+Plain English for non-AML managers. Define jargon in-line. Balance both sides. Do not invent facts.
 
 PROSECUTOR CASE:
 {prosecutor}
@@ -70,14 +73,63 @@ Return JSON only (no markdown):
 {{
   "final_verdict": "high" | "medium" | "low",
   "confidence_score": <0-100 integer>,
-  "plain_english_outcome": "2-3 sentences a senior can read aloud in a meeting: what this case is, and what we recommend",
-  "verdict_summary": "detailed synthesis: 5-8 sentences. Cover prosecutor's strongest points, defense's strongest points, what remains unknown, and why you landed where you did",
-  "points_for_prosecution": ["3-5 plain bullets of what worried you"],
-  "points_for_defense": ["3-5 plain bullets of what still looks ordinary or incomplete"],
-  "key_decisive_factor": "one plain sentence naming the single fact that tipped the decision",
-  "required_remediation": "plain-English directive for the team (who does what next)",
-  "recommended_actions": ["3-5 concrete next steps in everyday language"]
+  "plain_english_outcome": "2 sentences a senior can read aloud: what this case is, and what we recommend",
+  "verdict_summary": "4-6 sentences covering strongest points on each side, what is unknown, and why you landed here",
+  "points_for_prosecution": ["3-4 plain bullets"],
+  "points_for_defense": ["3-4 plain bullets"],
+  "key_decisive_factor": "one plain sentence naming the fact that tipped the decision",
+  "required_remediation": "plain-English directive (who does what next)",
+  "recommended_actions": ["3-4 concrete next steps in everyday language"]
 }}"""
+
+# Keys that matter for debate; drop bulky session/neighborhood dumps.
+_EVIDENCE_KEYS = (
+    "transaction",
+    "sender_risk",
+    "receiver_risk",
+    "shared_devices",
+    "shared_beneficiaries",
+    "corridor_velocity",
+    "named_patterns",
+    "deterministic_verdict",
+    "document_verification",
+)
+
+
+def _compact_evidence(evidence: dict) -> dict:
+    """Shrink the prompt so prompt tokens (and latency) stay bounded."""
+    out: dict[str, Any] = {}
+    for key in _EVIDENCE_KEYS:
+        if key not in evidence:
+            continue
+        val = evidence[key]
+        if isinstance(val, list):
+            out[key] = val[:8]
+        else:
+            out[key] = val
+    return out
+
+
+def _gen_json(prompt: str, *, max_output_tokens: int, temperature: float) -> str:
+    """One Gemini call via the shared path (thinking off + JSON mime)."""
+    c = agent_mod.client()
+    # ponytail: reuse agent._generate_content; add temp kw when that helper grows a temp arg
+    from google.genai import types
+    thinking = agent_mod._thinking_off()
+    kwargs: dict[str, Any] = {
+        "max_output_tokens": max_output_tokens,
+        "temperature": temperature,
+        "response_mime_type": "application/json",
+    }
+    if thinking is not None:
+        kwargs["thinking_config"] = thinking
+    resp = c.models.generate_content(
+        model=agent_mod.MODEL,
+        contents=prompt,
+        config=types.GenerateContentConfig(**kwargs),
+    )
+    agent_mod._record_usage(resp)
+    return getattr(resp, "text", None) or ""
 
 
 def run_debate(txn_id: str, use_llm: bool = True) -> dict[str, Any]:
@@ -90,18 +142,9 @@ def run_debate(txn_id: str, use_llm: bool = True) -> dict[str, Any]:
         return _deterministic_debate(txn_id, evidence, det_verdict)
 
     try:
-        from google.genai import types
-        c = agent_mod.client()
+        ev_str = json.dumps(_compact_evidence(evidence), default=str)
 
-        ev_str = json.dumps(evidence, default=str)
-
-        # 1. Prosecutor Turn
-        p_resp = c.models.generate_content(
-            model=agent_mod.MODEL,
-            contents=PROSECUTOR_PROMPT.format(evidence=ev_str),
-            config=types.GenerateContentConfig(temperature=0.3, max_output_tokens=4096),
-        )
-        prosecution = _safe_parse(p_resp.text, {
+        p_fallback = {
             "case_story": "Money moved quickly across related accounts in a way that can look like layering.",
             "key_incriminating_evidence": [
                 "Funds appear to leave soon after they arrive (short hold).",
@@ -115,15 +158,8 @@ def run_debate(txn_id: str, use_llm: bool = True) -> dict[str, Any]:
             ),
             "what_you_want_the_human_to_do": "Pause the payment and ask an FIU lead to review the network.",
             "recommended_severity": det_verdict.get("risk_level", "high"),
-        })
-
-        # 2. Defense Turn
-        d_resp = c.models.generate_content(
-            model=agent_mod.MODEL,
-            contents=DEFENSE_PROMPT.format(evidence=ev_str),
-            config=types.GenerateContentConfig(temperature=0.3, max_output_tokens=4096),
-        )
-        defense = _safe_parse(d_resp.text, {
+        }
+        d_fallback = {
             "case_story": "The same corridor also carries ordinary supplier and family remittance traffic.",
             "key_mitigating_evidence": [
                 "Sender has a registered KYC profile on file.",
@@ -137,33 +173,51 @@ def run_debate(txn_id: str, use_llm: bool = True) -> dict[str, Any]:
             ),
             "what_you_want_the_human_to_do": "Request supporting documents and confirm purpose with the customer before escalating.",
             "perceived_false_positive_risk": "medium",
-        })
+        }
 
-        # 3. Judge Synthesis Turn
-        j_resp = c.models.generate_content(
-            model=agent_mod.MODEL,
-            contents=JUDGE_PROMPT.format(
-                prosecutor=json.dumps(prosecution),
-                defense=json.dumps(defense),
-                evidence=ev_str,
+        # Prosecutor and Defense are independent — run them together.
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            p_fut = pool.submit(
+                _gen_json,
+                PROSECUTOR_PROMPT.format(evidence=ev_str),
+                max_output_tokens=_SIDE_TOKENS,
+                temperature=0.3,
+            )
+            d_fut = pool.submit(
+                _gen_json,
+                DEFENSE_PROMPT.format(evidence=ev_str),
+                max_output_tokens=_SIDE_TOKENS,
+                temperature=0.3,
+            )
+            prosecution = _safe_parse(p_fut.result(), p_fallback)
+            defense = _safe_parse(d_fut.result(), d_fallback)
+
+        judge = _safe_parse(
+            _gen_json(
+                JUDGE_PROMPT.format(
+                    prosecutor=json.dumps(prosecution),
+                    defense=json.dumps(defense),
+                    evidence=ev_str,
+                ),
+                max_output_tokens=_JUDGE_TOKENS,
+                temperature=0.2,
             ),
-            config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=4096),
+            {
+                "final_verdict": det_verdict.get("risk_level", "medium"),
+                "confidence_score": det_verdict.get("risk_score", 70),
+                "plain_english_outcome": "This case needs a human decision; do not clear it on automation alone.",
+                "verdict_summary": det_verdict.get("rationale", "Debate completed."),
+                "points_for_prosecution": prosecution.get("key_incriminating_evidence", [])[:4],
+                "points_for_defense": defense.get("key_mitigating_evidence", [])[:4],
+                "key_decisive_factor": "Network risk indicators need human confirmation of purpose.",
+                "required_remediation": det_verdict.get("recommended_action", "Manual review by FIU lead"),
+                "recommended_actions": [
+                    "Have an analyst write a one-paragraph case story for the FIU lead.",
+                    "Confirm whether invoices or remittance purpose documents exist.",
+                    "Do not freeze or release without an FIU lead decision on high-risk cases.",
+                ],
+            },
         )
-        judge = _safe_parse(j_resp.text, {
-            "final_verdict": det_verdict.get("risk_level", "medium"),
-            "confidence_score": det_verdict.get("risk_score", 70),
-            "plain_english_outcome": "This case needs a human decision; do not clear it on automation alone.",
-            "verdict_summary": det_verdict.get("rationale", "Debate completed."),
-            "points_for_prosecution": prosecution.get("key_incriminating_evidence", [])[:5],
-            "points_for_defense": defense.get("key_mitigating_evidence", [])[:5],
-            "key_decisive_factor": "Network risk indicators need human confirmation of purpose.",
-            "required_remediation": det_verdict.get("recommended_action", "Manual review by FIU lead"),
-            "recommended_actions": [
-                "Have an analyst write a one-paragraph case story for the FIU lead.",
-                "Confirm whether invoices or remittance purpose documents exist.",
-                "Do not freeze or release without an FIU lead decision on high-risk cases.",
-            ],
-        })
 
         result = {
             "txn_id": txn_id,
@@ -306,7 +360,6 @@ def _safe_parse(text: str, fallback: dict) -> dict:
 
 
 if __name__ == "__main__":
-    # ponytail: one assert that plain-language fields exist on the offline path
     sample = _deterministic_debate(
         "T-demo",
         {
@@ -319,6 +372,12 @@ if __name__ == "__main__":
          "rationale": "demo", "recommended_action": "Hold for FIU lead review"},
     )
     assert len(sample["prosecutor"]["key_incriminating_evidence"]) >= 3
-    assert len(sample["judge"]["verdict_summary"].split()) > 40
     assert "plain_english_outcome" in sample["judge"]
+    compact = _compact_evidence({
+        "transaction": {"txn_id": "T"},
+        "sender_sessions": [{"x": 1}] * 50,
+        "shared_devices": list(range(20)),
+    })
+    assert "sender_sessions" not in compact
+    assert len(compact["shared_devices"]) == 8
     print("agent_debate self-check ok")

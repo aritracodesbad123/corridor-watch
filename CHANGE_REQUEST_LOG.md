@@ -31,10 +31,15 @@
 | **CR-027** | Commercial pass-through + Dist E | Ptr on old book is commerce; hop on old mesh is supply-chain. Dist D pinned. Dist E seed 41 one-shot gate. Never claim 5,000 TPS. | **Completed** | v1.18.0 |
 | **CR-028** | Business context + Dist F | Graph-only commercial context; DNA-family primary picking. Dist E pinned. Dist F seed 47 one-shot + eval-only FAMILY map. Never claim 5,000 TPS. | **Completed** | v1.19.0 |
 | **CR-029** | Plain-language verdicts & debate | Rewrite Gemini grounded/tool prompts, deterministic DAG rationale, debate briefs, and Verdict/Debate UI so non-AML managers can read outcomes and next steps; debate returns detailed case stories (not 2–3 bullets). | **Completed** | v1.20.0 |
+| **CR-030** | Debate latency | Parallel Prosecutor+Defense, thinking-off + JSON mime, compact evidence, tighter token caps — keep plain-language detail without the slow sequential 4k-token path. | **Completed** | v1.20.1 |
 
 ---
 
 ## Detailed Change Request Specifications
+
+### CR-030: Debate latency
+- **Module**: `agent_debate.py`
+- **Capability**: Prosecutor and Defense run concurrently; Gemini calls use thinking-off and bounded `max_output_tokens` (1536/2048); evidence prompt drops bulky session/neighborhood dumps. Plain-language fields retained.
 
 ### CR-029: Plain-language verdicts and AI debate
 - **Modules**: `agent.py`, `agent_debate.py`, `investigation_dag.py`, `investigations/evidence.py`, `static/index.html`, `tests/test_core.py`
