@@ -235,46 +235,54 @@ def deterministic_report(
     confidence = _confidence_for_case(score, evidence, matches, network, risk)
     pattern_names = [m["pattern_id"] for m in matches]
     alts = [
-        "Legitimate family remittance clustered around a payroll or festival window.",
-        "SME treasury movements across affiliates that share operations staff and devices.",
+        "This could be ordinary family support money around payday or a festival.",
+        "This could be a real business moving cash between related companies that share staff and phones.",
     ]
     if not matches:
-        alts.append("Insufficient network overlap with known Crime Pattern DNA — treat hypothesis as provisional.")
+        alts.append("We have not yet matched this to a known Crime Pattern DNA case — treat the story as provisional.")
     vis = (network or {}).get("visibility") or {}
     next_checks = [
-        "Confirm account opening documents and beneficial ownership for the mule/sink candidate.",
-        "Request source-of-funds artefacts and compare amounts to stated income.",
-        "Ask the originating institution whether the shared device or beneficiary is already blocked.",
+        "Pull opening documents and confirm who really owns the account that looks like a temporary holding point.",
+        "Ask for invoices or source-of-funds papers and check whether the amounts match stated income or trade.",
+        "Ask the sending bank whether this phone or beneficiary is already on a watch or block list.",
     ]
     if vis.get("unknown", {}).get("boundaries"):
-        next_checks.append("Request authorized external intelligence for unresolved downstream / upstream boundaries.")
+        next_checks.append("Ask for authorized external intel on the hops we cannot see yet (downstream / upstream gaps).")
     unknown_areas = [
         f"{b.get('boundary_id')}: {b.get('description')}"
         for b in ((network or {}).get("boundaries") or [])
         if b.get("visibility") in {"unknown", "external"}
     ][:8]
     ext_ids = [e.evidence_id for e in evidence if str(e.evidence_id).startswith("INT-") or str(e.evidence_id).startswith("EXT-")]
+    txn_count = ((network or {}).get("features") or {}).get("txn_count", 0)
+    dna_bit = (
+        f"Closest known pattern match is {matches[0]['name']} ({matches[0]['pattern_id']})."
+        if matches else "No strong match to a known Crime Pattern DNA case yet."
+    )
     summary = (
-        f"Bounded network around {txn.get('txn_id')} contains {((network or {}).get('features') or {}).get('txn_count', 0)} "
-        f"related transfers on {txn.get('corridor')}. "
-        + (f"Closest DNA match is {matches[0]['pattern_id']} ({matches[0]['name']})." if matches else "No DNA match above threshold.")
+        f"Payment {txn.get('txn_id')} sits in a cluster of about {txn_count} related transfers on corridor {txn.get('corridor')}. "
+        f"{dna_bit} "
+        f"Automated score is {score:.0f}. "
+        f"Recommended human step: {disposition.replace('_', ' ')}"
     )
     source = (risk or {}).get("risk_source") or "model"
     screen = (risk or {}).get("screen_score")
     graph_only = (risk or {}).get("graph_score")
     extra = ""
     if graph_only is not None and screen is not None:
-        extra = f" Neighborhood composite {float(graph_only):.0f}; ingest screen {float(screen):.0f}."
+        extra = f" Network score {float(graph_only):.0f}; screening score {float(screen):.0f}."
+    primary = (risk or {}).get("primary_pattern") or txn.get("primary_pattern") or "elevated_activity"
     hypothesis = (
-        f"Primary hypothesis: {(risk or {}).get('primary_pattern') or txn.get('primary_pattern') or 'elevated_activity'} "
-        f"behavior with graph risk {score:.0f} ({source}).{extra}"
+        f"Working theory: the money movement looks like '{str(primary).replace('_', ' ')}' "
+        f"with overall risk {score:.0f} (source: {source}).{extra} "
+        "A human still confirms purpose before any freeze."
     )
     contradicting = []
     if score < 50:
         contradicting.append(EvidenceItem(
             evidence_id="E-LOW",
             type="score",
-            description="Composite risk is below the high-risk threshold; legitimate corridor activity remains plausible.",
+            description="Overall risk is below the high bar; ordinary corridor traffic is still plausible.",
             source="risk_fusion",
             source_ref="risk_score",
             confidence=0.6,
@@ -290,9 +298,8 @@ def deterministic_report(
         recommended_disposition=disposition,  # type: ignore[arg-type]
         confidence=confidence,
         uncertainty=(
-            f"Confidence {confidence} is scaled by neighborhood size, evidence count, and pattern overlap "
-            f"(risk source: {(risk or {}).get('risk_source') or 'model'}). "
-            "Deterministic synthesis only unless Gemini later rewrites this report."
+            f"We are about {confidence}% confident based on how much of the network we can see and how many evidence items we have. "
+            "This write-up is rule-based unless Gemini later rewrites it in plain English."
         ),
         model_version="deterministic-v1",
         model_provider="none",

@@ -1,4 +1,6 @@
 .venv/
+node_modules/
+presentation/qc/
 __pycache__/
 *.pyc
 fraud_demo.db
@@ -11,3 +13,6 @@ credentials.json
 *.egg-info/
 .coverage
 htmlcov/
+
+# graphify knowledge graph
+graphify-out/

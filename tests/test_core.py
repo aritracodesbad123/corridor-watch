@@ -279,7 +279,7 @@ def test_grounded_payload_omits_output_skeleton(monkeypatch):
     )
     assert "required_output" not in captured["prompt"]
     assert "drop-me" not in captured["prompt"]
-    assert out.prompt_version == "investigator-v9"
+    assert out.prompt_version == "investigator-v10"
 
 
 def test_rbac_uses_server_identity_for_decisions():

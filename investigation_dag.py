@@ -135,21 +135,42 @@ def deterministic_verdict(evidence: dict) -> dict:
         float(receiver_risk.get("behavioral_risk") or 0),
     )
 
+    pattern_plain = {
+        "mule_pass_through": "money in and out almost immediately (pass-through)",
+        "split_transaction_laundering": "one large amount split into many smaller wires",
+        "shared_device_ring": "several accounts controlled from the same device",
+        "synthetic_identity": "identity details that look fabricated or inconsistent",
+        "multi_hop_chain": "funds hopping across several accounts before exit",
+        "elevated_activity": "unusually busy activity for this corridor",
+    }.get(str(primary), str(primary).replace("_", " "))
+
     rationale_bits = [
-        f"Graph risk peaks at {score:.0f} with primary pattern '{primary}'.",
-        f"Fan-in={fan_in}, pass-through={ptr:.2f}, avg hold={hold:.0f}m, shared devices={shared_dev}, behavioral risk={beh:.0f}.",
+        f"Automated review scored this case {score:.0f}/100 ({level} risk).",
+        f"Main pattern flagged: {pattern_plain}.",
     ]
+    if fan_in:
+        rationale_bits.append(f"About {fan_in} inbound counterparties feed into the watch account.")
+    if ptr >= 0.5:
+        rationale_bits.append(
+            f"Roughly {ptr:.0%} of money that arrives leaves again quickly (pass-through)."
+        )
+    if hold < 99999:
+        rationale_bits.append(f"Typical hold before the next payout is about {hold:.0f} minutes.")
+    if shared_dev:
+        rationale_bits.append(f"{shared_dev} accounts appear to share a device fingerprint.")
+    if beh:
+        rationale_bits.append(f"Behavioral risk overlay is {beh:.0f}.")
     if evidence.get("shared_devices"):
         rationale_bits.append(
-            f"Shared-device peers observed: {len(evidence['shared_devices'])}."
+            f"Shared-device peers observed in the evidence pack: {len(evidence['shared_devices'])}."
         )
     if evidence.get("sender_sessions") or evidence.get("receiver_sessions"):
-        rationale_bits.append("Session biometrics included in evidence pack.")
+        rationale_bits.append("Login/session signals were included in the evidence pack.")
 
     actions = {
-        "high": "Hold payment, escalate to FIU case queue, request enhanced KYC + SoF docs",
-        "medium": "Request source-of-funds clarification and monitor related corridor activity 72h",
-        "low": "Clear with documented rationale; keep on enhanced monitoring watchlist 30d",
+        "high": "Pause this payment and send it to an FIU lead for a human decision (do not clear on automation alone).",
+        "medium": "Ask the analyst to collect purpose / source-of-funds documents and watch related corridor activity for 72 hours.",
+        "low": "Document why this looks ordinary, clear with a short note, and keep a light watch for 30 days.",
     }
     return {
         "risk_level": level,

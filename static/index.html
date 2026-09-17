@@ -1098,7 +1098,7 @@ async function openCase(txnId){
     <div class="panel-block" id="tab-debate">
       <div class="card">
         <h3>Adversarial AI Debate (Prosecutor vs Defense)</h3>
-        <p class="muted">Runs Prosecutor, Defense, and Chief Compliance Judge agents to evaluate alert objectivity.</p>
+        <p class="muted">Prosecutor and Defense argue in plain English; a Judge synthesizes both sides into a meeting-ready outcome and next steps. Models recommend — humans decide.</p>
         <div class="btn-row"><button id="btn-run-debate" type="button">Launch AI Debate</button></div>
         <div id="debate-slot" style="margin-top:12px"></div>
       </div>
@@ -1263,32 +1263,51 @@ async function openCase(txnId){
         const data = await res.json();
         if(!res.ok) throw new Error(apiError(data, res.statusText));
         const card = data.scorecard || {};
+        const j = data.judge || {};
+        const p = data.prosecutor || {};
+        const dfn = data.defense || {};
+        const bullets = (arr)=> (arr||[]).map(e=>`<li>${esc(e)}</li>`).join("") || "<li class='muted'>none</li>";
+        const para = (t)=> t ? `<p style="line-height:1.55;white-space:pre-wrap">${esc(t)}</p>` : "";
         slot.innerHTML = `
           <div class="card" style="margin-bottom:12px">
-            <div class="kv"><span>Prosecution evidence</span><span>${card.prosecution_evidence??(data.prosecutor.key_incriminating_evidence||[]).length}</span></div>
-            <div class="kv"><span>Defense evidence</span><span>${card.defense_evidence??(data.defense.key_mitigating_evidence||[]).length}</span></div>
-            <div class="kv"><span>Judge confidence</span><span>${card.judge_confidence??data.judge.confidence_score??"—"}%</span></div>
-            <div class="muted" style="margin-top:8px"><b>Key disagreement:</b> ${esc(card.key_disagreement||data.judge.key_decisive_factor||"—")}</div>
+            <div class="kv"><span>Mode</span><span>${esc(data.mode||"—")}</span></div>
+            <div class="kv"><span>Prosecution points</span><span>${card.prosecution_evidence??(p.key_incriminating_evidence||[]).length}</span></div>
+            <div class="kv"><span>Defense points</span><span>${card.defense_evidence??(dfn.key_mitigating_evidence||[]).length}</span></div>
+            <div class="kv"><span>Judge confidence</span><span>${card.judge_confidence??j.confidence_score??"—"}%</span></div>
+            <div class="muted" style="margin-top:8px"><b>What tipped the decision:</b> ${esc(card.key_disagreement||j.key_decisive_factor||"—")}</div>
           </div>
+          ${j.plain_english_outcome?`<div class="verdict ${pillClass(j.final_verdict)}" style="margin-bottom:12px">
+            <div style="font-size:11px;color:var(--muted);margin-bottom:4px">MEETING-READY OUTCOME</div>
+            <p style="line-height:1.55;margin:0">${esc(j.plain_english_outcome)}</p>
+          </div>`:""}
           <div class="grid2">
             <div class="card" style="border-color:var(--red-dim)">
-              <h3 style="color:var(--red)">Prosecutor Argument</h3>
-              <p>${data.prosecutor.prosecution_argument}</p>
-              <ul class="tight">${(data.prosecutor.key_incriminating_evidence||[]).map(e=>`<li>${e}</li>`).join("")}</ul>
+              <h3 style="color:var(--red)">Prosecutor — why this looks wrong</h3>
+              ${p.case_story?`<div class="muted" style="margin-bottom:6px"><b>Case story</b></div>${para(p.case_story)}`:""}
+              ${para(p.prosecution_argument)}
+              <div class="muted" style="margin-top:8px"><b>Key facts</b></div>
+              <ul class="tight">${bullets(p.key_incriminating_evidence)}</ul>
+              ${p.what_you_want_the_human_to_do?`<div class="muted" style="margin-top:8px"><b>Asked of the human:</b> ${esc(p.what_you_want_the_human_to_do)}</div>`:""}
             </div>
             <div class="card" style="border-color:var(--teal-dim)">
-              <h3 style="color:var(--teal)">Defense Explanation</h3>
-              <p>${data.defense.defense_argument}</p>
-              <ul class="tight">${(data.defense.key_mitigating_evidence||[]).map(e=>`<li>${e}</li>`).join("")}</ul>
+              <h3 style="color:var(--teal)">Defense — why this may be ordinary</h3>
+              ${dfn.case_story?`<div class="muted" style="margin-bottom:6px"><b>Case story</b></div>${para(dfn.case_story)}`:""}
+              ${para(dfn.defense_argument)}
+              <div class="muted" style="margin-top:8px"><b>Key facts</b></div>
+              <ul class="tight">${bullets(dfn.key_mitigating_evidence)}</ul>
+              ${dfn.what_you_want_the_human_to_do?`<div class="muted" style="margin-top:8px"><b>Asked of the human:</b> ${esc(dfn.what_you_want_the_human_to_do)}</div>`:""}
             </div>
           </div>
-          <div class="verdict ${pillClass(data.judge.final_verdict)}" style="margin-top:12px">
+          <div class="verdict ${pillClass(j.final_verdict)}" style="margin-top:12px">
             <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
-              <span class="pill ${pillClass(data.judge.final_verdict)}">Judge Verdict: ${data.judge.final_verdict} (Confidence: ${data.judge.confidence_score}%)</span>
+              <span class="pill ${pillClass(j.final_verdict)}">Judge: ${esc(j.final_verdict||"—")} · ${j.confidence_score??"—"}%</span>
             </div>
-            <p><b>Synthesis:</b> ${data.judge.verdict_summary}</p>
-            <div class="muted"><b>Decisive Factor:</b> ${data.judge.key_decisive_factor}</div>
-            <div class="muted" style="margin-top:4px"><b>Remediation Directive:</b> ${data.judge.required_remediation}</div>
+            <p style="line-height:1.55"><b>Full synthesis:</b> ${esc(j.verdict_summary||"")}</p>
+            ${(j.points_for_prosecution||[]).length?`<div class="muted" style="margin-top:8px"><b>What worried the judge</b></div><ul class="tight">${bullets(j.points_for_prosecution)}</ul>`:""}
+            ${(j.points_for_defense||[]).length?`<div class="muted" style="margin-top:8px"><b>What still looked ordinary</b></div><ul class="tight">${bullets(j.points_for_defense)}</ul>`:""}
+            <div class="muted" style="margin-top:8px"><b>Decisive factor:</b> ${esc(j.key_decisive_factor||"—")}</div>
+            <div class="muted" style="margin-top:4px"><b>Directive:</b> ${esc(j.required_remediation||"—")}</div>
+            ${(j.recommended_actions||[]).length?`<div class="muted" style="margin-top:8px"><b>Recommended next steps</b></div><ul class="tight">${bullets(j.recommended_actions)}</ul>`:""}
           </div>`;
         loadAudit(current);
       }catch(e){ slot.innerHTML = `<div class="muted" style="color:var(--red)">Debate failed: ${e.message}</div>`; }
@@ -1507,18 +1526,35 @@ async function openCase(txnId){
   loadAudit(txnId);
 }
 
+const PATTERN_PLAIN = {
+  mule_pass_through: "Money in and out almost immediately",
+  split_transaction_laundering: "One amount split into many smaller wires",
+  shared_device_ring: "Several accounts on the same device",
+  synthetic_identity: "Identity details look inconsistent",
+  multi_hop_chain: "Funds hopping across several accounts",
+  elevated_activity: "Unusually busy corridor activity",
+};
+const DISP_PLAIN = {
+  clear: "Clear — looks ordinary; document and close",
+  monitor: "Monitor — keep watching; no hold yet",
+  hold_payment: "Hold payment — pause until a human decides",
+  escalate_fiu: "Escalate to FIU lead — needs senior review",
+  freeze_account: "Freeze account — only an FIU lead can confirm",
+};
+
 function renderVerdict(data){
   const v = data.verdict||{};
   const doc = data.document_verification;
+  const patternLabel = PATTERN_PLAIN[v.primary_pattern] || (v.primary_pattern||"").replace(/_/g," ");
   const docHtml = doc ? `<div class="muted" style="margin-top:8px"><b>Document evidence:</b> ${esc(doc.verification_status||'')} — ${esc(doc.verification_note||'')}</div>` : "";
   $("verdict-slot").innerHTML = `
     <div class="verdict ${pillClass(v.risk_level)}">
-      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
         <span class="pill ${pillClass(v.risk_level)}">${esc(v.risk_level||'—')} · ${v.risk_score??'—'}</span>
-        <span class="case-id">${esc(v.primary_pattern||'')} · mode ${esc(v.mode||'')}${data.cached?' · cached':''}</span>
+        <span class="case-id">${esc(patternLabel)} · mode ${esc(v.mode||'')}${data.cached?' · cached':''}</span>
       </div>
-      <p style="line-height:1.5;margin:0 0 8px">${esc(v.rationale||'')}</p>
-      <div class="muted"><b style="color:var(--text)">Action:</b> ${esc(v.recommended_action||'—')}</div>
+      <p style="line-height:1.55;margin:0 0 8px">${esc(v.rationale||'')}</p>
+      <div class="muted"><b style="color:var(--text)">What to do next:</b> ${esc(v.recommended_action||'—')}</div>
       ${v.note?`<div class="muted" style="margin-top:6px">${esc(v.note)}</div>`:''}
       ${docHtml}
     </div>
@@ -1688,20 +1724,22 @@ function renderReport(report){
   ).join("");
   const alts = (report.alternative_explanations||[]).map(a=>`<li>${esc(a)}</li>`).join("");
   const next = (report.recommended_next_checks||[]).map(a=>`<li>${esc(a)}</li>`).join("");
+  const disp = report.recommended_disposition||"";
+  const dispLabel = DISP_PLAIN[disp] || disp;
   const html = `<div class="card" style="margin-top:12px">
-    <h3>Grounded investigation</h3>
-    <p>${esc(report.investigation_summary||"")}</p>
-    <div class="muted"><b>Hypothesis:</b> ${esc(report.risk_hypothesis||"")}</div>
+    <h3>Grounded investigation (plain-English brief)</h3>
+    <p style="line-height:1.55">${esc(report.investigation_summary||"")}</p>
+    <div class="muted" style="margin-top:8px"><b>Why it looks this way:</b> ${esc(report.risk_hypothesis||"")}</div>
     <div class="kv"><span>confidence</span><span>${report.confidence??"—"} · ${report.gemini_used?"gemini":"deterministic"}</span></div>
-    <div class="kv"><span>recommend</span><span>${esc(report.recommended_disposition||"")}</span></div>
-    <div class="muted" style="margin-top:6px">${esc(report.uncertainty||"")}</div>
-    <h3 style="margin-top:12px">Addressable evidence</h3>
+    <div class="kv"><span>recommended action</span><span>${esc(dispLabel)}</span></div>
+    <div class="muted" style="margin-top:6px"><b>Still unknown:</b> ${esc(report.uncertainty||"—")}</div>
+    <h3 style="margin-top:12px">Evidence a non-specialist can read</h3>
     <div>${chips||"<span class='muted'>No evidence IDs</span>"}</div>
     ${ev||""}
-    ${contra?`<h3>Contradicting</h3>${contra}`:""}
-    <h3>Alternative explanations</h3><ul class="tight">${alts}</ul>
-    <h3>Next checks</h3><ul class="tight">${next}</ul>
-    ${(report.matched_patterns||[]).length?`<div class="muted">DNA: ${report.matched_patterns.map(esc).join(", ")}</div>`:""}
+    ${contra?`<h3>What cuts against the risk story</h3>${contra}`:""}
+    <h3>Other possible explanations</h3><ul class="tight">${alts}</ul>
+    <h3>What a human should do next</h3><ul class="tight">${next}</ul>
+    ${(report.matched_patterns||[]).length?`<div class="muted">Pattern DNA: ${report.matched_patterns.map(esc).join(", ")}</div>`:""}
   </div>`;
   queueMicrotask(()=>{
     document.querySelectorAll(".ev-chip").forEach(btn=>{
