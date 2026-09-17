@@ -2,6 +2,8 @@
 
 > **The transaction is not the crime. The network is.**
 
+**Live demo:** [https://corridor-watch-6kmkxbsbwq-as.a.run.app](https://corridor-watch-6kmkxbsbwq-as.a.run.app) (Cloud Run, asia-southeast1)
+
 Corridor Watch detects **suspicious transaction networks**, builds a deterministic evidence pack, investigates the graph, grounds Gemini on that evidence, requires a human for consequential actions, and turns confirmed cases into **Crime Pattern DNA** — institutional memory, not a one-off alert.
 
 Gemini is **Evidence → grounding gate → human**, not User → chatbot → answer. Ingest never calls Gemini.
@@ -88,9 +90,22 @@ Canonical scorecard: [`reports/SCORECARD.md`](reports/SCORECARD.md). Judge brief
 | Historical single-model agreement | **1.0, n=100**, p95 4.025 s, **$0.00143**/case | `gemini-2.5-flash` only — not the 5-model comparison |
 | DeepEval | **205 cases** | custom metrics |
 | Official Gemini Faithfulness | **n=10** | not 205 Gemini-judged cases |
-| Sustained ingest under SLO | **814 TPS** | 5,000 TPS is a **target, not achieved** |
+| Sustained ingest under SLO | **814 TPS** | passing 1,000 TPS gate (`reports/scale/`) |
 
 All competition benchmark artifacts are frozen one-shot evaluations. Subsequent code changes are not used to alter or replace benchmark results.
+
+## Load testing (ingest TPS)
+
+Pub/Sub → Cloud Run push consume. Report only measured `achieved_tps`. Artifacts: [`reports/scale/live_gates.json`](reports/scale/live_gates.json).
+
+| Target publish TPS | Achieved consume TPS | Gate | Result |
+|---|---:|---:|---|
+| 100 | **97.59** | 95 | Pass |
+| 500 | **407.96** | 400 | Pass |
+| 1,000 | **814.13** | 800 | Pass |
+| 2,000 | **1148.32** | 1500 | Miss (SQL-bound) |
+
+Max sustained ingest under the defined SLO: **814 TPS**.
 
 ## GenAI model benchmarking (latest)
 
@@ -138,12 +153,12 @@ Open http://localhost:8080 — sign in as `fiu_lead` / `change-me-fiu` (from the
 
 Demo path (3–5 min, one case): **Home (network lights up) → Investigations (graph + money flow) → deterministic evidence → Gemini on that evidence → grounding → confirm → export → Pattern DNA library.** Full script: [`docs/COMPETITION.md`](docs/COMPETITION.md).
 
-Cloud Run: [`docs/CLOUD_RUN.md`](docs/CLOUD_RUN.md). Do not put API keys in the image or in git.
+Cloud Run: [`docs/CLOUD_RUN.md`](docs/CLOUD_RUN.md). Live URL above. Do not put API keys in the image or in git.
 
 ## Known limitations
 
 - Synthetic data only.
-- 814 TPS measured; 5,000 TPS is a target.
+- Sustained ingest under SLO is **814 TPS**; 2,000 TPS gate missed at 1148.32.
 - Dist C/D have frozen false-positive weaknesses.
 - Investigation-path recall = 0.667.
 - Exact novel taxonomy classification remains imperfect (Dist F name-match 0; eval-only taxonomy 0.25).
