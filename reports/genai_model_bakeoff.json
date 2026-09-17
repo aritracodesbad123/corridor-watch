@@ -1,0 +1,278 @@
+{
+  "run_id": "752b339f5f24",
+  "created_at": "2026-09-17T02:00:19.022292+00:00",
+  "base_url": "https://corridor-watch-6kmkxbsbwq-as.a.run.app",
+  "health": {
+    "ok": true,
+    "gemini": true,
+    "gemini_backend": "vertex",
+    "gemini_model": "gemini-2.5-flash",
+    "auth_mode": "password",
+    "environment": "gcp",
+    "database": "postgres",
+    "sqlite_forbidden_on_gcp": false,
+    "transaction_topic": "corridor-transactions",
+    "investigation_topic": "corridor-investigations",
+    "pubsub_push_subscription": "corridor-transactions-push"
+  },
+  "models": [
+    {
+      "model": "gemini-2.5-flash",
+      "status": "ok",
+      "unknown_pattern": {
+        "n": 8,
+        "llm_raw": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        },
+        "system_gated": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        }
+      },
+      "ops": {
+        "n": 4,
+        "p50_ms": 7553.21677098982,
+        "p95_ms": 9770.235582953319,
+        "pre_gate_invent_rate": 0.0,
+        "dag_agreement": 1.0,
+        "cost_proxy": 7.9575
+      },
+      "faithfulness": {
+        "n": 2,
+        "mean": 1.0,
+        "note": "live grounded-flag proxy; DeepEval FaithfulnessMetric optional offline"
+      },
+      "debate": {
+        "n": 1,
+        "p95_ms": 10637.821375043131,
+        "grounding_rewrites_total": 3,
+        "fallback_rate": 0.0
+      },
+      "tool_loop": {
+        "n": 1,
+        "success": 1,
+        "success_rate": 1.0
+      }
+    },
+    {
+      "model": "gemini-2.5-pro",
+      "status": "ok",
+      "unknown_pattern": {
+        "n": 8,
+        "llm_raw": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        },
+        "system_gated": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        }
+      },
+      "ops": {
+        "n": 4,
+        "p50_ms": 1641.4335829322226,
+        "p95_ms": 1702.2156659513712,
+        "pre_gate_invent_rate": 0.0,
+        "dag_agreement": 0.0,
+        "cost_proxy": 1.6083
+      },
+      "faithfulness": {
+        "n": 2,
+        "mean": 1.0,
+        "note": "live grounded-flag proxy; DeepEval FaithfulnessMetric optional offline"
+      },
+      "debate": {
+        "n": 1,
+        "p95_ms": 4130.906749982387,
+        "grounding_rewrites_total": 0,
+        "fallback_rate": 0.0
+      },
+      "tool_loop": {
+        "n": 1,
+        "success": 0,
+        "success_rate": 0.0
+      }
+    },
+    {
+      "model": "gemini-3.6-flash",
+      "status": "ok",
+      "unknown_pattern": {
+        "n": 8,
+        "llm_raw": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        },
+        "system_gated": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        }
+      },
+      "ops": {
+        "n": 4,
+        "p50_ms": 7911.052395531442,
+        "p95_ms": 8288.21849997621,
+        "pre_gate_invent_rate": 1.0,
+        "dag_agreement": 1.0,
+        "cost_proxy": 8.1326
+      },
+      "faithfulness": {
+        "n": 2,
+        "mean": 1.0,
+        "note": "live grounded-flag proxy; DeepEval FaithfulnessMetric optional offline"
+      },
+      "debate": {
+        "n": 1,
+        "p95_ms": 9156.107750022784,
+        "grounding_rewrites_total": 6,
+        "fallback_rate": 0.0
+      },
+      "tool_loop": {
+        "n": 1,
+        "success": 1,
+        "success_rate": 1.0
+      }
+    },
+    {
+      "model": "gemini-3.8-flash",
+      "status": "ok",
+      "unknown_pattern": {
+        "n": 8,
+        "llm_raw": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        },
+        "system_gated": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        }
+      },
+      "ops": {
+        "n": 4,
+        "p50_ms": 11483.318332990166,
+        "p95_ms": 14447.574666002765,
+        "pre_gate_invent_rate": 1.0,
+        "dag_agreement": 1.0,
+        "cost_proxy": 12.4855
+      },
+      "faithfulness": {
+        "n": 2,
+        "mean": 1.0,
+        "note": "live grounded-flag proxy; DeepEval FaithfulnessMetric optional offline"
+      },
+      "debate": {
+        "n": 1,
+        "p95_ms": 17002.37450003624,
+        "grounding_rewrites_total": 5,
+        "fallback_rate": 0.0
+      },
+      "tool_loop": {
+        "n": 1,
+        "success": 1,
+        "success_rate": 1.0
+      }
+    },
+    {
+      "model": "gemini-3.1-pro-preview",
+      "status": "ok",
+      "unknown_pattern": {
+        "n": 8,
+        "llm_raw": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        },
+        "system_gated": {
+          "tp": 8,
+          "fp": 0,
+          "tn": 0,
+          "fn": 0,
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "fpr": 0.0
+        }
+      },
+      "ops": {
+        "n": 4,
+        "p50_ms": 24326.056562480517,
+        "p95_ms": 30199.52645909507,
+        "pre_gate_invent_rate": 0.75,
+        "dag_agreement": 1.0,
+        "cost_proxy": 24.3484
+      },
+      "faithfulness": {
+        "n": 2,
+        "mean": 1.0,
+        "note": "live grounded-flag proxy; DeepEval FaithfulnessMetric optional offline"
+      },
+      "debate": {
+        "n": 1,
+        "p95_ms": 10875.504708033986,
+        "grounding_rewrites_total": 6,
+        "fallback_rate": 0.0
+      },
+      "tool_loop": {
+        "n": 1,
+        "success": 1,
+        "success_rate": 1.0
+      }
+    }
+  ],
+  "selected_model": "gemini-2.5-pro",
+  "selection_rationale": "Selected gemini-2.5-pro: llm_raw recall=1.0 FPR=0.0 F1=1.0; ops p95=1702.2156659513712ms.",
+  "holdout": "/Users/aritrachakraborty/Desktop/corridor-watch/reports/genai_unknown_pattern_holdout.json"
+}

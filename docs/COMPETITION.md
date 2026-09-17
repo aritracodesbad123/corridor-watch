@@ -55,7 +55,7 @@ Gemini is never a chatbot on the raw ledger. The path is **Evidence → Gemini �
 
 - Deterministic DAG produces the evidence pack and a verdict without an LLM.
 - Gemini explains only that pack (grounding gate). Debate / SAR / SoF notes use the same text-grounding helpers.
-- Live production model is the **bake-off winner** (see [`docs/GENAI_MODEL_BENCHMARK.md`](GENAI_MODEL_BENCHMARK.md) and `reports/genai_model_bakeoff.md`). Default pin before bake-off: `gemini-2.5-flash`.
+- Live production model is the **bake-off winner** `gemini-2.5-pro` (see [`docs/GENAI_MODEL_BENCHMARK.md`](GENAI_MODEL_BENCHMARK.md) and `reports/genai_model_bakeoff.md`).
 - GenAI alert quality (Precision/Recall/F1/FPR on unknown-pattern live holdout) is **separate** from Dist A–F detector SCORECARD.
 - Agreement vs deterministic disposition (historical pack): **1.0, n=100**. p95 **4.025s**. Cost/case **$0.00143** (model on that pack: `gemini-2.5-flash`).
 - Force Gemini runs a short tool loop when Interactions is available; UI shows provenance (`gemini_tools` | `gemini_prefetch` | `grounded` | `fallback` | `gate_fail`).

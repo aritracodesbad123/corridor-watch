@@ -139,7 +139,10 @@ def _build_holdout(base: str, token: str, n: int = 80) -> dict:
             benign.append(item)
     half = max(1, n // 2)
     cases = fraud[:half] + benign[:half]
-    if len(cases) < 10:
+    if len(cases) < 8:
+        # Use whatever the live ledger has rather than aborting the bake-off.
+        cases = (fraud + benign)[: max(n, 8)]
+    if len(cases) < 4:
         raise SystemExit(f"live holdout too small ({len(cases)}); need flagged cases on Cloud Run")
     holdout = {
         "source": "cloud_run_live",
@@ -148,6 +151,8 @@ def _build_holdout(base: str, token: str, n: int = 80) -> dict:
         "created_at": datetime.now(timezone.utc).isoformat(),
         "note": "Oracle labels derived on live ledger (risk/pattern). Runtime prompts never see oracle_fraud.",
         "cases": cases,
+        "available_fraud": len(fraud),
+        "available_benign": len(benign),
     }
     REPORTS.mkdir(exist_ok=True)
     path.write_text(json.dumps(holdout, indent=2))

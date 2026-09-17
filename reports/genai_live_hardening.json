@@ -1,0 +1,29 @@
+{
+  "run_id": "2fece860659a",
+  "created_at": "2026-09-17T02:05:12.195018+00:00",
+  "base_url": "https://corridor-watch-6kmkxbsbwq-as.a.run.app",
+  "health": {
+    "ok": true,
+    "gemini": true,
+    "gemini_backend": "vertex",
+    "gemini_model": "gemini-2.5-pro",
+    "auth_mode": "password",
+    "environment": "gcp",
+    "database": "postgres",
+    "sqlite_forbidden_on_gcp": false,
+    "transaction_topic": "corridor-transactions",
+    "investigation_topic": "corridor-investigations",
+    "pubsub_push_subscription": "corridor-transactions-push"
+  },
+  "model": "gemini-2.5-pro",
+  "faithfulness_proxy": {
+    "n": 9,
+    "mean": 1.0
+  },
+  "ungrounded_sample": {
+    "n": 9,
+    "pre_gate_invent_cases": 0,
+    "post_gate_invent_rate": 0.0,
+    "note": "post-gate invent rate is 0 by construction of ground_plain_text"
+  }
+}

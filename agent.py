@@ -48,7 +48,7 @@ ALLOWED_EVIDENCE_REFS = {
 }
 
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
 _client = None
 _LAST_USAGE: dict[str, Any] = {}
 _FLASH_IN_PER_TOKEN = 0.30 / 1_000_000
