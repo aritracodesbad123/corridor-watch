@@ -1,0 +1,80 @@
+{
+  "run_id": "982d59f1f0e4",
+  "timestamp_utc": "2026-09-17T05:21:44.792746+00:00",
+  "git_commit": "0a0cfc697a299406b8259a7c26ec7f7b15a73440",
+  "environment": "local",
+  "dataset": "dist_g",
+  "dataset_version": "generator_g.seed53",
+  "benchmark": "dist_g_genai_unknown",
+  "ground_truth": "validation.oracle (eval-only; runtime ignores fraud_scenario)",
+  "positive_scenarios": [
+    "airbill_loop",
+    "cargo_wake",
+    "gate_skip",
+    "tarmac_drip"
+  ],
+  "sample_count": 80,
+  "fraud_count": 32,
+  "benign_count": 48,
+  "random_seed": 53,
+  "one_shot": true,
+  "do_not_tune": true,
+  "status": "ok",
+  "genai_artifact": "reports/genai_dist_g_bakeoff.json",
+  "freeze_artifact": "reports/dist_g_freeze.json",
+  "selected_model": "gemini-2.5-flash",
+  "selection_rationale": "Selected gemini-2.5-flash: agreement=1.0 cost/case=$0.002012 p95=6720.0ms alert_FPR=0.0",
+  "per_model_alert": {
+    "gemini-2.5-flash": {
+      "tp": 15,
+      "fp": 0,
+      "tn": 48,
+      "fn": 17,
+      "precision": 1.0,
+      "recall": 0.4688,
+      "f1": 0.6383,
+      "fpr": 0.0
+    },
+    "gemini-2.5-pro": {
+      "tp": 15,
+      "fp": 0,
+      "tn": 48,
+      "fn": 17,
+      "precision": 1.0,
+      "recall": 0.4688,
+      "f1": 0.6383,
+      "fpr": 0.0
+    },
+    "gemini-3.6-flash": {
+      "tp": 15,
+      "fp": 0,
+      "tn": 48,
+      "fn": 17,
+      "precision": 1.0,
+      "recall": 0.4688,
+      "f1": 0.6383,
+      "fpr": 0.0
+    },
+    "gemini-3.8-flash": {
+      "tp": 15,
+      "fp": 0,
+      "tn": 48,
+      "fn": 17,
+      "precision": 1.0,
+      "recall": 0.4688,
+      "f1": 0.6383,
+      "fpr": 0.0
+    },
+    "gemini-3.1-pro-preview": {
+      "tp": 15,
+      "fp": 0,
+      "tn": 48,
+      "fn": 17,
+      "precision": 1.0,
+      "recall": 0.4688,
+      "f1": 0.6383,
+      "fpr": 0.0
+    }
+  },
+  "note": "Dist G is a GenAI unknown evaluation set, not a detector Dist A\u2013F claim. Do not pitch Dist G F1 alongside detector Dist A\u2013F."
+}

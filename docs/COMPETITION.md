@@ -55,9 +55,10 @@ Gemini is never a chatbot on the raw ledger. The path is **Evidence → Gemini �
 
 - Deterministic DAG produces the evidence pack and a verdict without an LLM.
 - Gemini explains only that pack (grounding gate). Debate / SAR / SoF notes use the same text-grounding helpers.
-- Live production model is the **bake-off winner** `gemini-2.5-pro` (see [`docs/GENAI_MODEL_BENCHMARK.md`](GENAI_MODEL_BENCHMARK.md) and `reports/genai_model_bakeoff.md`).
-- GenAI alert quality (Precision/Recall/F1/FPR on unknown-pattern live holdout) is **separate** from Dist A–F detector SCORECARD.
-- Agreement vs deterministic disposition (historical pack): **1.0, n=100**. p95 **4.025s**. Cost/case **$0.00143** (model on that pack: `gemini-2.5-flash`).
+- **Absolute GenAI model comparison** is Dist G + agreement/USD (see [`docs/GENAI_MODEL_BENCHMARK.md`](GENAI_MODEL_BENCHMARK.md)): USD winner **`gemini-2.5-flash`** ($0.00201/case Dist G; $0.00203 agreement pack). All five models tied on Dist G P/R/F1/FPR (1.0 / 0.4688 / 0.6383 / 0.0). Artifacts: `reports/genai_dist_g_bakeoff.md`, `reports/genai_agreement_cost_bakeoff.md`.
+- An earlier live Cloud Run bake-off (n=8, no benign) selected `gemini-2.5-pro` but is **superseded** for model ranking (vacuous FPR).
+- Dist G / agreement GenAI metrics are **separate** from Dist A–F detector SCORECARD.
+- Historical single-model agreement pack: **1.0, n=100**, p95 **4.025s**, **$0.00143**/case (`gemini-2.5-flash` only).
 - Force Gemini runs a short tool loop when Interactions is available; UI shows provenance (`gemini_tools` | `gemini_prefetch` | `grounded` | `fallback` | `gate_fail`).
 
 ## Demo (3–5 minutes)

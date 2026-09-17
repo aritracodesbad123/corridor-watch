@@ -181,17 +181,33 @@ def test_rbac_blocks_privileged_endpoint():
     assert allowed.status_code == 200
 
 
-def test_thinking_off_sets_budget_zero():
-    from agent import MODEL, _thinking_off
+def test_thinking_off_sets_budget_zero(monkeypatch):
+    import agent
+    from agent import _thinking_off
+
+    monkeypatch.setattr(agent, "MODEL", "gemini-2.5-flash")
     cfg = _thinking_off()
     assert cfg is not None
     assert cfg.include_thoughts is False
-    if str(MODEL).startswith("gemini-3"):
-        assert str(cfg.thinking_level).endswith("MINIMAL")
-    else:
-        assert cfg.thinking_budget == 0
-        unset = cfg.model_dump(exclude_unset=True) if hasattr(cfg, "model_dump") else {}
-        assert "thinking_level" not in unset
+    assert cfg.thinking_budget == 0
+    unset = cfg.model_dump(exclude_unset=True) if hasattr(cfg, "model_dump") else {}
+    assert "thinking_level" not in unset
+
+    monkeypatch.setattr(agent, "MODEL", "gemini-2.5-pro")
+    tok = agent.push_model_override("gemini-2.5-pro")
+    try:
+        cfg_pro = _thinking_off()
+        assert cfg_pro.thinking_budget == 128
+    finally:
+        agent.reset_model_override(tok)
+
+    monkeypatch.setattr(agent, "MODEL", "gemini-3.8-flash")
+    tok = agent.push_model_override("gemini-3.8-flash")
+    try:
+        cfg3 = _thinking_off()
+        assert str(cfg3.thinking_level).endswith("LOW")
+    finally:
+        agent.reset_model_override(tok)
 
 
 def test_investigate_gemini_is_one_call(monkeypatch):

@@ -107,13 +107,39 @@ Old full-graph line and v2 are different metrics. Do not substitute.
 
 ## Gemini
 
+### Absolute 5-model comparison (canonical)
+
+**Dist G — GenAI unknown** (`reports/genai_dist_g_bakeoff.md`, freeze `reports/dist_g_freeze.json`, run_id `982d59f1f0e4`): seed 53, n=80 (32 fraud / 48 benign). Novel families disjoint from Dist A–F. All five models **P=1.0 R=0.4688 F1=0.6383 FPR=0.0**. Selected **`gemini-2.5-flash` at $0.002012/case** (agr=1.0, p95=6720ms). Recall is honest: GenAI tracks the DAG and does not recover novel `tarmac_drip` detector misses.
+
+| Model | P | R | F1 | FPR | $/case | p95 ms |
+|---|---:|---:|---:|---:|---:|---:|
+| `gemini-2.5-flash` ★ | 1.0 | 0.4688 | 0.6383 | 0.0 | **0.002012** | 6720 |
+| `gemini-3.8-flash` | 1.0 | 0.4688 | 0.6383 | 0.0 | 0.003233 | 73814 |
+| `gemini-3.6-flash` | 1.0 | 0.4688 | 0.6383 | 0.0 | 0.004128 | 7911 |
+| `gemini-2.5-pro` | 1.0 | 0.4688 | 0.6383 | 0.0 | 0.010252 | 10153 |
+| `gemini-3.1-pro-preview` | 1.0 | 0.4688 | 0.6383 | 0.0 | 0.018887 | 16499 |
+
+**Agreement + USD** (`reports/genai_agreement_cost_bakeoff.md`, run_id `18c9176f68de`): golden n=100 × 5 models. Selected **`gemini-2.5-flash` at $0.002032/case** (agr=1.0).
+
+| Model | Agreement | $/case | p95 ms | Alert FPR |
+|---|---:|---:|---:|---:|
+| `gemini-2.5-flash` ★ | 1.0 | **0.002032** | 6654 | 0.0 |
+| `gemini-3.8-flash` | 1.0 | 0.003405 | 15377 | 0.0 |
+| `gemini-3.6-flash` | 1.0 | 0.004045 | 10029 | 0.0 |
+| `gemini-2.5-pro` | 0.99 | 0.010631 | 10377 | 0.022 |
+| `gemini-3.1-pro-preview` | 1.0 | 0.018758 | 16218 | 0.0 |
+
+Methodology: [`docs/GENAI_MODEL_BENCHMARK.md`](docs/GENAI_MODEL_BENCHMARK.md).
+
+### Historical single-model baseline
+
 run `unstamped` commit `not-recorded` ts `not-recorded` — `reports/gemini_agreement.json`
 
 - agreement=1.0 schema_valid=100 invoked=100 CI=[0.963, 1.0]
 - p95=4025.4 ms (gate 8000) model=gemini-2.5-flash cost/case=0.00143 tokens/case=1397.3
 - Hallucination run `unstamped` commit `not-recorded` ts `not-recorded` — `reports/hallucination.json`: gate=0.0 unsupported=0.0 entity=0.0 numerical=0.0 live ungrounded=0.0 n=100 (live model hallucination rate NOT_MEASURED)
 
-If this artifact has no `git_commit`, it was measured before experiment stamping. Numbers are still the live n=100 run; do not backfill a commit.
+If this artifact has no `git_commit`, it was measured before experiment stamping. Numbers are still the live n=100 run; do not backfill a commit. This pack is **not** the 5-model comparison (see Dist G / agreement+USD above).
 
 ## DeepEval
 

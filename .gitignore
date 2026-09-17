@@ -16,3 +16,37 @@ htmlcov/
 
 # graphify knowledge graph
 graphify-out/
+
+# editor / agent local
+.cursor/
+
+# Working pitch drafts (not frozen evidence)
+docs/pitch/
+docs/build_pitch_deck.py
+presentation/
+
+# Process / iteration logs
+CHANGE_REQUEST_LOG.md
+reports/*.log
+
+# Superseded GenAI comparison (vacuous live FPR) — Dist G + agreement+USD are canonical
+reports/genai_model_bakeoff.json
+reports/genai_model_bakeoff.md
+reports/genai_unknown_pattern_holdout.json
+reports/genai_live_hardening.json
+
+# Probe / tuning iterations
+reports/*_probe*.json
+
+# Stamped validation suite iterations (canonical is reports/SCORECARD.md)
+validation/results/run_*/
+
+# Obsolete planning / fix-iteration docs
+docs/GAP_AUDIT.md
+docs/CORRIDOR_WATCH_NEXT_ACTION_ITEMS.md
+docs/Corridor_Watch_Upgrade_Plan.md
+docs/Corridor_Watch_Master_Implementation_Spec.md
+docs/CORRIDOR_WATCH_EXACT_5_FIXES.md
+docs/IMPLEMENTATION_MAP.md
+docs/test_validation.md
+Corridor_Watch_Competition_Fixes.md

@@ -1,4 +1,7 @@
-Historical `run_*` snapshots from `validation.run_suite`. They are not the competition scorecard.
+Historical `run_*` snapshots from `validation.run_suite` are **not** the competition scorecard (gitignored).
 
-Canonical evidence: `reports/SCORECARD.md`, `FINAL_VALIDATION_REPORT.md`, `reports/gemini_agreement.json`.
-Gemini agreement is **1.0, n=100**; p95 **4.025s**; cost/case **$0.00143**. Ignore older figures in dated run folders.
+Canonical evidence: `reports/SCORECARD.md`, `FINAL_VALIDATION_REPORT.md`, Dist A–G freezes under `reports/`, and absolute GenAI 5-model packs:
+- `reports/genai_dist_g_bakeoff.md` (unknown, P/R/F1/FPR + USD)
+- `reports/genai_agreement_cost_bakeoff.md` (agreement + USD)
+
+Historical single-model: `reports/gemini_agreement.json` (flash, n=100, $0.00143/case).

@@ -21,7 +21,7 @@ Canonical wrap: `reports/validation_report.json` run `5fcf08a2b0e3`. Dictionary:
 | Dist F novel_detection_recall | Measured 1.0 (`trade_overbill` unmapped, still flagged) | `reports/dist_f.json` |
 | Hard-negative FPR | Verified 0.0 (n=71) | `reports/hard_negative_results.json` |
 
-100% recall on frozen unseen Dist E/F fraud families is not “100% accuracy on all fraud.” Dist C/D false-positive rates remain in the evidence pack.
+100% recall on frozen unseen Dist E/F fraud families is not “100% accuracy on all fraud.” Dist C/D false-positive rates remain in the evidence pack. Dist G is GenAI-only (unknown holdout); do not conflate its F1 with detector Dist A–F.
 
 ## Network V2
 
@@ -45,8 +45,10 @@ Canonical wrap: `reports/validation_report.json` run `5fcf08a2b0e3`. Dictionary:
 | Hallucination rate | Verified trap/gate 0.0; live ungrounded 0.0 n=100 (live model rate NOT_MEASURED) | `reports/hallucination.json` |
 | Unsupported / entity / numerical | Verified 0.0 after grounding gate | `reports/hallucination.json` |
 | Injection decision-change | Verified 0.0 (n=50) | `reports/injection_decision.json` |
-| Live GenAI bake-off (P/R/F1/FPR) | Verified live Cloud Run; selected **gemini-2.5-pro** (recall 1.0 FPR 0.0 on n=8 holdout; note: live ledger had no benign rows in sample) | `reports/genai_model_bakeoff.md` |
-| Live GenAI hardening | Verified after pin | `reports/genai_live_hardening.json` |
+| Live GenAI bake-off (P/R/F1/FPR) | **Superseded** (n=8, no benign; vacuous FPR). Absolute ranking is Dist G + agreement+USD | was `reports/genai_model_bakeoff.md` (gitignored) |
+| Agreement+USD bake-off (5 models) | Verified n=100; selected **gemini-2.5-flash** ($0.002032/case, agr=1.0, p95=6653.5ms). Others: 2.5-pro $0.010631 agr=0.99; 3.6-flash $0.004045; 3.8-flash $0.003405; 3.1-pro-preview $0.018758 (all agr=1.0 except pro) | `reports/genai_agreement_cost_bakeoff.md` |
+| Dist G GenAI unknown (5 models) | Verified one-shot seed 53 n=80 (32 fraud / 48 benign). All models P=1.0 R=0.4688 F1=0.6383 FPR=0.0; selected **gemini-2.5-flash** ($0.002012/case, agr=1.0, p95=6720ms). Not detector Dist A–F. | `reports/genai_dist_g_bakeoff.md` / `reports/dist_g.json` (freeze `reports/dist_g_freeze.json`) |
+| Live GenAI hardening | **Superseded** with live bake-off | was `reports/genai_live_hardening.json` (gitignored) |
 
 ## DeepEval
 
@@ -105,5 +107,6 @@ Enqueue ≠ completion. Neither is ingest TPS.
 - Dist C FPR 0.7568 and Dist D FPR 0.3585 are frozen misses (commercial/mill pass-through false positives).
 - Full investigation-path recall = **0.667**.
 - Exact novel taxonomy classification remains imperfect (Dist F `pattern_accuracy` 0.0; `taxonomy_accuracy` 0.25).
+- Dist G GenAI unknown recall 0.4688 (n=80); GenAI tracked the DAG (agr=1.0) and did not recover `tarmac_drip` misses — not a detector Dist claim.
 - PITR-to-past RPO is NOT_MEASURED.
 - Official Gemini Faithfulness evaluation is **n=10**, not n=205.

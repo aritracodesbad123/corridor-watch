@@ -53,6 +53,27 @@ _client = None
 _LAST_USAGE: dict[str, Any] = {}
 _FLASH_IN_PER_TOKEN = 0.30 / 1_000_000
 _FLASH_OUT_PER_TOKEN = 2.50 / 1_000_000
+# Vertex standard USD / 1M tokens (<=200k). Source: cloud.google.com pricing (2026-09).
+_MODEL_USD_PER_M: dict[str, tuple[float, float]] = {
+    "gemini-2.5-flash": (0.30, 2.50),
+    "gemini-2.5-pro": (1.25, 10.00),
+    "gemini-3.6-flash": (0.75, 3.75),
+    "gemini-3.8-flash": (0.75, 3.75),
+    "gemini-3.1-pro-preview": (2.00, 12.00),
+}
+
+
+def estimate_cost_usd(model: str, prompt: int, completion: int, thoughts: int = 0) -> float:
+    """USD from published Vertex rates. Thoughts billed as output (reasoning)."""
+    key = (model or "").lower()
+    rates = _MODEL_USD_PER_M.get(key)
+    if rates is None:
+        for name, r in _MODEL_USD_PER_M.items():
+            if name in key:
+                rates = r
+                break
+    in_m, out_m = rates or (0.30, 2.50)
+    return round(prompt * (in_m / 1_000_000) + (completion + thoughts) * (out_m / 1_000_000), 6)
 
 # Set for the duration of a single investigate_with_gemini() call so the tool
 # functions below can attach the right case id to their audit log entries.
@@ -332,12 +353,18 @@ def _thinking_off():
     from google.genai import types
     fields = getattr(types.ThinkingConfig, "model_fields", {})
     kwargs: dict[str, Any] = {}
-    three = str(MODEL).startswith("gemini-3")
-    # 3.x rejects thinking_budget=0; 2.5 rejects thinking_level.
-    if not three and "thinking_budget" in fields:
-        kwargs["thinking_budget"] = 0
-    if three and "thinking_level" in fields:
-        kwargs["thinking_level"] = types.ThinkingLevel.MINIMAL
+    m = str(active_model()).lower()
+    # 2.5-flash accepts thinking_budget=0; 2.5-pro rejects 0.
+    # 3.6 accepts MINIMAL; 3.8 / 3.1-pro reject MINIMAL → use LOW.
+    if m.startswith("gemini-3"):
+        if "thinking_level" in fields:
+            kwargs["thinking_level"] = types.ThinkingLevel.LOW
+    elif "pro" in m:
+        if "thinking_budget" in fields:
+            kwargs["thinking_budget"] = 128
+    else:
+        if "thinking_budget" in fields:
+            kwargs["thinking_budget"] = 0
     if "include_thoughts" in fields:
         kwargs["include_thoughts"] = False
     if not kwargs:
@@ -400,7 +427,7 @@ def _record_usage(response) -> dict[str, Any]:
     prompt = int(getattr(um, "prompt_token_count", 0) or 0)
     completion = int(getattr(um, "candidates_token_count", 0) or getattr(um, "output_token_count", 0) or 0)
     thoughts = int(getattr(um, "thoughts_token_count", 0) or 0)
-    cost = round(prompt * _FLASH_IN_PER_TOKEN + completion * _FLASH_OUT_PER_TOKEN, 6)
+    cost = estimate_cost_usd(active_model(), prompt, completion, thoughts)
     cand = (getattr(response, "candidates", None) or [None])[0]
     finish = str(getattr(cand, "finish_reason", "") or "")
     _LAST_USAGE.clear()
@@ -409,6 +436,7 @@ def _record_usage(response) -> dict[str, Any]:
         "completion_tokens": completion,
         "thoughts_tokens": thoughts,
         "cost_usd": cost,
+        "model": active_model(),
         "finish_reason": finish,
     })
     return _LAST_USAGE
