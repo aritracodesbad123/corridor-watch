@@ -118,7 +118,7 @@ def generate_sar(
             prompt = FINCEN_PROMPT.format(evidence=ev_str)
 
         resp = c.models.generate_content(
-            model=agent_mod.MODEL,
+            model=agent_mod.active_model(),
             contents=prompt,
             config=types.GenerateContentConfig(temperature=0.2),
         )
@@ -127,13 +127,34 @@ def generate_sar(
         data["generated_at"] = datetime.now(timezone.utc).isoformat()
         data["mode"] = "gemini"
         data["requires_human_review"] = True
-
+        data = _ground_sar(data, evidence, verdict)
         audit.log(txn_id, "sar_generate_complete", {"jurisdiction": jurisdiction}, actor="sar_generator")
         return data
 
     except Exception as e:
         audit.log(txn_id, "sar_generate_error", {"error": str(e)}, actor="sar_generator")
         return _templated_sar(txn_id, jurisdiction, evidence, verdict, note=f"LLM draft fallback: {e}")
+
+
+def _ground_sar(data: dict, evidence: dict, verdict: dict) -> dict:
+    allowed = agent_mod.evidence_allowed_text(evidence, json.dumps(verdict, default=str))
+    rewrites = 0
+    sections = data.get("narrative_sections") or {}
+    if isinstance(sections, dict):
+        for k, v in list(sections.items()):
+            if isinstance(v, str):
+                grounded, n = agent_mod.ground_plain_text(v, allowed)
+                rewrites += n
+                sections[k] = grounded or v
+        data["narrative_sections"] = sections
+    if isinstance(data.get("full_narrative_text"), str):
+        grounded, n = agent_mod.ground_plain_text(data["full_narrative_text"], allowed)
+        rewrites += n
+        if grounded:
+            data["full_narrative_text"] = grounded
+    data["grounded"] = True
+    data["grounding_rewrites"] = rewrites
+    return data
 
 
 def _templated_sar(txn_id: str, jurisdiction: str, evidence: dict, verdict: dict, note: str = "") -> dict:

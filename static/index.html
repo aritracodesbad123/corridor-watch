@@ -1087,6 +1087,7 @@ async function openCase(txnId){
       </div>
     </div>
     <div class="panel-block" id="tab-verdict">
+      <p class="muted" style="margin:0 0 10px">Demo spine: Evidence pack → Gemini brief → AI Debate → FIU decision → Pattern DNA. Other tabs are appendix.</p>
       <div class="btn-row">
         <button id="btn-invest-auto" type="button">Run investigation (auto)</button>
         <button class="secondary" id="btn-invest-det" type="button">Deterministic DAG only</button>
@@ -1098,7 +1099,7 @@ async function openCase(txnId){
     <div class="panel-block" id="tab-debate">
       <div class="card">
         <h3>Adversarial AI Debate (Prosecutor vs Defense)</h3>
-        <p class="muted">Prosecutor and Defense argue in plain English; a Judge synthesizes both sides into a meeting-ready outcome and next steps. Models recommend — humans decide.</p>
+        <p class="muted">Prosecutor and Defense argue in plain English; Judge synthesis feeds the case export / FIU brief. Models recommend — humans decide.</p>
         <div class="btn-row"><button id="btn-run-debate" type="button">Launch AI Debate</button></div>
         <div id="debate-slot" style="margin-top:12px"></div>
       </div>
@@ -1546,15 +1547,19 @@ function renderVerdict(data){
   const v = data.verdict||{};
   const doc = data.document_verification;
   const patternLabel = PATTERN_PLAIN[v.primary_pattern] || (v.primary_pattern||"").replace(/_/g," ");
+  const prov = v.provenance || (v.mode==="gemini"?"grounded":(v.mode||""));
+  const tools = (v.tool_calls||[]).map(t=>esc(t.tool||"?")).join(", ");
   const docHtml = doc ? `<div class="muted" style="margin-top:8px"><b>Document evidence:</b> ${esc(doc.verification_status||'')} — ${esc(doc.verification_note||'')}</div>` : "";
   $("verdict-slot").innerHTML = `
     <div class="verdict ${pillClass(v.risk_level)}">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
         <span class="pill ${pillClass(v.risk_level)}">${esc(v.risk_level||'—')} · ${v.risk_score??'—'}</span>
-        <span class="case-id">${esc(patternLabel)} · mode ${esc(v.mode||'')}${data.cached?' · cached':''}</span>
+        <span class="case-id">${esc(patternLabel)} · ${esc(prov)}${data.cached?' · cached':''}</span>
+        ${v.gemini_model?`<span class="case-id">${esc(v.gemini_model)}</span>`:""}
       </div>
       <p style="line-height:1.55;margin:0 0 8px">${esc(v.rationale||'')}</p>
       <div class="muted"><b style="color:var(--text)">What to do next:</b> ${esc(v.recommended_action||'—')}</div>
+      ${tools?`<div class="muted" style="margin-top:6px"><b>Tool calls:</b> ${tools}</div>`:""}
       ${v.note?`<div class="muted" style="margin-top:6px">${esc(v.note)}</div>`:''}
       ${docHtml}
     </div>

@@ -54,9 +54,23 @@ Gemini is never a chatbot on the raw ledger. The path is **Evidence → Gemini �
 ## AI
 
 - Deterministic DAG produces the evidence pack and a verdict without an LLM.
-- Gemini (`gemini-2.5-flash` on the measured run) explains only that pack.
-- Grounding strips unsupported claims. PII at the model boundary is tokenized.
-- Agreement vs deterministic disposition: **1.0, n=100**. p95 **4.025s**. Cost/case **$0.00143**.
+- Gemini explains only that pack (grounding gate). Debate / SAR / SoF notes use the same text-grounding helpers.
+- Live production model is the **bake-off winner** (see [`docs/GENAI_MODEL_BENCHMARK.md`](GENAI_MODEL_BENCHMARK.md) and `reports/genai_model_bakeoff.md`). Default pin before bake-off: `gemini-2.5-flash`.
+- GenAI alert quality (Precision/Recall/F1/FPR on unknown-pattern live holdout) is **separate** from Dist A–F detector SCORECARD.
+- Agreement vs deterministic disposition (historical pack): **1.0, n=100**. p95 **4.025s**. Cost/case **$0.00143** (model on that pack: `gemini-2.5-flash`).
+- Force Gemini runs a short tool loop when Interactions is available; UI shows provenance (`gemini_tools` | `gemini_prefetch` | `grounded` | `fallback` | `gate_fail`).
+
+## Demo (3–5 minutes)
+
+One case. Spine only:
+
+1. Evidence pack (DAG) — no Gemini yet.
+2. Force Gemini brief (plain English + provenance / tools).
+3. AI Debate → meeting-ready judge outcome (feeds export).
+4. FIU lead confirm hold/escalate.
+5. Pattern DNA.
+
+Do not tour every Phase 3 appendix tab.
 
 ## Evaluation
 
@@ -73,27 +87,13 @@ Independent generators A–F. Runtime ignores `fraud_scenario`. Dist C–F were 
 
 Dist F methodology: `pattern_accuracy` is exact Pattern DNA label agreement. `taxonomy_accuracy` uses a pre-declared eval-only FAMILY map. Unmapped `trade_overbill` stays novel (detected, not renamed). Dist F names were **not** added as runtime DNA labels.
 
-DeepEval: **205 cases** (custom metrics) plus official Gemini Faithfulness **n=10**. Not 205 Gemini-judged cases.
+DeepEval: **205 cases** (custom metrics) plus official Gemini Faithfulness **n=10**. Not 205 Gemini-judged cases. Live GenAI bake-off / hardening: [`docs/GENAI_MODEL_BENCHMARK.md`](GENAI_MODEL_BENCHMARK.md).
 
 Sustained ingest under the defined SLO: **814 TPS**. 5,000 TPS is a target, not achieved.
 
 ## Security
 
 RBAC, high-risk step-up, Gemini off ingest, PII tokens at the model boundary, injection decision-change 0.0 (n=50). See SCORECARD security rows.
-
-## Demo (3–5 minutes)
-
-One case. Do not tour every Phase 3 feature.
-
-1. Home: a suspicious network lights up on the corridor / queue.
-2. Open Investigations: graph and money-flow path are visible.
-3. Deterministic evidence pack (E-RISK, context, hops) — no Gemini yet.
-4. Run Gemini: it explains **that evidence**. Show grounding (unsupported claims do not survive).
-5. Analyst (FIU lead) confirms hold/escalate.
-6. Export SAR / case package.
-7. Pattern DNA library: the confirmed case is now a reusable fingerprint. Show a later queue item matching it.
-
-Script and likely judge questions: below.
 
 ## Known limitations
 

@@ -60,7 +60,7 @@ def _llm_novel_patterns(n: int = 2) -> list[dict]:
             "Avoid classic pure fan-in mule and obvious shared-device rings. Synthetic/demo only."
         )
         resp = c.models.generate_content(
-            model=agent_mod.MODEL,
+            model=agent_mod.active_model(),
             contents=prompt,
             config=types.GenerateContentConfig(temperature=0.8),
         )

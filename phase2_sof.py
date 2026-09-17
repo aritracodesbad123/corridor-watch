@@ -173,7 +173,7 @@ def sof_check(txn_id: str, explanation: str | None = None, use_llm: bool = True)
             f"\n\nFINDINGS:\n{json.dumps(base, default=str)}"
         )
         resp = c.models.generate_content(
-            model=agent_mod.MODEL,
+            model=agent_mod.active_model(),
             contents=prompt,
             config=types.GenerateContentConfig(temperature=0.2),
         )
@@ -183,6 +183,12 @@ def sof_check(txn_id: str, explanation: str | None = None, use_llm: bool = True)
         base["draft_narrative"] = refined.get("draft_narrative")
         base["plausibility"] = refined.get("plausibility", base["plausibility"])
         base["mode"] = "gemini"
+        allowed = agent_mod.evidence_allowed_text(base)
+        if isinstance(base.get("draft_narrative"), str):
+            grounded, n = agent_mod.ground_plain_text(base["draft_narrative"], allowed)
+            base["draft_narrative"] = grounded or base["draft_narrative"]
+            base["grounding_rewrites"] = n
+            base["grounded"] = True
         audit.log(txn_id, "sof_check_llm", {"plausibility": base["plausibility"]}, actor="phase2")
     except Exception as e:
         base["llm_note"] = f"LLM refine skipped: {e}"

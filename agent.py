@@ -48,7 +48,7 @@ ALLOWED_EVIDENCE_REFS = {
 }
 
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 _client = None
 _LAST_USAGE: dict[str, Any] = {}
 _FLASH_IN_PER_TOKEN = 0.30 / 1_000_000
@@ -57,6 +57,22 @@ _FLASH_OUT_PER_TOKEN = 2.50 / 1_000_000
 # Set for the duration of a single investigate_with_gemini() call so the tool
 # functions below can attach the right case id to their audit log entries.
 _CURRENT_TXN_ID: str | None = None
+
+from contextvars import ContextVar
+_MODEL_OVERRIDE: ContextVar[str | None] = ContextVar("cw_gemini_model_override", default=None)
+
+
+def active_model() -> str:
+    return _MODEL_OVERRIDE.get() or MODEL
+
+
+def push_model_override(model_id: str | None):
+    """Bake-off: temporarily force a Gemini model id for this request."""
+    return _MODEL_OVERRIDE.set(model_id or None)
+
+
+def reset_model_override(token) -> None:
+    _MODEL_OVERRIDE.reset(token)
 
 
 def _use_vertex() -> bool:
@@ -364,7 +380,7 @@ def _generate_content(
             time.sleep(delay)
         try:
             response = c.models.generate_content(
-                model=model,
+                model=active_model(),
                 contents=contents,
                 config=types.GenerateContentConfig(**config_kwargs),
             )
@@ -417,7 +433,7 @@ def _function_calls_from_response(response) -> list[tuple[str, dict]]:
 
 def _complete_text(c, prompt: str) -> str:
     """Single-shot completion used by the grounded report path."""
-    response = _generate_content(c, model=MODEL, contents=prompt, max_output_tokens=3072)
+    response = _generate_content(c, model=active_model(), contents=prompt, max_output_tokens=3072)
     return getattr(response, "text", None) or ""
 
 
@@ -600,7 +616,7 @@ def investigate_with_gemini(txn: dict, dag_bundle: dict | None = None) -> dict:
                 "content": [{"type": "text", "text": prompt}],
             }]
             for _ in range(8):
-                interaction = _call_with_retry(c, model=MODEL, store=False, input=history, tools=tools)
+                interaction = _call_with_retry(c, model=active_model(), store=False, input=history, tools=tools)
 
                 for step in interaction.steps:
                     history.append(step.model_dump())
@@ -675,12 +691,113 @@ def _investigate_with_generate_content(c, txn: dict, prompt: str, tools: list[di
         + "\n\nPre-fetched tool results. Use only this evidence; do not invent IDs or amounts.\n"
         + json.dumps(tool_pack, default=str)
     )
-    response = _generate_content(c, model=MODEL, contents=full_prompt, tools=None)
+    response = _generate_content(c, model=active_model(), contents=full_prompt, tools=None)
     text = getattr(response, "text", None) or ""
     verdict = _parse_verdict(text, txn.get("risk_score", 0))
     audit.log(txn.get("txn_id", ""), "gemini_verdict", verdict, actor="gemini")
     return verdict
 
+
+def allowed_nums_ents(allowed_text: str) -> tuple[set[str], set[str]]:
+    """Numeric tokens (3+ digits) and AAA-123 style entity IDs present in evidence text."""
+    text = allowed_text or ""
+    return set(re.findall(r"\d{3,}", text)), set(re.findall(r"\b[A-Z]{2,}(?:-[A-Z0-9]+)+\b", text))
+
+
+def ground_plain_text(text: str, allowed_text: str) -> tuple[str, int]:
+    """Drop sentences that invent entities/numbers absent from allowed evidence text.
+
+    Returns (grounded_text, rewrite_count).
+    """
+    if not text:
+        return "", 0
+    allowed_nums, allowed_ents = allowed_nums_ents(allowed_text)
+    kept: list[str] = []
+    rewrites = 0
+    # ponytail: sentence split on '. ' is good enough for gate prose
+    for raw in re.split(r"(?<=[.!?])\s+", text.strip()):
+        sent = raw.strip()
+        if not sent:
+            continue
+        extra_num = set(re.findall(r"\d{3,}", sent)) - allowed_nums
+        extra_ent = set(re.findall(r"\b[A-Z]{2,}(?:-[A-Z0-9]+)+\b", sent)) - allowed_ents
+        if extra_num or extra_ent:
+            rewrites += 1
+            continue
+        kept.append(sent)
+    return (" ".join(kept).strip(), rewrites)
+
+
+def ground_string_list(items: list[str] | None, allowed_text: str) -> tuple[list[str], int]:
+    out: list[str] = []
+    rewrites = 0
+    for item in items or []:
+        if not isinstance(item, str) or not item.strip():
+            continue
+        grounded, n = ground_plain_text(item, allowed_text)
+        rewrites += n
+        if grounded:
+            out.append(grounded)
+    return out, rewrites
+
+
+def evidence_allowed_text(evidence: dict | None = None, *extra: str) -> str:
+    """Flatten compact evidence / verdict bits into one allowed-text corpus."""
+    parts = [str(x) for x in extra if x]
+    if evidence:
+        parts.append(json.dumps(evidence, default=str))
+    return " ".join(parts)
+
+
+def allowed_nums_ents(allowed_text: str) -> tuple[set[str], set[str]]:
+    """Numeric tokens (3+ digits) and AAA-123 style entity IDs present in evidence text."""
+    text = allowed_text or ""
+    return set(re.findall(r"\d{3,}", text)), set(re.findall(r"\b[A-Z]{2,}(?:-[A-Z0-9]+)+\b", text))
+
+
+def ground_plain_text(text: str, allowed_text: str) -> tuple[str, int]:
+    """Drop sentences that invent entities/numbers absent from allowed evidence text.
+
+    Returns (grounded_text, rewrite_count).
+    """
+    if not text:
+        return "", 0
+    allowed_nums, allowed_ents = allowed_nums_ents(allowed_text)
+    kept: list[str] = []
+    rewrites = 0
+    # ponytail: sentence split on '. ' is good enough for gate prose
+    for raw in re.split(r"(?<=[.!?])\s+", text.strip()):
+        sent = raw.strip()
+        if not sent:
+            continue
+        extra_num = set(re.findall(r"\d{3,}", sent)) - allowed_nums
+        extra_ent = set(re.findall(r"\b[A-Z]{2,}(?:-[A-Z0-9]+)+\b", sent)) - allowed_ents
+        if extra_num or extra_ent:
+            rewrites += 1
+            continue
+        kept.append(sent)
+    return (" ".join(kept).strip(), rewrites)
+
+
+def ground_string_list(items: list[str] | None, allowed_text: str) -> tuple[list[str], int]:
+    out: list[str] = []
+    rewrites = 0
+    for item in items or []:
+        if not isinstance(item, str) or not item.strip():
+            continue
+        grounded, n = ground_plain_text(item, allowed_text)
+        rewrites += n
+        if grounded:
+            out.append(grounded)
+    return out, rewrites
+
+
+def evidence_allowed_text(evidence: dict | None = None, *extra: str) -> str:
+    """Flatten compact evidence / verdict bits into one allowed-text corpus."""
+    parts = [str(x) for x in extra if x]
+    if evidence:
+        parts.append(json.dumps(evidence, default=str))
+    return " ".join(parts)
 
 def apply_grounding_gate(
     report: InvestigationReport,
@@ -692,8 +809,7 @@ def apply_grounding_gate(
     allowed_text = " ".join(
         f"{e.evidence_id} {e.description or ''}" for e in fb_by_id.values()
     ) + " " + " ".join(allowed_ids)
-    allowed_nums = set(re.findall(r"\d{3,}", allowed_text))
-    allowed_ents = set(re.findall(r"\b[A-Z]{2,}(?:-[A-Z0-9]+)+\b", allowed_text))
+    allowed_nums, allowed_ents = allowed_nums_ents(allowed_text)
     cited = []
     for e in report.supporting_evidence:
         if e.evidence_id not in allowed_ids:
@@ -706,10 +822,27 @@ def apply_grounding_gate(
                 cited.append(fb_by_id[e.evidence_id])
             continue
         cited.append(e)
+    # Ground free-text fields the same way as debate/SAR.
+    summary, n1 = ground_plain_text(report.investigation_summary or "", allowed_text)
+    hyp, n2 = ground_plain_text(report.risk_hypothesis or "", allowed_text)
+    unc, n3 = ground_plain_text(report.uncertainty or "", allowed_text)
+    alts, n4 = ground_string_list(list(report.alternative_explanations or []), allowed_text)
+    checks, n5 = ground_string_list(list(report.recommended_next_checks or []), allowed_text)
+    if summary:
+        report.investigation_summary = summary
+    if hyp:
+        report.risk_hypothesis = hyp
+    report.uncertainty = unc
+    report.alternative_explanations = alts
+    report.recommended_next_checks = checks
+    report.__dict__["grounding_rewrites"] = n1 + n2 + n3 + n4 + n5  # ponytail: soft attr for bake-off
+    report.__dict__["llm_raw_disposition"] = report.recommended_disposition
     if not cited:
         fallback.gemini_used = True
         fallback.grounded = False
         fallback.uncertainty = "Gemini output failed grounding gate; deterministic report retained."
+        fallback.__dict__["llm_raw_disposition"] = report.recommended_disposition
+        fallback.__dict__["grounding_rewrites"] = n1 + n2 + n3 + n4 + n5
         return fallback
     report.supporting_evidence = cited
     report.contradicting_evidence = [e for e in report.contradicting_evidence if e.evidence_id in allowed_ids]
@@ -849,6 +982,39 @@ def investigate(txn_id: str, mode: str = "auto") -> dict[str, Any]:
 
     try:
         txn = dag_bundle["evidence"]["transaction"]
+        provenance = "grounded"
+        tool_verdict = None
+        tool_calls: list[dict] = []
+        if mode == "gemini":
+            try:
+                tool_verdict = investigate_with_gemini(txn, dag_bundle)
+                provenance = (
+                    "gemini_tools"
+                    if tool_verdict.get("mode") not in {"gemini_parse_error", None}
+                    and _has_interactions(client())
+                    else "gemini_prefetch"
+                )
+                # Collect recent tool_call audit rows for this case.
+                try:
+                    rows = audit.list_for_case(txn_id)
+                    tool_calls = []
+                    for r in rows:
+                        if r.get("event_type") != "tool_call":
+                            continue
+                        payload = r.get("payload")
+                        if isinstance(payload, str):
+                            try:
+                                payload = json.loads(payload)
+                            except Exception:
+                                payload = {}
+                        tool_calls.append({"tool": (payload or {}).get("tool"), "ts": r.get("ts")})
+                    tool_calls = tool_calls[-12:]
+                except Exception:
+                    tool_calls = []
+            except Exception as tool_exc:
+                audit.log(txn_id, "gemini_tool_loop_error", {"error": str(tool_exc)}, actor="gemini")
+                provenance = "gemini_prefetch"
+
         report = grounded_gemini_report(
             txn,
             [EvidenceItem.model_validate(e) for e in report.supporting_evidence],
@@ -857,13 +1023,27 @@ def investigate(txn_id: str, mode: str = "auto") -> dict[str, Any]:
             {"features": dag_bundle["evidence"].get("evidence_pack") or {}, "network_id": txn_id},
             report,
         )
+        if not report.gemini_used:
+            provenance = "fallback" if provenance.startswith("gemini") else provenance
+        if report.gemini_used and not report.grounded:
+            provenance = "gate_fail"
         merged = {
             **det,
             "rationale": (report.investigation_summary or det.get("rationale") or "")[:1200],
             "dag_risk_score": det.get("risk_score"),
             "mode": "gemini" if report.gemini_used else "deterministic_fallback",
+            "provenance": provenance,
+            "tool_calls": tool_calls,
+            "llm_raw_disposition": getattr(report, "llm_raw_disposition", None),
+            "grounding_rewrites": getattr(report, "grounding_rewrites", 0),
+            "gemini_model": active_model(),
             "investigation_report": report.model_dump(),
         }
+        if tool_verdict:
+            merged["tool_verdict"] = {
+                k: tool_verdict.get(k)
+                for k in ("risk_level", "risk_score", "primary_pattern", "rationale", "mode", "evidence_refs")
+            }
     except DatabaseBusy:
         fallback = {
             **det,

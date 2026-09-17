@@ -194,6 +194,7 @@ def health():
         "ok": not sqlite_on_gcp,
         "gemini": agent.gemini_available(),
         "gemini_backend": agent.gemini_backend(),
+        "gemini_model": agent.active_model(),
         "auth_mode": (
             "api_key" if os.getenv("CORRIDOR_WATCH_API_KEYS")
             else "oidc" if oidc_enabled()
@@ -325,8 +326,26 @@ def alert_detail(txn_id: str, auth: AuthContext = Depends(require("alerts:read")
     }
 
 
+def _eval_model_token(
+    x_cw_eval_model: str | None = Header(default=None, alias="X-CW-Eval-Model"),
+    x_cw_eval_secret: str | None = Header(default=None, alias="X-CW-Eval-Secret"),
+):
+    """Bake-off only: override Gemini model when secret matches Cloud Run env."""
+    expected = os.getenv("CW_EVAL_MODEL_SECRET") or ""
+    if not expected or not x_cw_eval_model:
+        return None
+    if x_cw_eval_secret != expected:
+        raise HTTPException(403, "invalid X-CW-Eval-Secret")
+    return x_cw_eval_model.strip()
+
+
 @app.post("/api/alerts/{txn_id}/investigate")
-def investigate(txn_id: str, body: InvestigateRequest | None = None, auth: AuthContext = Depends(require("investigate"))):
+def investigate(
+    txn_id: str,
+    body: InvestigateRequest | None = None,
+    auth: AuthContext = Depends(require("investigate")),
+    eval_model: str | None = Depends(_eval_model_token),
+):
     body = body or InvestigateRequest()
     con = connect()
     txn = con.execute(
@@ -343,10 +362,14 @@ def investigate(txn_id: str, body: InvestigateRequest | None = None, auth: AuthC
         if cached and body.mode == "auto":
             return {"verdict": cached, "cached": True, "dag": None, "evidence": None}
 
+    token = agent.push_model_override(eval_model) if eval_model else None
     try:
         result = agent.investigate(txn_id, mode=body.mode)
     except Exception as e:
         raise HTTPException(500, f"Investigation failed: {e}") from e
+    finally:
+        if token is not None:
+            agent.reset_model_override(token)
     result["document_verification"] = multimodal_sof.latest_verification(txn_id)
     return {**result, "cached": False}
 
@@ -477,7 +500,21 @@ def export_case_report(txn_id: str, auth: AuthContext = Depends(require("audit:c
     events = audit.list_for_case(txn_id)
     sender = agent.get_account_context(txn["sender_id"])
     receiver = agent.get_account_context(txn["receiver_id"])
+    debate = agent_debate.get_cached_debate(txn_id) or {}
+    judge = (debate.get("judge") or {}) if debate else {}
     con.close()
+
+    debate_html = ""
+    if judge:
+        actions = "".join(f"<li>{a}</li>" for a in (judge.get("recommended_actions") or [])[:6])
+        debate_html = f"""
+  <h2>AI Debate (Judge brief)</h2>
+  <div class="box">
+    <p><b>Outcome:</b> {judge.get('plain_english_outcome') or '—'}</p>
+    <p><b>Directive:</b> {judge.get('required_remediation') or '—'}</p>
+    <p><b>Grounded:</b> {debate.get('grounded')} · rewrites {debate.get('grounding_rewrites', 0)}</p>
+    <ul>{actions}</ul>
+  </div>"""
 
     html = f"""<!doctype html>
 <html>
@@ -512,7 +549,10 @@ def export_case_report(txn_id: str, auth: AuthContext = Depends(require("audit:c
     <p><b>Risk Level:</b> {verdict.get('risk_level', 'Pending')} &nbsp;|&nbsp; <b>Score:</b> {verdict.get('risk_score', 'N/A')} &nbsp;|&nbsp; <b>Mode:</b> {verdict.get('mode', 'N/A')}</p>
     <p><b>Rationale:</b> {verdict.get('rationale', 'No verdict logged yet.')}</p>
     <p><b>Recommended Directive:</b> {verdict.get('recommended_action', 'N/A')}</p>
+    <p><b>Provenance:</b> {verdict.get('provenance', '—')} · model {verdict.get('gemini_model', '—')}</p>
   </div>
+
+  {debate_html}
 
   <h2>Analyst Dispositions & History</h2>
   <table>
@@ -580,11 +620,20 @@ def audit_recent(auth: AuthContext = Depends(require("audit:recent"))):
 
 
 @app.post("/api/alerts/{txn_id}/debate")
-def debate_alert(txn_id: str, use_llm: bool = True, auth: AuthContext = Depends(require("debate:run"))):
+def debate_alert(
+    txn_id: str,
+    use_llm: bool = True,
+    auth: AuthContext = Depends(require("debate:run")),
+    eval_model: str | None = Depends(_eval_model_token),
+):
+    token = agent.push_model_override(eval_model) if eval_model else None
     try:
         return agent_debate.run_debate(txn_id, use_llm=use_llm)
     except ValueError as e:
         raise HTTPException(404, str(e)) from e
+    finally:
+        if token is not None:
+            agent.reset_model_override(token)
 
 
 @app.post("/api/alerts/{txn_id}/verify-document")

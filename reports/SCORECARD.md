@@ -45,6 +45,8 @@ Canonical wrap: `reports/validation_report.json` run `5fcf08a2b0e3`. Dictionary:
 | Hallucination rate | Verified trap/gate 0.0; live ungrounded 0.0 n=100 (live model rate NOT_MEASURED) | `reports/hallucination.json` |
 | Unsupported / entity / numerical | Verified 0.0 after grounding gate | `reports/hallucination.json` |
 | Injection decision-change | Verified 0.0 (n=50) | `reports/injection_decision.json` |
+| Live GenAI bake-off (P/R/F1/FPR) | See `reports/genai_model_bakeoff.md` after `CW_LIVE_GENAI=1` run | `docs/GENAI_MODEL_BENCHMARK.md` |
+| Live GenAI hardening | See `reports/genai_live_hardening.json` after winner pin | `validation/genai/live_hardening.py` |
 
 ## DeepEval
 

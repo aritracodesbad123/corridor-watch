@@ -176,6 +176,12 @@ CREATE TABLE IF NOT EXISTS verdicts (
     created_at TEXT,
     mode TEXT
 );
+
+CREATE TABLE IF NOT EXISTS debates (
+    txn_id TEXT PRIMARY KEY,
+    payload TEXT,
+    created_at TEXT
+);
 """
 
 PLATFORM_SCHEMA = """

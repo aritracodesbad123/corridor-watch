@@ -233,7 +233,8 @@ def test_investigate_gemini_is_one_call(monkeypatch):
 
     out = agent.investigate("T-1", mode="gemini")
     assert out == {"ok": True}
-    assert seen == {"tool": 0, "grounded": 1}
+    # Force Gemini: short tool loop then grounded report (CR-031).
+    assert seen == {"tool": 1, "grounded": 1}
 
 
 def test_grounded_payload_omits_output_skeleton(monkeypatch):

@@ -86,7 +86,7 @@ def _extract_with_gemini(image_bytes: bytes, mime_type: str) -> dict:
     except Exception:
         part = types.Part(inline_data=types.Blob(data=image_bytes, mime_type=mime_type))
     resp = c.models.generate_content(
-        model=agent_mod.MODEL,
+        model=agent_mod.active_model(),
         contents=[MULTIMODAL_PROMPT, part],
         config=types.GenerateContentConfig(temperature=0.1),
     )
@@ -174,6 +174,18 @@ def verify_document(
         "vision_error": vision_error,
         "used_upload": bool(image_bytes),
     }
+    allowed = agent_mod.evidence_allowed_text(txn, json.dumps(extracted, default=str), match_note)
+    note, n = agent_mod.ground_plain_text(match_note, allowed)
+    if note:
+        result["verification_note"] = note
+    if isinstance(extracted.get("summary"), str):
+        summary, n2 = agent_mod.ground_plain_text(extracted["summary"], allowed)
+        n += n2
+        if summary:
+            extracted["summary"] = summary
+            result["extracted_document"] = extracted
+    result["grounded"] = True
+    result["grounding_rewrites"] = n
     _persist(txn_id, filename, mime_type, result)
     audit.log(txn_id, "doc_verify_complete", {"status": match_status, "filename": filename}, actor="multimodal_sof")
     return result

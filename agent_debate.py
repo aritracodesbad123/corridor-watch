@@ -124,7 +124,7 @@ def _gen_json(prompt: str, *, max_output_tokens: int, temperature: float) -> str
     if thinking is not None:
         kwargs["thinking_config"] = thinking
     resp = c.models.generate_content(
-        model=agent_mod.MODEL,
+        model=agent_mod.active_model(),
         contents=prompt,
         config=types.GenerateContentConfig(**kwargs),
     )
@@ -228,12 +228,93 @@ def run_debate(txn_id: str, use_llm: bool = True) -> dict[str, Any]:
             "requires_human_review": True,
             "scorecard": debate_scorecard(prosecution, defense, judge),
         }
+        result = _ground_debate_result(result, evidence, det_verdict)
         audit.log(txn_id, "debate_complete", {"judge_verdict": judge.get("final_verdict")}, actor="agent_debate")
         return result
 
     except Exception as e:
         audit.log(txn_id, "debate_error", {"error": str(e)}, actor="agent_debate")
         return _deterministic_debate(txn_id, evidence, det_verdict, note=f"LLM debate fallback: {e}")
+
+
+def _ground_debate_result(result: dict, evidence: dict, det_verdict: dict) -> dict:
+    allowed = agent_mod.evidence_allowed_text(evidence, json.dumps(det_verdict, default=str))
+    rewrites = 0
+    grounded = True
+
+    def _g(s: str) -> str:
+        nonlocal rewrites, grounded
+        out, n = agent_mod.ground_plain_text(s or "", allowed)
+        rewrites += n
+        if n and not out:
+            grounded = False
+        return out or (s if n == 0 else out)
+
+    def _gl(items: list) -> list:
+        nonlocal rewrites
+        out, n = agent_mod.ground_string_list(list(items or []), allowed)
+        rewrites += n
+        return out
+
+    p = result.get("prosecutor") or {}
+    d = result.get("defense") or {}
+    j = result.get("judge") or {}
+    for side, keys in (
+        (p, ("case_story", "prosecution_argument", "what_you_want_the_human_to_do")),
+        (d, ("case_story", "defense_argument", "what_you_want_the_human_to_do")),
+        (j, (
+            "plain_english_outcome", "verdict_summary", "key_decisive_factor",
+            "required_remediation",
+        )),
+    ):
+        for k in keys:
+            if k in side and isinstance(side.get(k), str):
+                side[k] = _g(side[k])
+    if "key_incriminating_evidence" in p:
+        p["key_incriminating_evidence"] = _gl(p.get("key_incriminating_evidence"))
+    if "key_mitigating_evidence" in d:
+        d["key_mitigating_evidence"] = _gl(d.get("key_mitigating_evidence"))
+    for k in ("points_for_prosecution", "points_for_defense", "recommended_actions"):
+        if k in j:
+            j[k] = _gl(j.get(k))
+    result["prosecutor"] = p
+    result["defense"] = d
+    result["judge"] = j
+    result["grounded"] = bool(grounded)
+    result["grounding_rewrites"] = rewrites
+    _persist_debate(result.get("txn_id") or "", result)
+    return result
+
+
+def _persist_debate(txn_id: str, result: dict) -> None:
+    from db import connect, upsert
+    con = connect()
+    try:
+        upsert(con, "debates", "txn_id", {
+            "txn_id": txn_id,
+            "payload": json.dumps(result, default=str),
+            "created_at": __import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        })
+        con.commit()
+    except Exception:
+        pass
+    finally:
+        con.close()
+
+
+def get_cached_debate(txn_id: str) -> dict | None:
+    from db import connect
+    con = connect()
+    try:
+        row = con.execute("SELECT payload FROM debates WHERE txn_id=?", (txn_id,)).fetchone()
+    finally:
+        con.close()
+    if not row:
+        return None
+    try:
+        return json.loads(row["payload"] if hasattr(row, "keys") else row[0])
+    except Exception:
+        return None
 
 
 def _deterministic_debate(txn_id: str, evidence: dict, det_verdict: dict, note: str = "") -> dict:
@@ -323,7 +404,7 @@ def _deterministic_debate(txn_id: str, evidence: dict, det_verdict: dict, note: 
             "If risk stays high, route hold/freeze/escalate to an FIU lead only.",
         ],
     }
-    return {
+    return _ground_debate_result({
         "txn_id": txn_id,
         "prosecutor": prosecution,
         "defense": defense,
@@ -332,7 +413,7 @@ def _deterministic_debate(txn_id: str, evidence: dict, det_verdict: dict, note: 
         "note": note,
         "requires_human_review": True,
         "scorecard": debate_scorecard(prosecution, defense, judge),
-    }
+    }, evidence, det_verdict)
 
 
 def debate_scorecard(prosecution: dict, defense: dict, judge: dict) -> dict:

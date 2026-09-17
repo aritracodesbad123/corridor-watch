@@ -32,10 +32,15 @@
 | **CR-028** | Business context + Dist F | Graph-only commercial context; DNA-family primary picking. Dist E pinned. Dist F seed 47 one-shot + eval-only FAMILY map. Never claim 5,000 TPS. | **Completed** | v1.19.0 |
 | **CR-029** | Plain-language verdicts & debate | Rewrite Gemini grounded/tool prompts, deterministic DAG rationale, debate briefs, and Verdict/Debate UI so non-AML managers can read outcomes and next steps; debate returns detailed case stories (not 2–3 bullets). | **Completed** | v1.20.0 |
 | **CR-030** | Debate latency | Parallel Prosecutor+Defense, thinking-off + JSON mime, compact evidence, tighter token caps — keep plain-language detail without the slow sequential 4k-token path. | **Completed** | v1.20.1 |
+| **CR-031** | GenAI judge hardening | Shared text grounding on Debate/SAR/SoF; Force Gemini tool-loop provenance; live 5-model bake-off with unknown-pattern P/R/F1/FPR (min FPR under recall); pin winner; debate→export; demo spine. | **Completed** | v1.21.0 |
 
 ---
 
 ## Detailed Change Request Specifications
+
+### CR-031: GenAI judge hardening
+- **Modules**: `agent.py`, `agent_debate.py`, `sar_generator.py`, `multimodal_sof.py`, `phase2_sof.py`, `main.py`, `static/index.html`, `validation/genai/benchmark_models.py`, `docs/GENAI_MODEL_BENCHMARK.md`
+- **Capability**: Ground free-text GenAI surfaces; Force Gemini shows tool provenance; live Cloud Run bake-off across five Gemini models with Precision/Recall/F1/FPR on unknown-pattern holdout; production model pinned to bake-off winner; debate brief in case export.
 
 ### CR-030: Debate latency
 - **Module**: `agent_debate.py`
