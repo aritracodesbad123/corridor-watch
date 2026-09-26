@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
-# Raise Cloud SQL off db-f1-micro. Causes a restart and brief downtime.
+# Keep Cloud SQL on the shared-core tier that fits the remaining credits.
+# A load test can override: CW_SQL_TIER=db-custom-1-3840
+# Causes a restart and brief downtime.
 # Usage: ./scripts/scale_cloud_sql.sh [PROJECT_ID] [REGION]
 set -euo pipefail
 
 PROJECT_ID="${1:-${GOOGLE_CLOUD_PROJECT:-corridor-watch-508420}}"
 INSTANCE="${INSTANCE_NAME:-corridor-watch-pg}"
-# 2 vCPU / 7.5 GiB. Default max_connections is ~200 — enough for
-# 10 Cloud Run replicas × (pool 8 + overflow 4).
-CPU="${CW_SQL_CPU:-2}"
-MEMORY="${CW_SQL_MEMORY:-7680MB}"
+TIER="${CW_SQL_TIER:-db-f1-micro}"
 
-echo "Patching $INSTANCE to ${CPU} vCPU / ${MEMORY} (restart required)…"
+echo "Patching $INSTANCE to ${TIER} (restart required)…"
 gcloud sql instances patch "$INSTANCE" \
   --project "$PROJECT_ID" \
-  --cpu "$CPU" \
-  --memory "$MEMORY" \
+  --tier "$TIER" \
   --activation-policy=ALWAYS \
   --quiet
 

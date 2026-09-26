@@ -175,7 +175,10 @@ def sof_check(txn_id: str, explanation: str | None = None, use_llm: bool = True)
         resp = c.models.generate_content(
             model=agent_mod.active_model(),
             contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.2),
+            config=types.GenerateContentConfig(
+                temperature=0.2,
+                thinking_config=agent_mod._thinking_off(),
+            ),
         )
         text = (resp.text or "").strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         refined = json.loads(text)

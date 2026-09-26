@@ -48,7 +48,7 @@ ALLOWED_EVIDENCE_REFS = {
 }
 
 
-MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
+MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 _client = None
 _LAST_USAGE: dict[str, Any] = {}
 _FLASH_IN_PER_TOKEN = 0.30 / 1_000_000
@@ -348,31 +348,47 @@ def _call_with_retry(c, **kwargs):
             raise
 
 
+# Vertex rejects thinking_budget=0 on several 2.5 models (Pro always; Flash on some
+# Vertex endpoints). Floor at 128 — never emit 0 on the wire.
+THINKING_BUDGET_FLOOR = 128
+
+
 def _thinking_off():
-    """Turn thinking as far down as this SDK/model allows."""
+    """Lowest legal thinking config for the active model. Never sends budget=0."""
     from google.genai import types
-    fields = getattr(types.ThinkingConfig, "model_fields", {})
+    fields = getattr(types.ThinkingConfig, "model_fields", None) or getattr(
+        types.ThinkingConfig, "__fields__", {}
+    )
     kwargs: dict[str, Any] = {}
     m = str(active_model()).lower()
-    # 2.5-flash accepts thinking_budget=0; 2.5-pro rejects 0.
-    # 3.6 accepts MINIMAL; 3.8 / 3.1-pro reject MINIMAL → use LOW.
     if m.startswith("gemini-3"):
         if "thinking_level" in fields:
             kwargs["thinking_level"] = types.ThinkingLevel.LOW
-    elif "pro" in m:
-        if "thinking_budget" in fields:
-            kwargs["thinking_budget"] = 128
     else:
+        # 2.5-flash / 2.5-pro / flash-lite: positive budget only.
         if "thinking_budget" in fields:
-            kwargs["thinking_budget"] = 0
+            kwargs["thinking_budget"] = THINKING_BUDGET_FLOOR
     if "include_thoughts" in fields:
         kwargs["include_thoughts"] = False
     if not kwargs:
-        return None
+        # Field probe failed — still force a safe budget so Vertex never sees 0.
+        try:
+            return types.ThinkingConfig(
+                thinking_budget=THINKING_BUDGET_FLOOR,
+                include_thoughts=False,
+            )
+        except Exception:
+            return None
+    # Harden: never allow an accidental 0 through.
+    if kwargs.get("thinking_budget") is not None and int(kwargs["thinking_budget"]) <= 0:
+        kwargs["thinking_budget"] = THINKING_BUDGET_FLOOR
     try:
         return types.ThinkingConfig(**kwargs)
     except Exception:
-        return None
+        try:
+            return types.ThinkingConfig(thinking_budget=THINKING_BUDGET_FLOOR)
+        except Exception:
+            return None
 
 
 def _generate_content(
@@ -398,9 +414,12 @@ def _generate_content(
     config_kwargs.setdefault("max_output_tokens", max_output_tokens)
     config_kwargs.setdefault("temperature", 0)
     config_kwargs.setdefault("response_mime_type", "application/json")
+    # Always overwrite — never let a caller (or stale default) send thinking_budget=0.
     thinking = _thinking_off()
     if thinking is not None:
-        config_kwargs.setdefault("thinking_config", thinking)
+        config_kwargs["thinking_config"] = thinking
+    else:
+        config_kwargs.pop("thinking_config", None)
     last = None
     for delay in (0, 1, 2, 4):
         if delay:
@@ -415,8 +434,13 @@ def _generate_content(
             return response
         except Exception as exc:
             last = exc
-            msg = str(exc).upper()
-            if "429" in msg or "RESOURCE_EXHAUSTED" in msg or "UNAVAILABLE" in msg:
+            msg = str(exc)
+            msg_u = msg.upper()
+            # If anything still injected budget=0, retry once with no thinking_config.
+            if "thinking_budget" in msg.lower() and "0" in msg and "thinking_config" in config_kwargs:
+                config_kwargs.pop("thinking_config", None)
+                continue
+            if "429" in msg_u or "RESOURCE_EXHAUSTED" in msg_u or "UNAVAILABLE" in msg_u:
                 continue
             raise
     raise last
@@ -1022,23 +1046,7 @@ def investigate(txn_id: str, mode: str = "auto") -> dict[str, Any]:
                     and _has_interactions(client())
                     else "gemini_prefetch"
                 )
-                # Collect recent tool_call audit rows for this case.
-                try:
-                    rows = audit.list_for_case(txn_id)
-                    tool_calls = []
-                    for r in rows:
-                        if r.get("event_type") != "tool_call":
-                            continue
-                        payload = r.get("payload")
-                        if isinstance(payload, str):
-                            try:
-                                payload = json.loads(payload)
-                            except Exception:
-                                payload = {}
-                        tool_calls.append({"tool": (payload or {}).get("tool"), "ts": r.get("ts")})
-                    tool_calls = tool_calls[-12:]
-                except Exception:
-                    tool_calls = []
+                tool_calls = _recent_tool_calls(txn_id)
             except Exception as tool_exc:
                 audit.log(txn_id, "gemini_tool_loop_error", {"error": str(tool_exc)}, actor="gemini")
                 provenance = "gemini_prefetch"
@@ -1141,6 +1149,28 @@ def _cache_verdict(txn_id: str, verdict: dict, mode: str) -> None:
     audit.log(txn_id, "verdict_cached", {"mode": mode, "risk_level": verdict.get("risk_level")}, actor="system")
 
 
+def _recent_tool_calls(txn_id: str) -> list[dict]:
+    """Named investigation lookups from the audit log. The column is `detail`, not `payload`."""
+    seen: list[str] = []
+    try:
+        rows = audit.list_for_case(txn_id)
+    except Exception:
+        return []
+    for r in rows:
+        if r.get("event_type") != "tool_call":
+            continue
+        payload = r.get("detail")
+        if isinstance(payload, str):
+            try:
+                payload = json.loads(payload)
+            except Exception:
+                continue
+        name = payload.get("tool") if isinstance(payload, dict) else None
+        if name and name not in seen:
+            seen.append(name)
+    return [{"tool": name} for name in seen[:8]]
+
+
 def get_cached_verdict(txn_id: str) -> dict | None:
     con = connect()
     row = con.execute("SELECT verdict, mode, created_at FROM verdicts WHERE txn_id=?", (txn_id,)).fetchone()
@@ -1148,6 +1178,10 @@ def get_cached_verdict(txn_id: str) -> dict | None:
     if not row:
         return None
     data = json.loads(row["verdict"])
+    stored = data.get("tool_calls")
+    # Older caches stored one blank entry per call (`payload` was the wrong column).
+    if isinstance(stored, list) and stored and not any(isinstance(t, dict) and t.get("tool") for t in stored):
+        data["tool_calls"] = _recent_tool_calls(txn_id)
     data["_cached_at"] = row["created_at"]
     data["_cached_mode"] = row["mode"]
     return data

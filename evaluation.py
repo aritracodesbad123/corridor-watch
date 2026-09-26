@@ -527,6 +527,12 @@ def load_benchmark(kind: str) -> dict | None:
 def scorecard() -> dict:
     from graph.corridor import investigation_compression
     from pathlib import Path
+    import time as _time
+
+    now = _time.time()
+    cached = getattr(scorecard, "_cache", None)
+    if cached and now - cached[0] < 60:
+        return cached[1]
 
     detection = load_benchmark("detection")
     ingest = load_benchmark("ingest")
@@ -561,7 +567,7 @@ def scorecard() -> dict:
     if decisions["total"]:
         fp_rate = round(decisions["clear"] / decisions["total"], 4)
     metrics = (detection or {}).get("metrics") or {}
-    return {
+    out = {
         "detection": detection,
         "ingest": ingest,
         "investigation_compression": compression,
@@ -583,6 +589,8 @@ def scorecard() -> dict:
             "time_to_case_ready": None,
         },
     }
+    scorecard._cache = (now, out)  # type: ignore[attr-defined]
+    return out
 
 
 def benchmark_summary() -> str:

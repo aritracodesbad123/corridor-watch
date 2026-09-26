@@ -88,7 +88,10 @@ def _extract_with_gemini(image_bytes: bytes, mime_type: str) -> dict:
     resp = c.models.generate_content(
         model=agent_mod.active_model(),
         contents=[MULTIMODAL_PROMPT, part],
-        config=types.GenerateContentConfig(temperature=0.1),
+        config=types.GenerateContentConfig(
+            temperature=0.1,
+            thinking_config=agent_mod._thinking_off(),
+        ),
     )
     parsed = _safe_parse(getattr(resp, "text", None) or "")
     if not parsed:

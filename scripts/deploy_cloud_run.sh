@@ -27,6 +27,12 @@ fi
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Primary console is the React app, built in the image.
+if [[ ! -f web/package.json ]]; then
+  echo "Missing web/package.json" >&2
+  exit 1
+fi
+
 gcloud config set project "$PROJECT_ID"
 gcloud config set run/region "$REGION"
 
@@ -112,13 +118,13 @@ if [[ -n "${CW_PII_HMAC_KEY:-}" ]]; then
   SECRET_FLAGS="${SECRET_FLAGS},CW_PII_HMAC_KEY=${PII_SECRET}:latest"
 fi
 
-# Sized for Cloud SQL custom-2-7680 (~200 connections).
-# 10 replicas × (pool 8 + overflow 4) = 120 connections.
-CPU="${CW_CPU:-2}"
-MEMORY="${CW_MEMORY:-2Gi}"
-MIN_INSTANCES="${CW_MIN_INSTANCES:-2}"
-MAX_INSTANCES="${CW_MAX_INSTANCES:-10}"
-CONCURRENCY="${CW_CONCURRENCY:-16}"
+# Idle demo shape. CPU is billed only while a request is in flight.
+# A benchmark run can raise these: CW_MIN_INSTANCES=1 CW_CPU=2 CW_MEMORY=2Gi
+CPU="${CW_CPU:-1}"
+MEMORY="${CW_MEMORY:-1Gi}"
+MIN_INSTANCES="${CW_MIN_INSTANCES:-0}"
+MAX_INSTANCES="${CW_MAX_INSTANCES:-1}"
+CONCURRENCY="${CW_CONCURRENCY:-80}"
 echo "Deploying $SERVICE to Cloud Run ($REGION) cpu=${CPU} mem=${MEMORY} min=${MIN_INSTANCES} max=${MAX_INSTANCES} concurrency=${CONCURRENCY}…"
 gcloud run deploy "$SERVICE" \
   --source "$ROOT" \
@@ -131,8 +137,8 @@ gcloud run deploy "$SERVICE" \
   --min-instances "$MIN_INSTANCES" \
   --max-instances "$MAX_INSTANCES" \
   --concurrency "$CONCURRENCY" \
-  --no-cpu-throttling \
-  --set-env-vars "ENVIRONMENT=gcp,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},REGION=${REGION},GEMINI_BACKEND=vertex,VERTEX_LOCATION=global,GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-pro},CW_EVAL_MODEL_SECRET=${CW_EVAL_MODEL_SECRET:-},TRANSACTION_TOPIC=corridor-transactions,INVESTIGATION_TOPIC=corridor-investigations,PUBSUB_PUSH_SUBSCRIPTION=corridor-transactions-push,CW_PG_POOL_MAX=${CW_PG_POOL_MAX:-8},CW_PG_OVERFLOW=${CW_PG_OVERFLOW:-4},CW_INGEST_SLOTS=${CW_INGEST_SLOTS:-8},CW_SKIP_INVESTIGATION_NOTIFY=${CW_SKIP_INVESTIGATION_NOTIFY:-true}" \
+  --cpu-throttling \
+  --set-env-vars "ENVIRONMENT=gcp,GOOGLE_CLOUD_PROJECT=${PROJECT_ID},REGION=${REGION},GEMINI_BACKEND=vertex,VERTEX_LOCATION=global,GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.5-flash},CW_EVAL_MODEL_SECRET=${CW_EVAL_MODEL_SECRET:-},TRANSACTION_TOPIC=corridor-transactions,INVESTIGATION_TOPIC=corridor-investigations,PUBSUB_PUSH_SUBSCRIPTION=corridor-transactions-push,CW_PG_POOL_MAX=${CW_PG_POOL_MAX:-2},CW_PG_OVERFLOW=${CW_PG_OVERFLOW:-1},CW_INGEST_SLOTS=${CW_INGEST_SLOTS:-2},CW_SKIP_INVESTIGATION_NOTIFY=${CW_SKIP_INVESTIGATION_NOTIFY:-true}" \
   --set-secrets "$SECRET_FLAGS" \
   "${CLOUDSQL_FLAGS[@]}"
 

@@ -183,13 +183,15 @@ def test_rbac_blocks_privileged_endpoint():
 
 def test_thinking_off_sets_budget_zero(monkeypatch):
     import agent
-    from agent import _thinking_off
+    from agent import THINKING_BUDGET_FLOOR, _thinking_off
 
+    # Vertex rejects thinking_budget=0 on several 2.5 models; floor is THINKING_BUDGET_FLOOR.
     monkeypatch.setattr(agent, "MODEL", "gemini-2.5-flash")
     cfg = _thinking_off()
     assert cfg is not None
     assert cfg.include_thoughts is False
-    assert cfg.thinking_budget == 0
+    assert cfg.thinking_budget == THINKING_BUDGET_FLOOR
+    assert cfg.thinking_budget != 0
     unset = cfg.model_dump(exclude_unset=True) if hasattr(cfg, "model_dump") else {}
     assert "thinking_level" not in unset
 
@@ -197,7 +199,7 @@ def test_thinking_off_sets_budget_zero(monkeypatch):
     tok = agent.push_model_override("gemini-2.5-pro")
     try:
         cfg_pro = _thinking_off()
-        assert cfg_pro.thinking_budget == 128
+        assert cfg_pro.thinking_budget == THINKING_BUDGET_FLOOR
     finally:
         agent.reset_model_override(tok)
 
@@ -313,3 +315,32 @@ def test_rbac_uses_server_identity_for_decisions():
     )
     assert response.status_code == 200
     assert response.json()["analyst_id"] == "lead_real"
+
+
+def test_tool_calls_read_audit_detail_not_blank(tmp_path, monkeypatch):
+    import audit
+    import db
+    import agent
+
+    monkeypatch.setattr(db, "DB_PATH", tmp_path / "tools.db")
+    audit.log("CW-MID-02", "tool_call", {"tool": "get_network_neighborhood"}, actor="gemini")
+    audit.log("CW-MID-02", "tool_call", {"tool": "get_account_context"}, actor="gemini")
+    audit.log("CW-MID-02", "tool_call", {"tool": "get_account_context"}, actor="gemini")
+    calls = agent._recent_tool_calls("CW-MID-02")
+    assert [c["tool"] for c in calls] == ["get_network_neighborhood", "get_account_context"]
+
+
+def test_root_serves_react_and_legacy_path_redirects(tmp_path, monkeypatch):
+    import main
+
+    index = tmp_path / "index.html"
+    index.write_text("<div id=\"root\">react-console</div>", encoding="utf-8")
+    monkeypatch.setattr(main, "_WEB_INDEX", index)
+    monkeypatch.setattr(main, "_WEB_DIST", tmp_path)
+    client = TestClient(main.app)
+    page = client.get("/")
+    assert page.status_code == 200
+    assert "react-console" in page.text
+    moved = client.get("/react/investigate/CW-MID-02", follow_redirects=False)
+    assert moved.status_code == 307
+    assert moved.headers["location"] == "/investigate/CW-MID-02"

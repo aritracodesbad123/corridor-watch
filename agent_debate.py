@@ -15,71 +15,61 @@ import agent as agent_mod
 from investigation_dag import run_dag
 
 # Keep briefs readable but bounded so Vertex finishes faster than the 8–12 sentence / 4k-token path.
-_SIDE_TOKENS = 1536
-_JUDGE_TOKENS = 2048
+_SIDE_TOKENS = 768
+_JUDGE_TOKENS = 1024
 
-PROSECUTOR_PROMPT = """You are arguing that this payment should be treated as HIGH RISK and slowed down for human review.
-Write for a smart manager who is NOT an AML specialist. Prefer plain English. Define jargon in-line
-(e.g. "pass-through — money in and out almost immediately").
-
-Use ONLY the evidence below. Do not invent accounts, amounts, devices, or counterparties.
-Be concise but concrete — denser than a few bullets, not a long essay.
+PROSECUTOR_PROMPT = """Argue HIGH RISK / human review. Plain English for a non-AML manager.
+Use ONLY the evidence. Do not invent facts. Short answers.
 
 CASE EVIDENCE:
 {evidence}
 
-Return JSON only (no markdown):
+Return JSON only:
 {{
-  "case_story": "3-4 plain-English sentences on what the money appears to have done",
-  "key_incriminating_evidence": ["4-6 specific facts, each one clear sentence"],
-  "prosecution_argument": "5-7 sentences covering money movement, why it looks like misuse vs ordinary trade, and the risk a human should take seriously",
-  "what_you_want_the_human_to_do": "1-2 plain-English actions",
+  "case_story": "2 plain sentences on what the money appears to have done",
+  "key_incriminating_evidence": ["3 short factual bullets"],
+  "prosecution_argument": "3-4 sentences on why this looks like misuse",
+  "what_you_want_the_human_to_do": "1 plain action",
   "recommended_severity": "high" | "medium"
 }}"""
 
-DEFENSE_PROMPT = """You are arguing that this payment may still be LEGITIMATE business or family remittance.
-Write for a smart manager who is NOT an AML specialist. Prefer plain English. Define jargon in-line.
-
-Use ONLY the evidence below. Do not invent accounts, amounts, devices, or counterparties.
-Acknowledge weak spots. Be concise but concrete.
+DEFENSE_PROMPT = """Argue the payment may still be legitimate. Plain English for a non-AML manager.
+Use ONLY the evidence. Do not invent facts. Short answers.
 
 CASE EVIDENCE:
 {evidence}
 
-Return JSON only (no markdown):
+Return JSON only:
 {{
-  "case_story": "3-4 plain-English sentences with an innocent reading of the same facts",
-  "key_mitigating_evidence": ["4-6 specific facts supporting legitimacy, each one clear sentence"],
-  "defense_argument": "5-7 sentences covering why this can be normal trade, which red flags are weak, and what to verify before treating it as crime",
-  "what_you_want_the_human_to_do": "1-2 plain-English checks before escalating",
+  "case_story": "2 plain sentences with an innocent reading",
+  "key_mitigating_evidence": ["3 short factual bullets"],
+  "defense_argument": "3-4 sentences on why this can be normal trade",
+  "what_you_want_the_human_to_do": "1 plain check before escalating",
   "perceived_false_positive_risk": "high" | "medium" | "low"
 }}"""
 
-JUDGE_PROMPT = """You are an impartial senior reviewer deciding what a human team should do next.
-You recommend only — you do not file a SAR or freeze accounts.
+JUDGE_PROMPT = """Impartial reviewer. Recommend next human step only. Plain English. No invented facts.
 
-Plain English for non-AML managers. Define jargon in-line. Balance both sides. Do not invent facts.
-
-PROSECUTOR CASE:
+PROSECUTOR:
 {prosecutor}
 
-DEFENSE CASE:
+DEFENSE:
 {defense}
 
-CASE EVIDENCE:
+EVIDENCE:
 {evidence}
 
-Return JSON only (no markdown):
+Return JSON only:
 {{
   "final_verdict": "high" | "medium" | "low",
   "confidence_score": <0-100 integer>,
-  "plain_english_outcome": "2 sentences a senior can read aloud: what this case is, and what we recommend",
-  "verdict_summary": "4-6 sentences covering strongest points on each side, what is unknown, and why you landed here",
-  "points_for_prosecution": ["3-4 plain bullets"],
-  "points_for_defense": ["3-4 plain bullets"],
-  "key_decisive_factor": "one plain sentence naming the fact that tipped the decision",
-  "required_remediation": "plain-English directive (who does what next)",
-  "recommended_actions": ["3-4 concrete next steps in everyday language"]
+  "plain_english_outcome": "2 sentences: what this is + what we recommend",
+  "verdict_summary": "3-4 sentences balancing both sides",
+  "points_for_prosecution": ["2-3 bullets"],
+  "points_for_defense": ["2-3 bullets"],
+  "key_decisive_factor": "one sentence",
+  "required_remediation": "who does what next",
+  "recommended_actions": ["2-3 next steps"]
 }}"""
 
 # Keys that matter for debate; drop bulky session/neighborhood dumps.
@@ -111,10 +101,9 @@ def _compact_evidence(evidence: dict) -> dict:
 
 
 def _gen_json(prompt: str, *, max_output_tokens: int, temperature: float) -> str:
-    """One Gemini call via the shared path (thinking off + JSON mime)."""
-    c = agent_mod.client()
-    # ponytail: reuse agent._generate_content; add temp kw when that helper grows a temp arg
+    """One Gemini call with thinking_budget floor (never 0)."""
     from google.genai import types
+    c = agent_mod.client()
     thinking = agent_mod._thinking_off()
     kwargs: dict[str, Any] = {
         "max_output_tokens": max_output_tokens,
@@ -181,13 +170,13 @@ def run_debate(txn_id: str, use_llm: bool = True) -> dict[str, Any]:
                 _gen_json,
                 PROSECUTOR_PROMPT.format(evidence=ev_str),
                 max_output_tokens=_SIDE_TOKENS,
-                temperature=0.3,
+                temperature=0.1,
             )
             d_fut = pool.submit(
                 _gen_json,
                 DEFENSE_PROMPT.format(evidence=ev_str),
                 max_output_tokens=_SIDE_TOKENS,
-                temperature=0.3,
+                temperature=0.1,
             )
             prosecution = _safe_parse(p_fut.result(), p_fallback)
             defense = _safe_parse(d_fut.result(), d_fallback)
@@ -200,7 +189,7 @@ def run_debate(txn_id: str, use_llm: bool = True) -> dict[str, Any]:
                     evidence=ev_str,
                 ),
                 max_output_tokens=_JUDGE_TOKENS,
-                temperature=0.2,
+                temperature=0.1,
             ),
             {
                 "final_verdict": det_verdict.get("risk_level", "medium"),

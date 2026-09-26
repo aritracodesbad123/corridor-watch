@@ -120,7 +120,10 @@ def generate_sar(
         resp = c.models.generate_content(
             model=agent_mod.active_model(),
             contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.2),
+            config=types.GenerateContentConfig(
+                temperature=0.2,
+                thinking_config=agent_mod._thinking_off(),
+            ),
         )
         data = _safe_parse(resp.text)
         data["txn_id"] = txn_id

@@ -62,7 +62,10 @@ def _llm_novel_patterns(n: int = 2) -> list[dict]:
         resp = c.models.generate_content(
             model=agent_mod.active_model(),
             contents=prompt,
-            config=types.GenerateContentConfig(temperature=0.8),
+            config=types.GenerateContentConfig(
+                temperature=0.8,
+                thinking_config=agent_mod._thinking_off(),
+            ),
         )
         text = (resp.text or "").strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip()
         data = json.loads(text)

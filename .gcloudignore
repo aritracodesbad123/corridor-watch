@@ -10,3 +10,16 @@ agent-transcripts/
 *.md
 !README.md
 !docs/CLOUD_RUN.md
+web/node_modules/
+web/dist/
+graphify-out/
+brag-output/
+brag-output-*/
+*.mp4
+!static/login-demo.mp4
+*.mp3
+*.wav
+*.ogg
+docs/demo-assets/
+.gcloud-tmp/
+presentation/node_modules/

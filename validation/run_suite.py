@@ -139,7 +139,7 @@ def main(argv: list[str] | None = None) -> int:
         },
     }
     if not _frozen_pack():
-        (REPORTS / "validation_report.json").write_text(json.dumps(report, indent=2, default=str))
+    (REPORTS / "validation_report.json").write_text(json.dumps(report, indent=2, default=str))
         _write_markdown(report, gates)
         _write_scorecard(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e, dist_f)
         _write_final_report(report, gates, gem, dr, hall, inj, net, inv, hold, races, hn_net or hn, dist_b, deepeval, net_v2, tput_v2, dist_b_before, dist_c, dist_d, dist_e, dist_f)

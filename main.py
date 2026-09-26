@@ -7,9 +7,11 @@ import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException, Header, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator, ConfigDict
 from auth import (
@@ -195,6 +197,7 @@ def health():
         "gemini": agent.gemini_available(),
         "gemini_backend": agent.gemini_backend(),
         "gemini_model": agent.active_model(),
+        "thinking_budget_floor": agent.THINKING_BUDGET_FLOOR,
         "auth_mode": (
             "api_key" if os.getenv("CORRIDOR_WATCH_API_KEYS")
             else "oidc" if oidc_enabled()
@@ -846,7 +849,8 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
     except DatabaseBusy:
         snap = METRICS.snapshot()
         settings = get_settings()
-        return {
+        stream = _stream_status()
+        payload = {
             "live_tps": snap["live_tps"],
             "session_tps": snap.get("session_tps"),
             "uptime_seconds": snap["uptime_seconds"],
@@ -860,14 +864,17 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
             "environment": settings.environment,
             "database": settings.dialect,
             "gemini": agent.gemini_available(),
-            "live_stream": _stream_status(),
+            "live_stream": stream,
             "workflow": {},
             "investigation_path": "pubsub_transactions → Cloud Run → PostgreSQL investigation_queue",
             "light": True,
+            "scale_evidence": _frozen_scale_evidence(),
             "observability_note": "database busy, retry",
         }
+        return _overlay_home_metrics(payload, snap, stream)
     snap = METRICS.snapshot()
     settings = get_settings()
+    stream = _stream_status()
     payload = {
         "live_tps": snap["live_tps"],
         "session_tps": snap.get("session_tps"),
@@ -887,12 +894,19 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
         "environment": settings.environment,
         "database": settings.dialect,
         "gemini": agent.gemini_available(),
-        "live_stream": _stream_status(),
+        "live_stream": stream,
         "workflow": wf,
         "investigation_path": "pubsub_transactions → Cloud Run → PostgreSQL investigation_queue",
         "light": light,
         "middle_bank": describe_middle_bank(),
+        "scale_evidence": _frozen_scale_evidence(),
     }
+    try:
+        payload["active_corridors"] = corridor_intelligence(limit=8)
+        payload["suspicious_networks"] = investigation_compression()
+    except Exception:
+        pass
+    payload = _overlay_home_metrics(payload, snap, stream)
     if light:
         return payload
     try:
@@ -926,7 +940,7 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
             "alerts": METRICS.evaluate_alerts(queue=q, pool=pool, pubsub_backlog=backlog),
             "db_pool": pool,
             "pattern_dna": library_snapshot(),
-            "scale_evidence": _scale_evidence(scorecard, snap, signals, wiring),
+            "scale_evidence": _frozen_scale_evidence(),
             "pubsub": wiring,
             "pubsub_backlog": backlog,
             "cloud_run_instances": signals.get("cloud_run_instances"),
@@ -938,31 +952,83 @@ def command_center(light: bool = False, auth: AuthContext = Depends(require("com
             "institutions": _institution_snapshot(),
             "scorecard": scorecard,
         })
+        payload = _overlay_home_metrics(payload, snap, stream)
     except Exception as exc:
         payload["light"] = True
         payload["observability_note"] = f"Full command snapshot unavailable: {exc}"
     return payload
 
 
-def _scale_evidence(scorecard: dict, snap: dict, signals: dict, wiring: dict) -> dict:
-    ingest = (scorecard or {}).get("ingest") or {}
-    measured = ingest.get("achieved_tps")
+def _ledger_recent_ingest(window_s: float = 60.0) -> tuple[float, int]:
+    """Cross-replica ingest rate from shared Postgres (Cloud Run METRICS are per-instance)."""
     try:
-        measured_n = float(measured) if measured is not None else None
-    except (TypeError, ValueError):
-        measured_n = None
+        from datetime import datetime, timedelta, timezone
+        con = connect()
+        since = (datetime.now(timezone.utc) - timedelta(seconds=window_s)).isoformat()
+        n = int(con.execute(
+            "SELECT COUNT(*) AS c FROM ingestion_events WHERE received_at>=?",
+            (since,),
+        ).fetchone()["c"])
+        con.close()
+        return round(n / max(window_s, 1.0), 2), n
+    except Exception:
+        return 0.0, 0
+
+
+def _overlay_home_metrics(payload: dict, snap: dict, stream: dict) -> dict:
+    """Prefer ledger/stream counts so Home works across Cloud Run replicas."""
+    counters = dict((snap.get("counters") or {}))
+    live = float(snap.get("live_tps") or 0)
+    ledger_tps, _ = _ledger_recent_ingest(60.0)
+    if ledger_tps > live:
+        live = ledger_tps
+    started = stream.get("started_at")
+    accepted = int(stream.get("accepted") or stream.get("ingested") or 0)
+    if stream.get("running") and started and accepted > 0:
+        try:
+            from datetime import datetime, timezone
+            st = datetime.fromisoformat(str(started).replace("Z", "+00:00"))
+            elapsed = max(1.0, (datetime.now(timezone.utc) - st).total_seconds())
+            live = max(live, round(accepted / elapsed, 2))
+        except Exception:
+            pass
+    if stream.get("ingested") is not None:
+        ing = int(stream["ingested"])
+        counters["transactions_received_total"] = max(int(counters.get("transactions_received_total") or 0), ing)
+        counters["transactions_processed_total"] = max(int(counters.get("transactions_processed_total") or 0), ing)
+    if stream.get("queued_for_investigation") is not None:
+        counters["investigations_started_total"] = max(
+            int(counters.get("investigations_started_total") or 0),
+            int(stream["queued_for_investigation"] or 0),
+        )
+    if stream.get("duplicates") is not None:
+        counters["transactions_duplicate_total"] = max(
+            int(counters.get("transactions_duplicate_total") or 0),
+            int(stream.get("duplicates") or 0),
+        )
+    payload["live_tps"] = live
+    payload["ingestion"] = counters
+    payload["metrics_source"] = "ledger" if (stream.get("count_source") == "ledger" or ledger_tps > 0) else "instance"
+    return payload
+
+
+def _frozen_scale_evidence() -> dict:
+    """SCORECARD ingest gates — no 5,000 TPS claim on Home."""
+    from pathlib import Path
+    path = Path(__file__).resolve().parent / "reports" / "scale" / "live_gates.json"
+    try:
+        gates = json.loads(path.read_text())
+    except Exception:
+        gates = {}
+    measured = gates.get("max_sustained_consume_tps_passing_gate")
     return {
-        "target_tps": 5000,
-        "target_status": "TARGET",
-        "measured_tps": measured_n,
-        "publisher_tps": ingest.get("achieved_publish_tps"),
-        "p95_ingest_ms": ingest.get("p95_ingest_ms") or (snap.get("ingestion_latency_ms") or {}).get("p95"),
-        "status": "target_met" if measured_n is not None and measured_n >= 5000 else "benchmark_in_progress",
-        "primary_bottleneck": "Cloud SQL write path",
-        "next_optimization": "Batched persistence; measure the pool matrix before adding replicas",
-        "pubsub_backlog": ingest.get("pubsub_backlog_end") if ingest else wiring.get("backlog"),
-        "cloud_run_instances": ingest.get("cloud_run_instances") or signals.get("cloud_run_instances"),
-        "note": "5,000 TPS is a synthetic target, not a measured result. Never display it as achieved.",
+        "target_tps": None,
+        "measured_tps": measured,
+        "publisher_tps": None,
+        "status": "measured" if measured is not None else "unknown",
+        "primary_bottleneck": "Cloud SQL write path at higher publish rates",
+        "note": "Sustained ingest under SLO: 814 TPS (1k gate pass). 2k gate measured 1148 TPS (miss).",
+        "gates": gates.get("runs") or [],
     }
 
 
@@ -1205,13 +1271,44 @@ def pubsub_push(body: dict, _: None = Depends(_require_ingest_token)):
     return ingest_transaction(event, message_id=message_id, source="pubsub")
 
 
+_WEB_DIST = Path(__file__).resolve().parent / "web" / "dist"
+_WEB_INDEX = _WEB_DIST / "index.html"
+_NO_CACHE = {"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache"}
+
+
+def _react_index():
+    if not _WEB_INDEX.is_file():
+        raise HTTPException(404, "React console not built")
+    return FileResponse(_WEB_INDEX, media_type="text/html", headers=_NO_CACHE)
+
+
 @app.get("/", include_in_schema=False)
 def console():
-    return FileResponse(
-        "static/index.html",
-        media_type="text/html",
-        headers={"Cache-Control": "no-store, max-age=0", "Pragma": "no-cache"},
-    )
+    return _react_index()
 
 
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+@app.get("/react", include_in_schema=False)
+@app.get("/react/{legacy_path:path}", include_in_schema=False)
+def console_react_redirect(legacy_path: str = ""):
+    return RedirectResponse("/" + legacy_path, status_code=307)
+
+
+if (_WEB_DIST / "assets").is_dir():
+    app.mount("/assets", StaticFiles(directory=str(_WEB_DIST / "assets")), name="web_assets")
+
+_static_dir = Path(__file__).resolve().parent / "static"
+if _static_dir.is_dir():
+    app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+
+
+@app.get("/{spa_path:path}", include_in_schema=False)
+def spa_fallback(spa_path: str):
+    """Client routes of the React console. API misses stay 404."""
+    if spa_path.startswith("api/") or spa_path == "api":
+        raise HTTPException(404, "not found")
+    if _WEB_DIST.is_dir():
+        dist_root = _WEB_DIST.resolve()
+        candidate = (_WEB_DIST / spa_path).resolve()
+        if candidate.is_relative_to(dist_root) and candidate.is_file():
+            return FileResponse(candidate)
+    return _react_index()
