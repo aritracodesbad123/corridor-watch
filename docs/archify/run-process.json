@@ -1,0 +1,87 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Corridor Watch case run",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "docs/archify/run-process.html",
+    "views": [
+      {
+        "id": "three-roles",
+        "label": "Who can do what",
+        "focus": ["analyst", "fiu", "mrm", "investigate", "decide", "confirm"],
+        "note": "All three roles can open an investigation. Only the FIU lead confirms a hold."
+      },
+      {
+        "id": "tool-calls",
+        "label": "Gemini tool calls",
+        "focus": ["dag", "account", "devices", "sessions", "network", "verdict"],
+        "note": "The DAG always runs. Gemini then calls the four evidence tools when a key is set."
+      },
+      {
+        "id": "analyst-hold",
+        "label": "Analyst hold is blocked",
+        "focus": ["decide", "confirm"],
+        "note": "An analyst monitor stands. Hold, escalate, and freeze go to the FIU lead."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "desk", "label": "Analyst" },
+    { "id": "lead", "label": "FIU lead" },
+    { "id": "model", "label": "MRM and Gemini tools" }
+  ],
+  "phases": [
+    { "id": "enter", "label": "Sign in", "fromCol": 0, "toCol": 1 },
+    { "id": "case", "label": "Investigate", "fromCol": 2, "toCol": 3, "variant": "emphasis" },
+    { "id": "judgment", "label": "Judgment", "fromCol": 4, "toCol": 5, "variant": "dashed" }
+  ],
+  "mainPath": ["analyst", "investigate", "dag", "verdict", "decide"],
+  "nodes": [
+    { "id": "analyst", "lane": "desk", "col": 0, "type": "external", "label": "Analyst", "sublabel": "monitor only" },
+    { "id": "investigate", "lane": "desk", "col": 2, "type": "backend", "label": "Investigate", "sublabel": "POST /investigate" },
+    { "id": "verdict", "lane": "desk", "col": 4, "type": "database", "label": "Verdict", "sublabel": "Cloud SQL" },
+    { "id": "decide", "lane": "desk", "col": 5, "type": "security", "label": "Monitor", "sublabel": "analyst decision" },
+    { "id": "fiu", "lane": "lead", "col": 0, "type": "security", "label": "FIU lead", "sublabel": "high-risk role" },
+    { "id": "dag", "lane": "lead", "col": 3, "type": "backend", "label": "Run DAG", "sublabel": "then Gemini" },
+    { "id": "confirm", "lane": "lead", "col": 5, "type": "security", "label": "Confirm hold", "sublabel": "FIU only" },
+    { "id": "mrm", "lane": "model", "col": 0, "type": "security", "label": "MRM auditor", "sublabel": "no disposition" },
+    { "id": "account", "lane": "model", "col": 2, "type": "cloud", "label": "Accounts", "sublabel": "account context" },
+    { "id": "devices", "lane": "model", "col": 3, "type": "cloud", "label": "Devices", "sublabel": "shared device" },
+    { "id": "sessions", "lane": "model", "col": 4, "type": "cloud", "label": "Sessions", "sublabel": "biometrics" },
+    { "id": "network", "lane": "model", "col": 5, "type": "cloud", "label": "Network", "sublabel": "neighborhood" }
+  ],
+  "edges": [
+    { "id": "analyst-opens", "from": "analyst", "to": "investigate", "label": "open case", "variant": "emphasis" },
+    { "id": "fiu-opens", "from": "fiu", "to": "investigate", "label": "open case" },
+    { "id": "mrm-reads", "from": "mrm", "to": "investigate", "label": "read only", "variant": "dashed", "role": "branch" },
+    { "id": "always-dag", "from": "investigate", "to": "dag", "label": "always", "variant": "emphasis" },
+    { "id": "tool-account", "from": "dag", "to": "account", "label": "tool call", "variant": "dashed", "role": "branch" },
+    { "id": "tool-devices", "from": "dag", "to": "devices", "label": "tool call", "variant": "dashed", "role": "branch" },
+    { "id": "tool-sessions", "from": "dag", "to": "sessions", "label": "tool call", "variant": "dashed", "role": "branch" },
+    { "id": "tool-network", "from": "dag", "to": "network", "label": "tool call", "variant": "dashed", "role": "branch" },
+    { "id": "store-verdict", "from": "dag", "to": "verdict", "label": "grounded", "variant": "emphasis" },
+    { "id": "show-decision", "from": "verdict", "to": "decide", "label": "recommend" },
+    { "id": "role-denied", "from": "decide", "to": "confirm", "label": "hold needs FIU", "variant": "security", "role": "error" }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Roles",
+      "items": [
+        "Analyst decisions stay at monitor",
+        "FIU lead confirms hold, escalate, and freeze",
+        "MRM auditor has no decision:write"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Tool loop",
+      "items": [
+        "Gemini chooses among the four tools; the order is not fixed",
+        "A missing key keeps the DAG verdict"
+      ]
+    }
+  ]
+}

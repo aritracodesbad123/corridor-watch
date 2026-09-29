@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Corridor Watch",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "output": "docs/archify/architecture.html",
+    "views": [
+      {
+        "id": "roles",
+        "label": "Three signed-in roles",
+        "focus": ["analyst", "fiu", "mrm", "console", "api"],
+        "note": "Analyst, FIU lead, and MRM auditor share the console. Only the FIU lead can confirm a high-risk hold."
+      },
+      {
+        "id": "tool-calls",
+        "label": "Gemini tool calls",
+        "focus": ["dag", "gemini", "account", "devices", "sessions", "network"],
+        "note": "After the DAG, Gemini may call four evidence tools. The calls are written to the audit log."
+      },
+      {
+        "id": "ledger",
+        "label": "Case store",
+        "focus": ["api", "sql", "network"],
+        "note": "Alerts, cached verdicts, and tool results stay in Cloud SQL."
+      }
+    ]
+  },
+  "layout": {
+    "mode": "grid",
+    "origin": [36, 40],
+    "cols": 4,
+    "gapX": 48,
+    "gapY": 36,
+    "cellW": 168,
+    "cellH": 72
+  },
+  "components": [
+    { "id": "analyst", "type": "external", "label": "Analyst", "sublabel": "monitor only", "row": 0, "col": 0 },
+    { "id": "fiu", "type": "security", "label": "FIU lead", "sublabel": "can hold", "row": 0, "col": 1 },
+    { "id": "mrm", "type": "security", "label": "MRM auditor", "sublabel": "no disposition", "row": 0, "col": 2 },
+    { "id": "console", "type": "frontend", "label": "Console", "sublabel": "React at /", "row": 1, "col": 1 },
+    { "id": "api", "type": "backend", "label": "FastAPI", "sublabel": "Cloud Run", "row": 1, "col": 2 },
+    { "id": "sql", "type": "database", "label": "Cloud SQL", "sublabel": "PostgreSQL", "row": 1, "col": 3 },
+    { "id": "dag", "type": "backend", "label": "Investigation DAG", "sublabel": "always runs", "row": 2, "col": 1 },
+    { "id": "gemini", "type": "cloud", "label": "Vertex Gemini", "sublabel": "tool loop", "row": 2, "col": 2 },
+    { "id": "sessions", "type": "backend", "label": "Login sessions", "sublabel": "biometrics", "row": 3, "col": 0 },
+    { "id": "devices", "type": "backend", "label": "Shared devices", "sublabel": "shared device", "row": 3, "col": 1 },
+    { "id": "account", "type": "backend", "label": "Account history", "sublabel": "account context", "row": 3, "col": 2 },
+    { "id": "network", "type": "backend", "label": "Corridor network", "sublabel": "neighborhood", "row": 3, "col": 3 }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "asia-southeast1",
+      "wraps": ["api", "sql", "dag", "gemini", "account", "devices", "sessions", "network"]
+    }
+  ],
+  "connections": [
+    { "id": "analyst-in", "from": "analyst", "to": "console", "label": "HTTPS", "variant": "emphasis" },
+    { "id": "fiu-in", "from": "fiu", "to": "console" },
+    { "id": "mrm-in", "from": "mrm", "to": "console" },
+    { "id": "api-calls", "from": "console", "to": "api", "variant": "emphasis" },
+    { "id": "read-ledger", "from": "api", "to": "sql", "label": "SQL", "variant": "emphasis" },
+    { "id": "start-case", "from": "api", "to": "dag" },
+    { "id": "ask-model", "from": "dag", "to": "gemini", "variant": "dashed" },
+    { "id": "call-account", "from": "gemini", "to": "account", "label": "tool calls", "variant": "dashed", "labelDy": 24 },
+    { "id": "account-devices", "from": "account", "to": "devices", "variant": "dashed" },
+    { "id": "devices-sessions", "from": "devices", "to": "sessions", "variant": "dashed" },
+    { "id": "account-network", "from": "account", "to": "network", "variant": "dashed" }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "Roles",
+      "items": [
+        "Analyst can monitor, and cannot hold, escalate, or freeze",
+        "FIU lead confirms high-risk actions",
+        "MRM auditor investigates and reads the audit, and does not record a disposition"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "Gemini tools",
+      "items": [
+        "get_account_context, get_shared_devices, get_session_biometrics, get_network_neighborhood",
+        "Each call is appended to the audit log, then the pack is grounded"
+      ]
+    }
+  ]
+}

@@ -10,6 +10,12 @@ Gemini is **Evidence → grounding gate → human**, not User → chatbot → an
 
 ## End-to-end architecture
 
+The interactive maps are [`docs/archify/architecture.html`](docs/archify/architecture.html) and [`docs/archify/run-process.html`](docs/archify/run-process.html). Open those files in a browser to pan, focus a role, and follow the Gemini tool calls. The views below are the same diagrams.
+
+![Corridor Watch system map: analyst, FIU lead, MRM auditor, FastAPI, Cloud SQL, the investigation DAG, and Gemini’s four evidence tools](docs/archify/architecture.visual-check.1440x900.light.png)
+
+![Corridor Watch case run: monitor, FIU confirm hold, MRM read-only, and the four Gemini tool calls](docs/archify/run-process.visual-check.1440x900.light.png)
+
 ```mermaid
 flowchart TD
   src[Transactions / Pub/Sub]
