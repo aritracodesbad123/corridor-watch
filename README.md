@@ -2,7 +2,7 @@
 
 > **The transaction is not the crime. The network is.**
 
-**Live demo:** [https://corridor-watch-6kmkxbsbwq-as.a.run.app](https://corridor-watch-6kmkxbsbwq-as.a.run.app) (Cloud Run, asia-southeast1)
+**Live demo:** [https://corridor-watch-836108471099.asia-southeast1.run.app/](https://corridor-watch-836108471099.asia-southeast1.run.app/) (Cloud Run, asia-southeast1). The console at `/` is the React app.
 
 Corridor Watch detects **suspicious transaction networks**, builds a deterministic evidence pack, investigates the graph, grounds Gemini on that evidence, requires a human for consequential actions, and turns confirmed cases into **Crime Pattern DNA** — institutional memory, not a one-off alert.
 
@@ -27,7 +27,7 @@ flowchart TD
   det[Deterministic detection]
   dag[Investigation DAG]
   evid[Evidence pack]
-  gem[Gemini copilot]
+  gem[Gemini copilot — optional]
   gate[Grounding gate]
   human[Human decision — FIU lead]
   dna[Crime Pattern DNA]
@@ -59,7 +59,7 @@ Investigation DAG
      ↓
 Evidence pack
      ↓
-Gemini copilot
+Gemini copilot  (skipped when no API key)
      ↓
 Grounding gate
      ↓
@@ -92,7 +92,7 @@ Canonical scorecard: [`reports/SCORECARD.md`](reports/SCORECARD.md). Judge brief
 | Dist E / Dist F detection recall | **1.0** on those frozen unseen families | Not “100% accuracy on all fraud” |
 | Dist B F1 | **1.0** (was 0.4118) | Seed 7, FPR 0 |
 | Dist G GenAI (unknown) | **P 1.0 / R 0.4688 / F1 0.6383 / FPR 0.0** | n=80, 48 benign; all 5 models tied on quality |
-| GenAI USD winner | **`gemini-2.5-flash` at $0.00201/case** | Dist G; agreement pack also selects flash |
+| GenAI USD winner | **`gemini-2.5-flash` at $0.002012/case** | Dist G; agreement pack also selects flash ($0.002032/case) |
 | Historical single-model agreement | **1.0, n=100**, p95 4.025 s, **$0.00143**/case | `gemini-2.5-flash` only — not the 5-model comparison |
 | DeepEval | **205 cases** | custom metrics |
 | Official Gemini Faithfulness | **n=10** | not 205 Gemini-judged cases |
@@ -151,11 +151,12 @@ pip install -r requirements.txt
 cp credentials.example.json credentials.json
 python data_gen.py
 python graph_features.py
-# optional: export GEMINI_API_KEY=...  (DAG works without it)
+cd web && npm ci && npm run build && cd ..
+# optional: export GEMINI_API_KEY=...  (DAG runs without it; Gemini tool calls do not)
 uvicorn main:app --reload --port 8080
 ```
 
-Open http://localhost:8080 — sign in as `fiu_lead` / `change-me-fiu` (from the example file).
+Open http://localhost:8080 — the React console. Sign in as `fiu_lead` / `change-me-fiu` (from the example file). The `web` build is what `/` serves.
 
 Demo path (3–5 min, one case): **Home (network lights up) → Investigations (graph + money flow) → deterministic evidence → Gemini on that evidence → grounding → confirm → export → Pattern DNA library.** Full script: [`docs/COMPETITION.md`](docs/COMPETITION.md).
 

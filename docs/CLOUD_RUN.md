@@ -10,9 +10,8 @@ Cloud Run service with Pub/Sub push ingest, Vertex Gemini, and Cloud SQL Postgre
 
 `DATABASE_URL` is stored in Secret Manager and mounted at runtime. The entrypoint seeds an empty database, then starts uvicorn.
 
-Default Cloud SQL is 2 vCPU / 7.5 GiB (`scripts/scale_cloud_sql.sh`). That is the ingest ceiling, not Cloud Run.
-Default Cloud Run deploy is `--cpu 2 --memory 2Gi --min-instances 2 --max-instances 10 --concurrency 16`.
-Each replica uses `CW_PG_POOL_MAX=8`, `CW_INGEST_SLOTS=8`. Ten replicas stay under ~200 SQL connections.
+The default deploy keeps cost down: Cloud SQL `db-f1-micro` (`scripts/scale_cloud_sql.sh`) and Cloud Run `--cpu 1 --memory 1Gi --min-instances 0 --max-instances 1 --concurrency 80`, with CPU charged only while a request is in flight. The pool defaults are `CW_PG_POOL_MAX=2` and `CW_INGEST_SLOTS=2`.
+The README’s 814 TPS result was measured on a larger shape (`db-custom-2-7680`, Cloud Run max 10). That shape is an override (`CW_SQL_TIER`, `CW_CPU`, `CW_MIN_INSTANCES`, `CW_MAX_INSTANCES`), not what `./scripts/deploy_cloud_run.sh` does now. The table below is an earlier, lower-rate run on that larger SQL tier.
 
 Override with `CW_CPU`, `CW_MEMORY`, `CW_MIN_INSTANCES`, `CW_MAX_INSTANCES`, `CW_CONCURRENCY`.
 

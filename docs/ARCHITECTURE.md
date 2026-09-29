@@ -57,7 +57,7 @@ If Gemini is down, screening and case creation continue.
 
 ## Analyst console
 
-`static/index.html` is a four-view workspace: Home, Corridor Explorer, Investigations, Pattern DNA.
+The console at `/` is the React app in `web/`. It has four views: Home, Corridor Explorer, Investigations, and Pattern DNA. `/react/...` redirects to the same routes.
 The Investigations layout is viewport-locked. The left queue scrolls on its own. The case pane scrolls horizontally so tabs, feature cards, and the money-flow DAG stay in frame. Corridor geography and the Explorer graph support zoom and pan.
 
 ## Human control
