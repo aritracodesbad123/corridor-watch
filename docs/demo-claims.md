@@ -16,8 +16,10 @@ Every claim the video may make must have **code + test**. Claims without both ar
 | 10 | Later alert with same fingerprint can match non-zero | `patterns.matcher.match_patterns` + seeded `CW-MID-03` | `tests/test_demo_day1.py::test_confirm_then_next_alert_matches` | PASS |
 | 11 | Structured brief schema (summary, unknown, next checks, evidence chips) | `investigations.schemas.InvestigationReport` | `tests/test_platform.py::test_grounded_report_schema` | PASS |
 | 12 | Model cannot execute hold/escalate/freeze from output alone | Decisions only via `/decision` + RBAC; model returns text/schema only | `test_high_risk_decision_still_requires_fiu_lead` | PASS |
-| 13 | Provenance states (prefetch / grounded / fallback / gate fail) | UI `CasePanels` + verdict `mode` / `grounded` | UI wired; **demo replay flag** pending Day-1 #2 | PARTIAL |
-| 14 | Model name shown in UI | `active_model()` → brief `model_version` | Label UI pending Day-1 #2 | PARTIAL |
+| 13 | Provenance states (prefetch / grounded / fallback / gate fail) | `agent.investigate` provenance + `CasePanels` | UI shows provenance; gate_fail via ungrounded path | PASS |
+| 14 | Model name shown in UI | `verdict.gemini_model` / `active_model()` | `CasePanels` “model …” label | PASS |
+| 16 | Demo replay vs live | `CW_DEMO_REPLAY=1` + seeded `verdicts` (`synthetic/demo_verdicts.py`) | `tests/test_demo_day1.py::test_demo_replay_verdicts_and_gate_fail_fixture` | PASS |
+| 17 | Gate-fail safety test fixture (invented owner) | `demo_verdicts._gate_fail_brief_for_mid03` → real `apply_grounding_gate` | same test; UI “Safety test” banner | PASS |
 | 15 | What-if / SAR exist as real features | `counterfactual.py`, `sar_generator.py`, API routes | Platform tests exist; **video may include only if shown live** | REAL — optional in script |
 
 ## Cut from script (not claimed until PARTIAL → PASS)

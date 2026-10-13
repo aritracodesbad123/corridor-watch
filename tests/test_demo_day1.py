@@ -121,3 +121,41 @@ def test_demo_seed_has_five_cases_three_typologies(isolated_db):
     assert len(ids) >= 5
     assert len(scenarios) >= 3
     assert "CW-MID-02" in ids and "CW-MID-03" in ids
+
+
+def test_demo_replay_verdicts_and_gate_fail_fixture(isolated_db, monkeypatch):
+    seed_middle_bank()
+    from synthetic.demo_verdicts import seed_demo_verdicts
+    from synthetic.showcase import seed_showcase
+
+    seed_showcase()
+    assert seed_demo_verdicts() >= 3
+
+    import agent
+
+    grounded = agent.get_cached_verdict("CW-MID-02")
+    assert grounded is not None
+    assert grounded["risk_score"] == 91
+    assert grounded["provenance"] == "grounded"
+    assert grounded["gemini_model"]
+
+    gate = agent.get_cached_verdict("CW-MID-03")
+    assert gate is not None
+    assert gate["provenance"] == "gate_fail"
+    assert gate.get("safety_test") is True
+    assert gate["investigation_report"].get("grounded") is False
+
+    monkeypatch.setenv("CW_DEMO_REPLAY", "1")
+    from fastapi.testclient import TestClient
+    from main import app
+
+    client = TestClient(app)
+    res = client.post(
+        "/api/alerts/CW-MID-02/investigate",
+        json={"mode": "auto", "force": False},
+        headers={"X-Analyst-Role": "fiu_lead"},
+    )
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert body.get("replayed") is True or body.get("verdict", {}).get("replayed") is True
+    assert body.get("cached") is True
