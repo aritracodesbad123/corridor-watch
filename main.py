@@ -363,7 +363,18 @@ def investigate(
     if not body.force:
         cached = agent.get_cached_verdict(txn_id)
         if cached and body.mode == "auto":
-            return {"verdict": cached, "cached": True, "dag": None, "evidence": None}
+            import os as _os
+
+            replay = (_os.environ.get("CW_DEMO_REPLAY") or "").strip() in {"1", "true", "yes"}
+            if replay:
+                cached = {**cached, "replayed": True}
+            return {
+                "verdict": cached,
+                "cached": True,
+                "replayed": replay,
+                "dag": None,
+                "evidence": None,
+            }
 
     token = agent.push_model_override(eval_model) if eval_model else None
     try:

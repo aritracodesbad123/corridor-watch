@@ -21,6 +21,7 @@ def main() -> int:
     from db import init_schema
     from patterns.repository import seed_library
     from phase2_memory import seed_if_empty
+    from synthetic.demo_verdicts import seed_demo_verdicts
     from synthetic.middle_bank import seed_middle_bank
     from synthetic.showcase import seed_showcase
     from synthetic.world import seed_banks
@@ -31,7 +32,8 @@ def main() -> int:
     seed_library()
     seed_showcase()
     seed_middle_bank()
-    print(f"demo-reset ok → {db}")
+    n = seed_demo_verdicts()
+    print(f"demo-reset ok → {db} (seeded {n} replay verdicts)")
     return 0
 
 
