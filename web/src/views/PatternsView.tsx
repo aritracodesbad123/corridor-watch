@@ -24,11 +24,20 @@ export function PatternsView() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    void api<Pattern[] | { patterns?: Pattern[] }>('/patterns')
+    void api<Pattern[] | { patterns?: Pattern[]; items?: Pattern[] }>('/patterns')
       .then((data) => {
-        if (Array.isArray(data)) setRows(data)
-        else if (data && Array.isArray(data.patterns)) setRows(data.patterns)
-        else setRows([])
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data?.patterns)
+            ? data.patterns
+            : Array.isArray(data?.items)
+              ? data.items
+              : null
+        if (list) setRows(list)
+        else {
+          setRows([])
+          setError('Unexpected patterns payload')
+        }
       })
       .catch((e) => setError(e instanceof Error ? e.message : 'Failed'))
   }, [])
