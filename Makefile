@@ -14,5 +14,6 @@ shake-check:
 	$(PY) scripts/shake_check.py $(VID)
 
 # Capture real-app plates (server must be up with CW_DEMO_REPLAY=1).
+# Prefer Playwright when installed: cd film && npm i -D playwright && npx playwright install chromium
 demo-capture:
-	cd film && node scripts/capture.mjs
+	cd film && (test -d node_modules/playwright && node scripts/capture-playwright.mjs || node scripts/capture.mjs)
