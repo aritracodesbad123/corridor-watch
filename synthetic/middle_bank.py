@@ -61,9 +61,13 @@ ACCOUNTS = [
 ]
 
 # Only the hops the middle bank can see. No Bank D / off-ramp rows.
+# risk: single source — same value written to transactions + flagged_transactions.
 TXNS = [
-    ("CW-MID-01", "ACC-MID-IN-FEED", "ACC-MID-SG-MULE", 9200, "IN->SG", "BANK_IN", "BANK_SG", "vendor settlement", "business income", "mule_pass_through", 0),
-    ("CW-MID-02", "ACC-MID-SG-MULE", "ACC-MID-PH-EXIT", 9050, "SG->PH", "BANK_SG", "BANK_PH", "correspondent cover", "business income", "mule_pass_through", 18),
+    # txn_id, sender, receiver, amount, corridor, origin_bank, dest_bank, purpose, sof, scenario, offset_min, risk
+    ("CW-MID-01", "ACC-MID-IN-FEED", "ACC-MID-SG-MULE", 9200, "IN->SG", "BANK_IN", "BANK_SG", "vendor settlement", "business income", "mule_pass_through", 0, 80),
+    ("CW-MID-02", "ACC-MID-SG-MULE", "ACC-MID-PH-EXIT", 9050, "SG->PH", "BANK_SG", "BANK_PH", "correspondent cover", "business income", "mule_pass_through", 18, 91),
+    # Next alert: same mule fingerprint, different amount — Pattern DNA match after CW-MID-02 confirm.
+    ("CW-MID-03", "ACC-MID-SG-MULE", "ACC-MID-PH-EXIT", 8750, "SG->PH", "BANK_SG", "BANK_PH", "trade settlement", "business income", "mule_pass_through", 240, 88),
 ]
 
 
@@ -71,17 +75,7 @@ def _base_ts() -> datetime:
     return datetime(2026, 9, 12, 8, 40, tzinfo=timezone.utc)
 
 
-def seed_middle_bank() -> dict:
-    init_schema()
-    con = connect()
-    existing = con.execute(
-        "SELECT txn_id FROM flagged_transactions WHERE txn_id=?",
-        (HERO_TXN_ID,),
-    ).fetchone()
-    if existing:
-        con.close()
-        return describe_middle_bank()
-    now = utc_now()
+def _seed_rows(con, now: str) -> None:
     upsert(con, "devices", "device_id", {
         "device_id": DEVICE_ID,
         "fingerprint": "mid-bank-chrome-sg",
@@ -98,9 +92,11 @@ def seed_middle_bank() -> dict:
             "linked_at": acc["opened_date"],
         })
     for row in TXNS:
-        txn_id, sender, receiver, amount, corridor, origin_bank, dest_bank, purpose, sof, scenario, offset = row
+        txn_id, sender, receiver, amount, corridor, origin_bank, dest_bank, purpose, sof, scenario, offset, risk = row
         ts = (_base_ts() + timedelta(minutes=offset)).isoformat()
         origin, dest = corridor.split("->")
+        tier = "CRITICAL" if risk >= 90 else "HIGH"
+        state = "analyst_review" if txn_id == HERO_TXN_ID else "open"
         upsert(con, "transactions", "txn_id", {
             "txn_id": txn_id,
             "sender_id": sender,
@@ -120,8 +116,8 @@ def seed_middle_bank() -> dict:
             "origin_bank_id": origin_bank,
             "destination_bank_id": dest_bank,
             "channel": "swift_gpi",
-            "risk_score": 90 if txn_id == HERO_TXN_ID else 82,
-            "risk_tier": "CRITICAL" if txn_id == HERO_TXN_ID else "HIGH",
+            "risk_score": risk,
+            "risk_tier": tier,
             "status": "posted",
         })
         upsert(con, "flagged_transactions", "txn_id", {
@@ -131,22 +127,22 @@ def seed_middle_bank() -> dict:
             "amount": amount,
             "corridor": corridor,
             "ts": ts,
-            "risk_score": 91 if txn_id == HERO_TXN_ID else 80,
+            "risk_score": risk,
             "primary_pattern": scenario,
             "fraud_scenario": scenario,
             "currency": "USD",
             "purpose": purpose,
             "source_of_funds": sof,
-            "risk_tier": "CRITICAL" if txn_id == HERO_TXN_ID else "HIGH",
+            "risk_tier": tier,
             "network_id": NETWORK_ID,
-            "workflow_state": "analyst_review" if txn_id == HERO_TXN_ID else "open",
+            "workflow_state": state,
             "showcase": SHOWCASE_FLAG,
         })
         upsert(con, "investigation_queue", "queue_id", {
             "queue_id": f"Q-{txn_id}",
             "txn_id": txn_id,
             "network_id": NETWORK_ID,
-            "risk_tier": "CRITICAL" if txn_id == HERO_TXN_ID else "HIGH",
+            "risk_tier": tier,
             "status": "QUEUED",
             "created_at": ts,
             "updated_at": now,
@@ -167,6 +163,14 @@ def seed_middle_bank() -> dict:
         "primary_pattern": "mule_pass_through",
         "pattern_scores": '{"mule_pass_through":91,"multi_hop_chain":74}',
     })
+
+
+def seed_middle_bank() -> dict:
+    """Idempotent upsert of middle-bank demo rows (including next-alert CW-MID-03)."""
+    init_schema()
+    con = connect()
+    now = utc_now()
+    _seed_rows(con, now)
     con.commit()
     con.close()
     return describe_middle_bank()
