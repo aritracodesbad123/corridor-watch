@@ -1086,7 +1086,7 @@ export function InvestigateView() {
                     <h3>Case workflow</h3>
                     <p className="muted">
                       Analyst review → FIU lead action → MRM audit close. High-risk dispositions
-                      require FIU lead.
+                      require FIU lead. Console hold is not a core-banking freeze.
                     </p>
                     <div className="workflow">
                       {WF_ORDER.map((s, i) => (
@@ -1098,53 +1098,58 @@ export function InvestigateView() {
                         </div>
                       ))}
                     </div>
-                    <div className="btn-row">
-                      <button
-                        className="btn secondary"
-                        type="button"
-                        disabled={!!busy}
-                        onClick={() => void runWorkflow('start_review')}
-                      >
-                        Start analyst review
-                      </button>
-                      <button
-                        className="btn secondary"
-                        type="button"
-                        disabled={!!busy}
-                        onClick={() => void runWorkflow('refer_fiu')}
-                      >
-                        Send to FIU lead
-                      </button>
-                      {isFiu(role) && (
-                        <>
-                          <button
-                            className="btn secondary"
-                            type="button"
-                            disabled={!!busy}
-                            onClick={() => void runWorkflow('escalate')}
-                          >
-                            Take over (FIU)
-                          </button>
-                          <button
-                            className="btn secondary"
-                            type="button"
-                            disabled={!!busy}
-                            onClick={() => void runWorkflow('close')}
-                          >
-                            Close case
-                          </button>
-                        </>
-                      )}
-                      {isMrm(role) && (
+                    <div className="decision-rail">
+                      <div className="decision-rail-label">
+                        Decision rail · {isFiu(role) ? 'FIU lead' : isMrm(role) ? 'MRM' : 'Analyst'}
+                      </div>
+                      <div className="btn-row">
                         <button
                           className="btn secondary"
                           type="button"
                           disabled={!!busy}
-                          onClick={() => void runWorkflow('audit_ack')}
+                          onClick={() => void runWorkflow('start_review')}
                         >
-                          MRM audit acknowledge
+                          Start analyst review
                         </button>
-                      )}
+                        <button
+                          className="btn secondary"
+                          type="button"
+                          disabled={!!busy}
+                          onClick={() => void runWorkflow('refer_fiu')}
+                        >
+                          Send to FIU lead
+                        </button>
+                        {isFiu(role) && (
+                          <>
+                            <button
+                              className="btn secondary"
+                              type="button"
+                              disabled={!!busy}
+                              onClick={() => void runWorkflow('escalate')}
+                            >
+                              Take over (FIU)
+                            </button>
+                            <button
+                              className="btn secondary"
+                              type="button"
+                              disabled={!!busy}
+                              onClick={() => void runWorkflow('close')}
+                            >
+                              Close case
+                            </button>
+                          </>
+                        )}
+                        {isMrm(role) && (
+                          <button
+                            className="btn secondary"
+                            type="button"
+                            disabled={!!busy}
+                            onClick={() => void runWorkflow('audit_ack')}
+                          >
+                            MRM audit acknowledge
+                          </button>
+                        )}
+                      </div>
                     </div>
                     {wfOut && <div className="muted">{wfOut}</div>}
                   </div>
@@ -1246,9 +1251,31 @@ export function InvestigateView() {
             <h3>Audit trail</h3>
             <div className="audit">
               {Array.isArray(audit) && audit.length
-                ? audit.map((a, i) => (
-                    <div key={i}>{typeof a === 'string' ? a : JSON.stringify(a)}</div>
-                  ))
+                ? audit.map((a, i) => {
+                    if (typeof a === 'string') return <div key={i}>{a}</div>
+                    const row = a as Record<string, unknown>
+                    const ts = String(row.ts || row.created_at || '')
+                    const ev = String(row.event_type || row.type || 'event')
+                    const actor = String(row.actor || row.role || '')
+                    let detail = row.detail ?? row.payload ?? ''
+                    if (detail && typeof detail === 'object') {
+                      const d = detail as Record<string, unknown>
+                      detail = [d.decision, d.action, d.tool, d.mode, d.notes]
+                        .filter(Boolean)
+                        .map(String)
+                        .join(' · ')
+                    }
+                    return (
+                      <div key={i} className="audit-row">
+                        <div className="audit-meta">
+                          <span>{ev}</span>
+                          <span>{actor}</span>
+                          <span>{ts ? new Date(ts).toLocaleString() : ''}</span>
+                        </div>
+                        {detail ? <div className="audit-detail">{String(detail)}</div> : null}
+                      </div>
+                    )
+                  })
                 : 'Open a case to load audit events.'}
             </div>
           </div>

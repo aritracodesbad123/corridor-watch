@@ -215,14 +215,41 @@ export function VerdictPanel({
           <span className="case-id">
             {String(v.primary_pattern || '').replace(/_/g, ' ')} ·{' '}
             {String(v.provenance || (v.mode === 'gemini' ? 'grounded' : v.mode || ''))}
-            {data.cached ? ' · cached' : ''}
+            {data.replayed || v.replayed ? ' · replayed' : data.cached ? ' · cached' : ' · live'}
           </span>
-          {v.gemini_model ? <span className="case-id">{String(v.gemini_model)}</span> : null}
+          {v.gemini_model ? (
+            <span className="case-id" title="Model used for this brief">
+              model {String(v.gemini_model)}
+            </span>
+          ) : null}
         </div>
         <p style={{ lineHeight: 1.55, margin: '0 0 8px' }}>{String(v.rationale || '')}</p>
         <div className="muted">
           <b style={{ color: 'var(--text)' }}>What to do next:</b> {String(v.recommended_action || '—')}
         </div>
+        {['hold_payment', 'escalate_fiu', 'freeze_account'].includes(
+          String(v.recommended_action || ''),
+        ) ? (
+          <div className="muted" style={{ marginTop: 6, color: 'var(--amber, #C87010)' }}>
+            Model-refused action — Gemini can recommend only; a human must authorize via Workflow.
+          </div>
+        ) : null}
+        {String(v.provenance || '') === 'gate_fail' || v.safety_test ? (
+          <div
+            className="muted"
+            style={{
+              marginTop: 8,
+              padding: '6px 10px',
+              border: '1px solid var(--line)',
+              borderRadius: 6,
+              background: 'var(--amber-dim, #FFF6E8)',
+              fontWeight: 600,
+            }}
+          >
+            Safety test — output gate rejected ungrounded model text
+            {v.safety_test ? ' (fixture)' : ''}.
+          </div>
+        ) : null}
         {tools && (
           <div className="muted" style={{ marginTop: 6 }}>
             <b>Evidence looked up:</b> {tools}
