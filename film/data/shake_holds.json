@@ -1,0 +1,19 @@
+{
+  "note": "Hold windows after discrete punch-ins (absolute master seconds). Camera must be still here.",
+  "max_shift_px": 0.3,
+  "holds": [
+    { "scene": "S00", "label": "brand_hold", "start_s": 10.0, "end_s": 14.5 },
+    { "scene": "S01", "label": "after_punch", "start_s": 16.2, "end_s": 22.0 },
+    { "scene": "S01", "label": "alert_hold", "start_s": 31.0, "end_s": 34.5 },
+    { "scene": "S03", "label": "queue_hold", "start_s": 42.0, "end_s": 55.0 },
+    { "scene": "S03", "label": "case_hold", "start_s": 60.0, "end_s": 72.0 },
+    { "scene": "S04", "label": "dag_hold", "start_s": 85.0, "end_s": 95.0 },
+    { "scene": "S04", "label": "late_still", "start_s": 98.0, "end_s": 104.0 },
+    { "scene": "S05", "label": "map_still", "start_s": 107.5, "end_s": 112.0 },
+    { "scene": "S06", "label": "brief_hold", "start_s": 120.0, "end_s": 135.0 },
+    { "scene": "S06", "label": "gate_hold", "start_s": 145.0, "end_s": 155.0 },
+    { "scene": "S07", "label": "workflow_hold", "start_s": 165.0, "end_s": 175.0 },
+    { "scene": "S08", "label": "library_hold", "start_s": 192.0, "end_s": 200.0 },
+    { "scene": "S09", "label": "outro_still", "start_s": 208.0, "end_s": 218.0 }
+  ]
+}

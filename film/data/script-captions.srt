@@ -1,0 +1,255 @@
+1
+00:00:00,130 --> 00:00:03,840
+The transaction is not the crime. The network is.
+
+2
+00:00:04,000 --> 00:00:07,140
+Suspicious activity hides in the hops around a payment,
+
+3
+00:00:07,310 --> 00:00:09,050
+not in the wire itself.
+
+4
+00:00:09,490 --> 00:00:12,320
+Corridor Watch takes the network as the case.
+
+5
+00:00:12,320 --> 00:00:15,360
+One synthetic case shows the path.
+
+6
+00:00:15,480 --> 00:00:19,160
+A rule on one transaction flags the wrong object.
+
+7
+00:00:19,400 --> 00:00:23,390
+Cross-border mule and layering rings are not a single wire.
+
+8
+00:00:23,530 --> 00:00:28,040
+Funds can arrive, rest for minutes, and leave under another purpose.
+
+9
+00:00:28,110 --> 00:00:30,960
+A threshold cannot see that shared device.
+
+10
+00:00:30,960 --> 00:00:34,950
+The bank is left an alert, and no memory of the network.
+
+11
+00:00:35,290 --> 00:00:39,720
+This console is the middle bank, BANK_SG.
+
+12
+00:00:39,850 --> 00:00:45,800
+Case CW-MID-02 is $9,050.
+
+13
+00:00:45,800 --> 00:00:47,900
+Singapore to the Philippines.
+
+14
+00:00:47,900 --> 00:00:49,400
+Risk 91.
+
+15
+00:00:49,400 --> 00:00:51,160
+Mule pass-through.
+
+16
+00:00:51,290 --> 00:00:53,080
+The queue marks it partial.
+
+17
+00:00:53,080 --> 00:00:56,300
+The badge reads partial network observed.
+
+18
+00:00:56,490 --> 00:00:59,720
+Visibility is coverage, not guilt.
+
+19
+00:00:59,850 --> 00:01:08,050
+Eighteen minutes earlier, CW-MID-01 brought $9,200 in from India.
+
+20
+00:01:08,120 --> 00:01:12,360
+On shared device D-MID-MULE.
+
+21
+00:01:12,490 --> 00:01:15,000
+The object under review is the corridor.
+
+22
+00:01:15,130 --> 00:01:18,990
+Corridor Watch constructs that corridor before a model speaks.
+
+23
+00:01:19,010 --> 00:01:21,880
+Ingest never calls Gemini.
+
+24
+00:01:21,970 --> 00:01:26,560
+A twelve-step investigation DAG
+
+25
+00:01:26,640 --> 00:01:31,240
+loads the payment, both profiles, risk features, shared devices,
+
+26
+00:01:31,240 --> 00:01:36,360
+and the neighborhood, then drafts a deterministic verdict from the evidence pack.
+
+27
+00:01:36,470 --> 00:01:38,480
+On this case the pill is high,
+
+28
+00:01:38,910 --> 00:01:40,440
+ninety-one.
+
+29
+00:01:40,570 --> 00:01:43,790
+The stated next step is a human decision,
+
+30
+00:01:43,790 --> 00:01:45,940
+not an automatic clear.
+
+31
+00:01:46,090 --> 00:01:50,490
+Downstream of the Philippines hop, the graph keeps an unknown boundary.
+
+32
+00:01:50,490 --> 00:01:52,860
+It does not invent a bank.
+
+33
+00:01:53,050 --> 00:01:55,070
+Gemini does not see the raw ledger.
+
+34
+00:01:55,400 --> 00:01:57,600
+It receives that evidence pack.
+
+35
+00:01:57,750 --> 00:02:01,240
+At the model boundary, account identifiers are tokens,
+
+36
+00:02:01,600 --> 00:02:03,560
+not customer names.
+
+37
+00:02:03,690 --> 00:02:08,240
+Force Gemini explains only the pack: why the case looks this way,
+
+38
+00:02:08,410 --> 00:02:12,360
+what is still unknown, and what a person should check next.
+
+39
+00:02:12,490 --> 00:02:16,120
+The recommendation is to pause for an FIU lead.
+
+40
+00:02:16,340 --> 00:02:19,640
+The model cannot hold, escalate, or freeze.
+
+41
+00:02:19,770 --> 00:02:23,560
+The verdict carries a provenance chip: gemini tools,
+
+42
+00:02:23,640 --> 00:02:27,720
+prefetch, grounded, fallback, or gate fail.
+
+43
+00:02:27,830 --> 00:02:31,260
+If the grounding gate rejects the report, the chip reads
+
+44
+00:02:31,260 --> 00:02:34,440
+gate fail, and the deterministic verdict stands.
+
+45
+00:02:34,440 --> 00:02:36,750
+Evidence chips cite the pack.
+
+46
+00:02:36,750 --> 00:02:39,400
+A claim has to point at one of them.
+
+47
+00:02:39,530 --> 00:02:42,760
+Consequential actions stay with the FIU lead.
+
+48
+00:02:42,760 --> 00:02:47,560
+Hold payment, escalate, and freeze account are refused for an analyst.
+
+49
+00:02:47,560 --> 00:02:50,360
+Here the lead records hold payment.
+
+50
+00:02:50,490 --> 00:02:52,480
+The rail moves to FIU lead.
+
+51
+00:02:52,920 --> 00:02:56,600
+That is a human authorization in this console.
+
+52
+00:02:56,710 --> 00:02:58,750
+It is not a core-banking freeze.
+
+53
+00:02:59,160 --> 00:03:00,600
+Gemini recommended.
+
+54
+00:03:00,700 --> 00:03:02,360
+A person decided.
+
+55
+00:03:02,360 --> 00:03:06,180
+A confirming decision writes Crime Pattern DNA.
+
+56
+00:03:07,130 --> 00:03:11,400
+This network strengthens the multi-hop layering fingerprint in the library.
+
+57
+00:03:11,530 --> 00:03:15,720
+Confirmed investigations become reusable memory for the next case,
+
+58
+00:03:15,720 --> 00:03:17,400
+not a one-off alert.
+
+59
+00:03:17,510 --> 00:03:19,960
+The next network can match that fingerprint.
+
+60
+00:03:19,960 --> 00:03:21,960
+The library holds the pattern.
+
+61
+00:03:22,070 --> 00:03:23,380
+The single wire does not.
+
+62
+00:03:23,510 --> 00:03:26,360
+The transaction is not the crime.
+
+63
+00:03:26,360 --> 00:03:27,240
+The network is.
+
+64
+00:03:28,120 --> 00:03:32,200
+Corridor Watch turns investigations into institutional memory.

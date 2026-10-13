@@ -1,0 +1,39 @@
+{
+  "name": "corridor-watch-film",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Corridor Watch premium product film (Remotion)",
+  "scripts": {
+    "studio": "remotion studio src/index.ts",
+    "render:first10s": "remotion render src/index.ts First10s out/first10s-preview.mp4 --video-bitrate=12M",
+    "render:master": "remotion render src/index.ts Master out/corridor-watch-1080p.mp4 --video-bitrate=12M",
+    "render:4k": "remotion render src/index.ts Master out/corridor-watch-master-4k.mp4 --scale=2 --video-bitrate=20M",
+    "capture": "node scripts/capture.mjs",
+    "render:s01": "remotion render src/index.ts S01Preview out/s01-preview.mp4 --video-bitrate=12M",
+    "render:s02": "remotion render src/index.ts S02Preview out/s02-preview.mp4 --video-bitrate=12M",
+    "render:s03": "remotion render src/index.ts S03Preview out/s03-preview.mp4 --video-bitrate=12M",
+    "render:s04": "remotion render src/index.ts S04Preview out/s04-preview.mp4 --video-bitrate=12M",
+    "render:s05": "remotion render src/index.ts S05Preview out/s05-preview.mp4 --video-bitrate=12M",
+    "render:s06": "remotion render src/index.ts S06Preview out/s06-preview.mp4 --video-bitrate=12M",
+    "render:s07": "remotion render src/index.ts S07Preview out/s07-preview.mp4 --video-bitrate=12M",
+    "render:s08": "remotion render src/index.ts S08Preview out/s08-preview.mp4 --video-bitrate=12M",
+    "render:s09": "remotion render src/index.ts S09Preview out/s09-preview.mp4 --video-bitrate=12M",
+    "audio:mix": "./scripts/mix-audio.sh",
+    "audio:mux": "./scripts/mux-final.sh",
+    "qa": "./scripts/qa.sh out/corridor-watch-master.mp4"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.347",
+    "@remotion/cli": "4.0.347",
+    "@remotion/media-utils": "4.0.347",
+    "@remotion/renderer": "4.0.347",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "remotion": "4.0.347"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "typescript": "^5.5.4"
+  }
+}

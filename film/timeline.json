@@ -1,0 +1,67 @@
+{
+  "fps": 60,
+  "target_seconds": 240,
+  "note": "4:00 master. VO is generated per scene and padded to exact scene duration so speech stays in picture.",
+  "scenes": [
+    {
+      "id": "S00",
+      "file": "hook-preview.mp4",
+      "duration_s": 20,
+      "vo": "The transaction is not the crime. The network is. Suspicious activity hides in the hops around a payment, not in the wire itself. Corridor Watch takes the network as the case. One synthetic case shows the path."
+    },
+    {
+      "id": "S01",
+      "file": "s01-preview.mp4",
+      "duration_s": 24,
+      "vo": "A rule on one transaction flags the wrong object. Cross-border mule and layering rings are not a single wire. Funds can arrive, rest for minutes, and leave under another purpose. A threshold cannot see that shared device. The bank is left an alert, and no memory of the network."
+    },
+    {
+      "id": "S02",
+      "file": "s02-preview.mp4",
+      "duration_s": 14,
+      "vo": "Corridor Watch turns one alert into a defensible decision. Investigate the corridor. Preserve the evidence. Keep the decision human."
+    },
+    {
+      "id": "S03",
+      "file": "s03-preview.mp4",
+      "duration_s": 38,
+      "vo": "This console is the middle bank, BANK S G. Case C W mid zero two is nine thousand fifty dollars, Singapore to the Philippines, risk ninety-one, mule pass-through. The queue marks it partial. The badge reads partial network observed. Visibility sixty-one percent is coverage, not guilt. Eighteen minutes earlier, C W mid zero one brought nine thousand two hundred dollars in from India, on shared device D mid mule. The object under review is the corridor."
+    },
+    {
+      "id": "S04",
+      "file": "s04-preview.mp4",
+      "duration_s": 30,
+      "vo": "Corridor Watch constructs that corridor before a model speaks. A twelve-step investigation builds the evidence pack: the payment, both profiles, risk features, shared devices, and the neighborhood. Then it drafts a deterministic verdict. On this case the pill is high, ninety-one. The next step is a human decision, not an automatic clear. Downstream of the Philippines hop, the graph keeps an unknown boundary. It does not invent a bank."
+    },
+    {
+      "id": "S05",
+      "file": "s05-preview.mp4",
+      "duration_s": 22,
+      "vo": "Follow the money across institutions — including the boundaries you cannot see. Observed path: India to Singapore to the Philippines. The shared mule device links the accounts. Downstream, Bank H K remains unresolved."
+    },
+    {
+      "id": "S06",
+      "file": "s06-preview.mp4",
+      "duration_s": 36,
+      "vo": "The model does not see the raw ledger. It receives that evidence pack. It explains only what the pack supports: why the case looks this way, what is still unknown, and what a person should check next. Every claim must cite evidence. If the grounding gate rejects a claim, the deterministic verdict stands. High. Ninety-one."
+    },
+    {
+      "id": "S07",
+      "file": "s07-preview.mp4",
+      "duration_s": 24,
+      "vo": "The A I recommends pause for an F I U lead. A named human authorizes. Hold payment, escalate, and freeze stay with the lead. Here the lead records hold payment. That is human authorization in this console — not a core-banking freeze. Recommendation is not authorization."
+    },
+    {
+      "id": "S08",
+      "file": "s08-preview.mp4",
+      "duration_s": 16,
+      "vo": "A confirming decision writes Crime Pattern DNA. This network strengthens the multi-hop layering fingerprint in the library. Confirmed investigations become reusable memory for the next case. The next network can match that fingerprint."
+    },
+    {
+      "id": "S09",
+      "file": "s09-preview.mp4",
+      "duration_s": 16,
+      "vo": "The transaction is not the crime. The network is. Corridor Watch turns investigations into institutional memory. Investigate the corridor. Preserve the evidence. Keep the decision human."
+    }
+  ]
+}

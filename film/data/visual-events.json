@@ -1,0 +1,1177 @@
+{
+  "version": 2,
+  "vo_source": "video/audio/voiceover.wav",
+  "caption_source": "script (voiceover.md) forced-aligned to phrase timestamps",
+  "rules": {
+    "min_events_per_sentence": 1,
+    "max_idle_window_s": 2.5,
+    "max_static_layout_s": 3.0,
+    "trigger_tolerance_frames": 3,
+    "fps": 60
+  },
+  "assumptions": [
+    "Phrase timings from voiceover_phrases.json; caption text from script overrides (not ASR).",
+    "First real UI cutaway begins in S01 (~30.96s alert\u2192queue) to meet \u226425s if possible; if VO blocks, queue under console line at 35.29s is absolute latest \u2014 plan pulls home/queue cutaway into S01 problem scene at ~22s.",
+    "CW-005 match count deferred until demo-mode re-capture; use app value consistently.",
+    "Pass2 restores Book a walkthrough CTA on outro per \u00a73-H (overrides pass1 removal)."
+  ],
+  "validation": {
+    "event_count": 72,
+    "gaps_gt_2_5s": [],
+    "uncovered_2_5_windows": []
+  },
+  "events": [
+    {
+      "id": "p001",
+      "phrase_id": "p001",
+      "scene": "S00",
+      "start": 0.13,
+      "end": 3.84,
+      "voText": "The transaction is not the crime. The network is.",
+      "trigger": {
+        "word": "network",
+        "at": 2.76
+      },
+      "visualEvent": "Thesis headline enters; network word punches teal",
+      "type": "native explainer",
+      "target": "thesis",
+      "sfx": "soft_hit"
+    },
+    {
+      "id": "p002",
+      "phrase_id": "p002",
+      "scene": "S00",
+      "start": 4.0,
+      "end": 7.14,
+      "voText": "Suspicious activity hides in the hops around a payment,",
+      "trigger": {
+        "word": "hops",
+        "at": 5.9
+      },
+      "visualEvent": "Payment hops animate along SG\u2192PH arc",
+      "type": "native explainer",
+      "target": "payment_arc",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p003",
+      "phrase_id": "p003",
+      "scene": "S00",
+      "start": 7.31,
+      "end": 9.05,
+      "voText": "not in the wire itself.",
+      "trigger": {
+        "word": "wire",
+        "at": 8.0
+      },
+      "visualEvent": "Wire stroke dims; hops remain lit",
+      "type": "native explainer",
+      "target": "payment_arc",
+      "sfx": ""
+    },
+    {
+      "id": "p004",
+      "phrase_id": "p004",
+      "scene": "S00",
+      "start": 9.49,
+      "end": 12.32,
+      "voText": "Corridor Watch takes the network as the case.",
+      "trigger": {
+        "word": "Corridor",
+        "at": 9.49
+      },
+      "visualEvent": "Corridor Watch brand lockup fills frame",
+      "type": "native explainer",
+      "target": "brand",
+      "sfx": "logo_hit"
+    },
+    {
+      "id": "p005",
+      "phrase_id": "p005",
+      "scene": "S00",
+      "start": 12.32,
+      "end": 15.36,
+      "voText": "One synthetic case shows the path.",
+      "trigger": {
+        "word": "path",
+        "at": 14.67
+      },
+      "visualEvent": "Brand fades; corridor graph blooms (full hero)",
+      "type": "transition",
+      "target": "graph",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p006",
+      "phrase_id": "p006",
+      "scene": "S01",
+      "start": 15.48,
+      "end": 19.16,
+      "voText": "A rule on one transaction flags the wrong object.",
+      "trigger": {
+        "word": "rule",
+        "at": 15.53
+      },
+      "visualEvent": "Isolated alert card + generic rule-threshold line (illustrative)",
+      "type": "native explainer",
+      "target": "alert_card",
+      "sfx": "tap"
+    },
+    {
+      "id": "p007",
+      "phrase_id": "p007",
+      "scene": "S01",
+      "start": 19.4,
+      "end": 23.39,
+      "voText": "Cross-border mule and layering rings are not a single wire.",
+      "trigger": {
+        "word": "rings",
+        "at": 21.32
+      },
+      "visualEvent": "Rings fan out from the single wire",
+      "type": "native explainer",
+      "target": "rings",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p008",
+      "phrase_id": "p008",
+      "scene": "S01",
+      "start": 23.53,
+      "end": 28.04,
+      "voText": "Funds can arrive, rest for minutes, and leave under another purpose.",
+      "trigger": {
+        "word": "arrive",
+        "at": 23.99
+      },
+      "visualEvent": "Timeline strip: arrive \u2192 rest \u2192 leave under new purpose",
+      "type": "native explainer",
+      "target": "timeline",
+      "sfx": ""
+    },
+    {
+      "id": "p009",
+      "phrase_id": "p009",
+      "scene": "S01",
+      "start": 28.11,
+      "end": 30.96,
+      "voText": "A threshold cannot see that shared device.",
+      "trigger": {
+        "word": "device",
+        "at": 30.6
+      },
+      "visualEvent": "Shared device node D-MID-MULE lights and links accounts",
+      "type": "native explainer",
+      "target": "device",
+      "sfx": "tap"
+    },
+    {
+      "id": "p010",
+      "phrase_id": "p010",
+      "scene": "S01",
+      "start": 30.96,
+      "end": 34.95,
+      "voText": "The bank is left an alert, and no memory of the network.",
+      "trigger": {
+        "word": "alert",
+        "at": 32.31
+      },
+      "visualEvent": "Alert remains; ghost unknowns; cutaway queue plate begins (first real UI \u226425s)",
+      "type": "UI interaction",
+      "target": "queue",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p011",
+      "phrase_id": "p011",
+      "scene": "S03",
+      "start": 35.29,
+      "end": 39.72,
+      "voText": "This console is the middle bank, BANK_SG.",
+      "trigger": {
+        "word": "console",
+        "at": 35.64
+      },
+      "visualEvent": "Real triage queue framed; BANK_SG chip highlighted",
+      "type": "UI interaction",
+      "target": "queue",
+      "sfx": ""
+    },
+    {
+      "id": "p012",
+      "phrase_id": "p012",
+      "scene": "S03",
+      "start": 39.85,
+      "end": 45.8,
+      "voText": "Case CW-MID-02 is $9,050.",
+      "trigger": {
+        "word": "CW-MID-02",
+        "at": 40.41
+      },
+      "visualEvent": "Cursor clicks CW-MID-02 row \u2192 case overview opens",
+      "type": "UI interaction",
+      "target": "queue.midRow",
+      "sfx": "click"
+    },
+    {
+      "id": "p013",
+      "phrase_id": "p013",
+      "scene": "S03",
+      "start": 45.8,
+      "end": 47.9,
+      "voText": "Singapore to the Philippines.",
+      "trigger": {
+        "word": "Singapore",
+        "at": 45.8
+      },
+      "visualEvent": "Punch-in on corridor SG\u2192PH on case header",
+      "type": "camera move",
+      "target": "case.amount",
+      "sfx": ""
+    },
+    {
+      "id": "p014",
+      "phrase_id": "p014",
+      "scene": "S03",
+      "start": 47.9,
+      "end": 49.4,
+      "voText": "Risk 91.",
+      "trigger": {
+        "word": "Risk",
+        "at": 47.9
+      },
+      "visualEvent": "Risk callout count-up to 91",
+      "type": "stat count-up",
+      "target": "case.risk",
+      "sfx": "low_hit"
+    },
+    {
+      "id": "p015",
+      "phrase_id": "p015",
+      "scene": "S03",
+      "start": 49.4,
+      "end": 51.16,
+      "voText": "Mule pass-through.",
+      "trigger": {
+        "word": "Mule",
+        "at": 49.4
+      },
+      "visualEvent": "Pattern pill mule_pass_through highlights",
+      "type": "UI interaction",
+      "target": "case.pattern",
+      "sfx": ""
+    },
+    {
+      "id": "p016",
+      "phrase_id": "p016",
+      "scene": "S03",
+      "start": 51.29,
+      "end": 53.08,
+      "voText": "The queue marks it partial.",
+      "trigger": {
+        "word": "partial",
+        "at": 52.3
+      },
+      "visualEvent": "Queue partial badge pulse",
+      "type": "UI interaction",
+      "target": "queue.partial",
+      "sfx": ""
+    },
+    {
+      "id": "p017",
+      "phrase_id": "p017",
+      "scene": "S03",
+      "start": 53.08,
+      "end": 56.3,
+      "voText": "The badge reads partial network observed.",
+      "trigger": {
+        "word": "partial",
+        "at": 52.3
+      },
+      "visualEvent": "PARTIAL NETWORK OBSERVED badge punch-in",
+      "type": "camera move",
+      "target": "case.badge",
+      "sfx": "tap"
+    },
+    {
+      "id": "p018",
+      "phrase_id": "p018",
+      "scene": "S03",
+      "start": 56.49,
+      "end": 59.72,
+      "voText": "Visibility is coverage, not guilt.",
+      "trigger": {
+        "word": "Visibility",
+        "at": 56.49
+      },
+      "visualEvent": "Visibility bar fill to 61%; caption coverage not guilt",
+      "type": "stat count-up",
+      "target": "case.visibility",
+      "sfx": ""
+    },
+    {
+      "id": "p019",
+      "phrase_id": "p019",
+      "scene": "S03",
+      "start": 59.85,
+      "end": 68.05,
+      "voText": "Eighteen minutes earlier, CW-MID-01 brought $9,200 in from India.",
+      "trigger": {
+        "word": "CW-MID-01",
+        "at": 61.32
+      },
+      "visualEvent": "Cut to feeder CW-MID-01 row/detail; $9,200 IN\u2192SG",
+      "type": "UI interaction",
+      "target": "queue.feeder",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p020",
+      "phrase_id": "p020",
+      "scene": "S03",
+      "start": 68.12,
+      "end": 72.36,
+      "voText": "On shared device D-MID-MULE.",
+      "trigger": {
+        "word": "D-MID-MULE",
+        "at": 69.25
+      },
+      "visualEvent": "D-MID-MULE highlight links feeder to mule",
+      "type": "UI interaction",
+      "target": "device",
+      "sfx": "tap"
+    },
+    {
+      "id": "p021",
+      "phrase_id": "p021",
+      "scene": "S03",
+      "start": 72.49,
+      "end": 75.0,
+      "voText": "The object under review is the corridor.",
+      "trigger": {
+        "word": "corridor",
+        "at": 74.16
+      },
+      "visualEvent": "Camera settles on corridor thesis over case",
+      "type": "camera move",
+      "target": "case",
+      "sfx": ""
+    },
+    {
+      "id": "p022",
+      "phrase_id": "p022",
+      "scene": "S04",
+      "start": 75.13,
+      "end": 78.99,
+      "voText": "Corridor Watch constructs that corridor before a model speaks.",
+      "trigger": {
+        "word": "constructs",
+        "at": 75.92
+      },
+      "visualEvent": "Match-cut into Money flow / Investigation DAG panel",
+      "type": "transition",
+      "target": "flow.dag",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p023",
+      "phrase_id": "p023",
+      "scene": "S04",
+      "start": 79.01,
+      "end": 81.88,
+      "voText": "Ingest never calls Gemini.",
+      "trigger": {
+        "word": "Ingest",
+        "at": 79.01
+      },
+      "visualEvent": "Ingest lane streams rows; AI model lane locked/dim behind boundary wall",
+      "type": "native explainer",
+      "target": "ingest_wall",
+      "sfx": ""
+    },
+    {
+      "id": "p024",
+      "phrase_id": "p024",
+      "scene": "S04",
+      "start": 81.97,
+      "end": 86.56,
+      "voText": "A twelve-step investigation DAG",
+      "trigger": {
+        "word": "12-step",
+        "at": 82.01
+      },
+      "visualEvent": "12 DAG nodes appear in layered layout (ready)",
+      "type": "native explainer",
+      "target": "dag",
+      "sfx": "soft_hit"
+    },
+    {
+      "id": "p025a",
+      "phrase_id": "p025",
+      "scene": "S04",
+      "start": 86.64,
+      "end": 87.72,
+      "voText": "loads the payment, both profiles, risk features, shared devices,",
+      "trigger": {
+        "word": "payment",
+        "at": 87.11
+      },
+      "visualEvent": "DAG step lights: load payment",
+      "type": "native explainer",
+      "target": "dag.payment",
+      "sfx": "tap"
+    },
+    {
+      "id": "p025b",
+      "phrase_id": "p025",
+      "scene": "S04",
+      "start": 87.72,
+      "end": 89.19,
+      "voText": "loads the payment, both profiles, risk features, shared devices,",
+      "trigger": {
+        "word": "profiles",
+        "at": 88.07
+      },
+      "visualEvent": "DAG step lights: both profiles",
+      "type": "native explainer",
+      "target": "dag.profiles",
+      "sfx": "tap"
+    },
+    {
+      "id": "p025c",
+      "phrase_id": "p025",
+      "scene": "S04",
+      "start": 89.19,
+      "end": 90.25,
+      "voText": "loads the payment, both profiles, risk features, shared devices,",
+      "trigger": {
+        "word": "risk",
+        "at": 89.19
+      },
+      "visualEvent": "DAG step lights: risk features",
+      "type": "native explainer",
+      "target": "dag.risk",
+      "sfx": "tap"
+    },
+    {
+      "id": "p025d",
+      "phrase_id": "p025",
+      "scene": "S04",
+      "start": 90.25,
+      "end": 91.24,
+      "voText": "loads the payment, both profiles, risk features, shared devices,",
+      "trigger": {
+        "word": "devices",
+        "at": 90.57
+      },
+      "visualEvent": "DAG step lights: shared devices",
+      "type": "native explainer",
+      "target": "dag.devices",
+      "sfx": "tap"
+    },
+    {
+      "id": "p026a",
+      "phrase_id": "p026",
+      "scene": "S04",
+      "start": 91.24,
+      "end": 92.76,
+      "voText": "and the neighborhood, then drafts a deterministic verdict from the evidence pack.",
+      "trigger": {
+        "word": "neighborhood",
+        "at": 91.68
+      },
+      "visualEvent": "DAG step lights: neighborhood",
+      "type": "native explainer",
+      "target": "dag.neighborhood",
+      "sfx": "tap"
+    },
+    {
+      "id": "p026b",
+      "phrase_id": "p026",
+      "scene": "S04",
+      "start": 92.76,
+      "end": 96.36,
+      "voText": "and the neighborhood, then drafts a deterministic verdict from the evidence pack.",
+      "trigger": {
+        "word": "verdict",
+        "at": 94.4
+      },
+      "visualEvent": "DAG converges; evidence pack assembles; deterministic verdict drafts",
+      "type": "native explainer",
+      "target": "verdict_card",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p027",
+      "phrase_id": "p027",
+      "scene": "S04",
+      "start": 96.47,
+      "end": 98.48,
+      "voText": "On this case the pill is high,",
+      "trigger": {
+        "word": "high",
+        "at": 98.03
+      },
+      "visualEvent": "Risk pill HIGH appears on case",
+      "type": "UI interaction",
+      "target": "case.risk",
+      "sfx": ""
+    },
+    {
+      "id": "p028",
+      "phrase_id": "p028",
+      "scene": "S04",
+      "start": 98.91,
+      "end": 100.44,
+      "voText": "ninety-one.",
+      "trigger": {
+        "word": "91",
+        "at": 98.91
+      },
+      "visualEvent": "91 count-up lock",
+      "type": "stat count-up",
+      "target": "case.risk",
+      "sfx": "low_hit"
+    },
+    {
+      "id": "p029",
+      "phrase_id": "p029",
+      "scene": "S04",
+      "start": 100.57,
+      "end": 103.79,
+      "voText": "The stated next step is a human decision,",
+      "trigger": {
+        "word": "a",
+        "at": 102.26
+      },
+      "visualEvent": "Next-step chip: human decision",
+      "type": "native explainer",
+      "target": "next_step",
+      "sfx": ""
+    },
+    {
+      "id": "p030",
+      "phrase_id": "p030",
+      "scene": "S04",
+      "start": 103.79,
+      "end": 105.94,
+      "voText": "not an automatic clear.",
+      "trigger": {
+        "word": "automatic",
+        "at": 104.45
+      },
+      "visualEvent": "Automatic clear struck / refused",
+      "type": "native explainer",
+      "target": "next_step",
+      "sfx": "tap"
+    },
+    {
+      "id": "p031",
+      "phrase_id": "p031",
+      "scene": "S05",
+      "start": 106.09,
+      "end": 110.49,
+      "voText": "Downstream of the Philippines hop, the graph keeps an unknown boundary.",
+      "trigger": {
+        "word": "unknown",
+        "at": 109.21
+      },
+      "visualEvent": "Corridor map: unknown boundary dashed after BANK_PH",
+      "type": "UI interaction",
+      "target": "flow.unknown",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p032",
+      "phrase_id": "p032",
+      "scene": "S05",
+      "start": 110.49,
+      "end": 112.86,
+      "voText": "It does not invent a bank.",
+      "trigger": {
+        "word": "invent",
+        "at": 111.16
+      },
+      "visualEvent": "No invented bank \u2014 dashed HK stays unresolved",
+      "type": "native explainer",
+      "target": "flow.unknown",
+      "sfx": ""
+    },
+    {
+      "id": "p033",
+      "phrase_id": "p033",
+      "scene": "S06",
+      "start": 113.05,
+      "end": 115.07,
+      "voText": "Gemini does not see the raw ledger.",
+      "trigger": {
+        "word": "ledger",
+        "at": 114.53
+      },
+      "visualEvent": "Raw ledger lane blocked from model",
+      "type": "native explainer",
+      "target": "boundary",
+      "sfx": ""
+    },
+    {
+      "id": "p034",
+      "phrase_id": "p034",
+      "scene": "S06",
+      "start": 115.4,
+      "end": 117.6,
+      "voText": "It receives that evidence pack.",
+      "trigger": {
+        "word": "pack",
+        "at": 117.05
+      },
+      "visualEvent": "Evidence pack slides into model input",
+      "type": "native explainer",
+      "target": "pack",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p035",
+      "phrase_id": "p035",
+      "scene": "S06",
+      "start": 117.75,
+      "end": 121.24,
+      "voText": "At the model boundary, account identifiers are tokens,",
+      "trigger": {
+        "word": "tokens",
+        "at": 120.6
+      },
+      "visualEvent": "ACC-MID-SG-MULE crosses boundary \u2192 tokenizes",
+      "type": "native explainer",
+      "target": "boundary.token",
+      "sfx": "tap"
+    },
+    {
+      "id": "p036",
+      "phrase_id": "p036",
+      "scene": "S06",
+      "start": 121.6,
+      "end": 123.56,
+      "voText": "not customer names.",
+      "trigger": {
+        "word": "customer",
+        "at": 121.65
+      },
+      "visualEvent": "Customer-name lane stays empty",
+      "type": "native explainer",
+      "target": "boundary",
+      "sfx": ""
+    },
+    {
+      "id": "p037",
+      "phrase_id": "p037",
+      "scene": "S06",
+      "start": 123.69,
+      "end": 128.24,
+      "voText": "Force Gemini explains only the pack: why the case looks this way,",
+      "trigger": {
+        "word": "Forced",
+        "at": 123.69
+      },
+      "visualEvent": "Real Verdict: cursor clicks Force Gemini; brief streams; section Why highlights",
+      "type": "UI interaction",
+      "target": "verdict.force",
+      "sfx": "click"
+    },
+    {
+      "id": "p038a",
+      "phrase_id": "p038",
+      "scene": "S06",
+      "start": 128.41,
+      "end": 130.4,
+      "voText": "what is still unknown, and what a person should check next.",
+      "trigger": {
+        "word": "unknown",
+        "at": 129.13
+      },
+      "visualEvent": "Brief section Still unknown highlights",
+      "type": "UI interaction",
+      "target": "verdict.unknown",
+      "sfx": "tap"
+    },
+    {
+      "id": "p038b",
+      "phrase_id": "p038",
+      "scene": "S06",
+      "start": 130.4,
+      "end": 132.36,
+      "voText": "what is still unknown, and what a person should check next.",
+      "trigger": {
+        "word": "check",
+        "at": 131.36
+      },
+      "visualEvent": "Brief section What to check next highlights",
+      "type": "UI interaction",
+      "target": "verdict.next",
+      "sfx": "tap"
+    },
+    {
+      "id": "p039",
+      "phrase_id": "p039",
+      "scene": "S06",
+      "start": 132.49,
+      "end": 136.12,
+      "voText": "The recommendation is to pause for an FIU lead.",
+      "trigger": {
+        "word": "pause",
+        "at": 134.26
+      },
+      "visualEvent": "Recommendation chip: pause for FIU lead",
+      "type": "UI interaction",
+      "target": "verdict.reco",
+      "sfx": "soft_hit"
+    },
+    {
+      "id": "p040",
+      "phrase_id": "p040",
+      "scene": "S06",
+      "start": 136.34,
+      "end": 139.64,
+      "voText": "The model cannot hold, escalate, or freeze.",
+      "trigger": {
+        "word": "hold",
+        "at": 137.17
+      },
+      "visualEvent": "Hold/escalate/freeze icons lock for model",
+      "type": "native explainer",
+      "target": "actions_lock",
+      "sfx": ""
+    },
+    {
+      "id": "p041",
+      "phrase_id": "p041",
+      "scene": "S06",
+      "start": 139.77,
+      "end": 143.56,
+      "voText": "The verdict carries a provenance chip: gemini tools,",
+      "trigger": {
+        "word": "a",
+        "at": 140.9
+      },
+      "visualEvent": "Provenance chip enters large; state gemini tools",
+      "type": "UI interaction",
+      "target": "provenance",
+      "sfx": "tap"
+    },
+    {
+      "id": "p042a",
+      "phrase_id": "p042",
+      "scene": "S06",
+      "start": 143.64,
+      "end": 144.6,
+      "voText": "prefetch, grounded, fallback, or gate fail.",
+      "trigger": {
+        "word": "pre-fetch",
+        "at": 143.64
+      },
+      "visualEvent": "Chip \u2192 prefetch",
+      "type": "UI interaction",
+      "target": "provenance",
+      "sfx": ""
+    },
+    {
+      "id": "p042b",
+      "phrase_id": "p042",
+      "scene": "S06",
+      "start": 144.6,
+      "end": 145.8,
+      "voText": "prefetch, grounded, fallback, or gate fail.",
+      "trigger": {
+        "word": "grounded",
+        "at": 144.52
+      },
+      "visualEvent": "Chip \u2192 grounded",
+      "type": "UI interaction",
+      "target": "provenance",
+      "sfx": ""
+    },
+    {
+      "id": "p042c",
+      "phrase_id": "p042",
+      "scene": "S06",
+      "start": 145.8,
+      "end": 146.7,
+      "voText": "prefetch, grounded, fallback, or gate fail.",
+      "trigger": {
+        "word": "fallback",
+        "at": 145.32
+      },
+      "visualEvent": "Chip \u2192 fallback",
+      "type": "UI interaction",
+      "target": "provenance",
+      "sfx": ""
+    },
+    {
+      "id": "p042d",
+      "phrase_id": "p042",
+      "scene": "S06",
+      "start": 146.7,
+      "end": 147.72,
+      "voText": "prefetch, grounded, fallback, or gate fail.",
+      "trigger": {
+        "word": "gate",
+        "at": 146.92
+      },
+      "visualEvent": "Chip \u2192 gate fail (preview)",
+      "type": "UI interaction",
+      "target": "provenance",
+      "sfx": ""
+    },
+    {
+      "id": "p043",
+      "phrase_id": "p043",
+      "scene": "S06",
+      "start": 147.83,
+      "end": 151.26,
+      "voText": "If the grounding gate rejects the report, the chip reads",
+      "trigger": {
+        "word": "rejects",
+        "at": 148.81
+      },
+      "visualEvent": "Ungrounded claim struck red reject",
+      "type": "native explainer",
+      "target": "gate_reject",
+      "sfx": "low_hit"
+    },
+    {
+      "id": "p044",
+      "phrase_id": "p044",
+      "scene": "S06",
+      "start": 151.26,
+      "end": 154.44,
+      "voText": "gate fail, and the deterministic verdict stands.",
+      "trigger": {
+        "word": "Gate",
+        "at": 151.26
+      },
+      "visualEvent": "Chip reads gate fail; deterministic verdict stands HIGH\u00b791",
+      "type": "UI interaction",
+      "target": "provenance",
+      "sfx": "low_hit"
+    },
+    {
+      "id": "p045",
+      "phrase_id": "p045",
+      "scene": "S06",
+      "start": 154.44,
+      "end": 156.75,
+      "voText": "Evidence chips cite the pack.",
+      "trigger": {
+        "word": "Evidence",
+        "at": 154.44
+      },
+      "visualEvent": "Evidence chips E-RISK/E-DEV leader-line to tiles",
+      "type": "native explainer",
+      "target": "evidence_chips",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p046",
+      "phrase_id": "p046",
+      "scene": "S06",
+      "start": 156.75,
+      "end": 159.4,
+      "voText": "A claim has to point at one of them.",
+      "trigger": {
+        "word": "A",
+        "at": 156.75
+      },
+      "visualEvent": "Claim must point to a chip (leader line pulse)",
+      "type": "native explainer",
+      "target": "evidence_chips",
+      "sfx": ""
+    },
+    {
+      "id": "p047",
+      "phrase_id": "p047",
+      "scene": "S07",
+      "start": 159.53,
+      "end": 162.76,
+      "voText": "Consequential actions stay with the FIU lead.",
+      "trigger": {
+        "word": "FIU",
+        "at": 161.97
+      },
+      "visualEvent": "Role matrix enters: FIU lead column highlighted",
+      "type": "native explainer",
+      "target": "role_matrix",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p048",
+      "phrase_id": "p048",
+      "scene": "S07",
+      "start": 162.76,
+      "end": 167.56,
+      "voText": "Hold payment, escalate, and freeze account are refused for an analyst.",
+      "trigger": {
+        "word": "refused",
+        "at": 166.16
+      },
+      "visualEvent": "Analyst column locks hold/escalate/freeze \u2014 refused",
+      "type": "native explainer",
+      "target": "role_matrix",
+      "sfx": "tap"
+    },
+    {
+      "id": "p049",
+      "phrase_id": "p049",
+      "scene": "S07",
+      "start": 167.56,
+      "end": 170.36,
+      "voText": "Here the lead records hold payment.",
+      "trigger": {
+        "word": "records",
+        "at": 168.99
+      },
+      "visualEvent": "Workflow: FIU lead selects hold_payment",
+      "type": "UI interaction",
+      "target": "workflow.hold",
+      "sfx": "click"
+    },
+    {
+      "id": "p050",
+      "phrase_id": "p050",
+      "scene": "S07",
+      "start": 170.49,
+      "end": 172.48,
+      "voText": "The rail moves to FIU lead.",
+      "trigger": {
+        "word": "rail",
+        "at": 170.65
+      },
+      "visualEvent": "Rail animates to FIU lead",
+      "type": "UI interaction",
+      "target": "workflow.rail",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p051",
+      "phrase_id": "p051",
+      "scene": "S07",
+      "start": 172.92,
+      "end": 176.6,
+      "voText": "That is a human authorization in this console.",
+      "trigger": {
+        "word": "a",
+        "at": 173.32
+      },
+      "visualEvent": "AUTHORIZED stamp + human authorization callout",
+      "type": "UI interaction",
+      "target": "workflow.stamp",
+      "sfx": "low_hit"
+    },
+    {
+      "id": "p052",
+      "phrase_id": "p052",
+      "scene": "S07",
+      "start": 176.71,
+      "end": 178.75,
+      "voText": "It is not a core-banking freeze.",
+      "trigger": {
+        "word": "freeze",
+        "at": 178.16
+      },
+      "visualEvent": "Footnote: not a core-banking freeze",
+      "type": "native explainer",
+      "target": "workflow",
+      "sfx": ""
+    },
+    {
+      "id": "p053",
+      "phrase_id": "p053",
+      "scene": "S07",
+      "start": 179.16,
+      "end": 180.6,
+      "voText": "Gemini recommended.",
+      "trigger": {
+        "word": "recommended",
+        "at": 179.38
+      },
+      "visualEvent": "Split card: Gemini recommended",
+      "type": "native explainer",
+      "target": "decision_split",
+      "sfx": ""
+    },
+    {
+      "id": "p054",
+      "phrase_id": "p054",
+      "scene": "S07",
+      "start": 180.7,
+      "end": 182.36,
+      "voText": "A person decided.",
+      "trigger": {
+        "word": "person",
+        "at": 180.73
+      },
+      "visualEvent": "Split card: A person decided; audit row appends",
+      "type": "UI interaction",
+      "target": "workflow.audit",
+      "sfx": "tap"
+    },
+    {
+      "id": "p055",
+      "phrase_id": "p055",
+      "scene": "S08",
+      "start": 182.36,
+      "end": 186.18,
+      "voText": "A confirming decision writes Crime Pattern DNA.",
+      "trigger": {
+        "word": "crime",
+        "at": 184.49
+      },
+      "visualEvent": "Case network compresses into fingerprint",
+      "type": "native explainer",
+      "target": "fingerprint",
+      "sfx": "whoosh"
+    },
+    {
+      "id": "p056",
+      "phrase_id": "p056",
+      "scene": "S08",
+      "start": 187.13,
+      "end": 191.4,
+      "voText": "This network strengthens the multi-hop layering fingerprint in the library.",
+      "trigger": {
+        "word": "fingerprint",
+        "at": 189.56
+      },
+      "visualEvent": "Fingerprint drops into Pattern DNA library; multi-hop layering card",
+      "type": "UI interaction",
+      "target": "patterns.cw005",
+      "sfx": "soft_hit"
+    },
+    {
+      "id": "p057",
+      "phrase_id": "p057",
+      "scene": "S08",
+      "start": 191.53,
+      "end": 195.72,
+      "voText": "Confirmed investigations become reusable memory for the next case,",
+      "trigger": {
+        "word": "memory",
+        "at": 194.08
+      },
+      "visualEvent": "Library card: reusable memory label",
+      "type": "UI interaction",
+      "target": "patterns.library",
+      "sfx": ""
+    },
+    {
+      "id": "p058",
+      "phrase_id": "p058",
+      "scene": "S08",
+      "start": 195.72,
+      "end": 197.4,
+      "voText": "not a one-off alert.",
+      "trigger": {
+        "word": "a",
+        "at": 195.98
+      },
+      "visualEvent": "One-off alert crossed out",
+      "type": "native explainer",
+      "target": "patterns",
+      "sfx": ""
+    },
+    {
+      "id": "p059",
+      "phrase_id": "p059",
+      "scene": "S08",
+      "start": 197.51,
+      "end": 199.96,
+      "voText": "The next network can match that fingerprint.",
+      "trigger": {
+        "word": "match",
+        "at": 198.47
+      },
+      "visualEvent": "New alert arrives and matches fingerprint",
+      "type": "UI interaction",
+      "target": "patterns.match",
+      "sfx": "tap"
+    },
+    {
+      "id": "p060",
+      "phrase_id": "p060",
+      "scene": "S08",
+      "start": 199.96,
+      "end": 201.96,
+      "voText": "The library holds the pattern.",
+      "trigger": {
+        "word": "library",
+        "at": 200.17
+      },
+      "visualEvent": "Camera settles on library with CW-005 highlighted",
+      "type": "camera move",
+      "target": "patterns.cw005",
+      "sfx": ""
+    },
+    {
+      "id": "p061",
+      "phrase_id": "p061",
+      "scene": "S08",
+      "start": 202.07,
+      "end": 203.38,
+      "voText": "The single wire does not.",
+      "trigger": {
+        "word": "wire",
+        "at": 202.51
+      },
+      "visualEvent": "Single wire graphic fades; library holds",
+      "type": "native explainer",
+      "target": "patterns",
+      "sfx": ""
+    },
+    {
+      "id": "p062",
+      "phrase_id": "p062",
+      "scene": "S09",
+      "start": 203.51,
+      "end": 206.36,
+      "voText": "The transaction is not the crime.",
+      "trigger": {
+        "word": "transaction",
+        "at": 203.69
+      },
+      "visualEvent": "Outro: logo build begins",
+      "type": "native explainer",
+      "target": "outro.logo",
+      "sfx": "logo_hit"
+    },
+    {
+      "id": "p063",
+      "phrase_id": "p063",
+      "scene": "S09",
+      "start": 206.36,
+      "end": 207.24,
+      "voText": "The network is.",
+      "trigger": {
+        "word": "network",
+        "at": 206.54
+      },
+      "visualEvent": "Tagline line 1: The network is.",
+      "type": "native explainer",
+      "target": "outro.tag",
+      "sfx": ""
+    },
+    {
+      "id": "p064",
+      "phrase_id": "p064",
+      "scene": "S09",
+      "start": 208.12,
+      "end": 212.2,
+      "voText": "Corridor Watch turns investigations into institutional memory.",
+      "trigger": {
+        "word": "memory",
+        "at": 211.4
+      },
+      "visualEvent": "Tagline complete; CTA + URL + synthetic footnote; music resolve through 220s",
+      "type": "native explainer",
+      "target": "outro.cta",
+      "sfx": "resolve"
+    }
+  ]
+}

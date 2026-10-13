@@ -1,0 +1,20 @@
+{
+  "id": "CW-MID-02",
+  "amount": 9050,
+  "corridor": "SG→PH",
+  "risk": 91,
+  "pattern": "mule_pass_through",
+  "home_bank": "BANK_SG",
+  "observed_path": [
+    "BANK_IN",
+    "BANK_SG",
+    "BANK_PH"
+  ],
+  "unresolved": [
+    "BANK_HK"
+  ],
+  "mule": "D-MID-MULE",
+  "network_visibility_pct": 61,
+  "pattern_cw005_matches": 36,
+  "note": "PARTIAL NETWORK OBSERVED — upstream partial, internal full, downstream partial. CW-005 match count locked to 36 for film consistency."
+}

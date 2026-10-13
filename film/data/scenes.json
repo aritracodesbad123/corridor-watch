@@ -1,0 +1,132 @@
+{
+  "fps": 60,
+  "vo_source": "video/audio/voiceover.wav",
+  "vo_duration_s": 212.2,
+  "master_duration_s": 220.0,
+  "note": "Scene cuts locked to voiceover_phrases.json / vo-transcript.json. Master = full VO + 7.8s music-only outro. Do not rewrite VO.",
+  "breathing": {
+    "intro_music_only_s": 0,
+    "outro_music_only_s": 7.8,
+    "reason": "VO alone is 3:32 (inside 3:00–4:00). Outro hold carries music resolve + CTA; no frozen UI pads."
+  },
+  "scenes": [
+    {
+      "id": "S00",
+      "name": "Hook",
+      "vo_start": 0.0,
+      "vo_end": 15.36,
+      "vo_text": "The transaction is not the crime. The network is. Suspicious activity hides in the hops around a payment, not in the wire itself. Corridor Watch takes the network as the case. One synthetic case shows the path.",
+      "headline": "The transaction is not the crime.",
+      "hero": "Payment arc $9,050 SG→PH → network bloom",
+      "ui": [],
+      "camera": "slow push; graph blooms after thesis exits",
+      "beats": [
+        { "at": 0.26, "word": "transaction", "event": "node_pop" },
+        { "at": 2.56, "word": "network", "event": "graph_connect + NETWORK punch" },
+        { "at": 9.49, "word": "Corridor", "event": "brand_lockup_flash (S02 visual beat)" }
+      ]
+    },
+    {
+      "id": "S01",
+      "name": "The gap",
+      "vo_start": 15.36,
+      "vo_end": 34.95,
+      "vo_text": "A rule on one transaction flags the wrong object. Cross-border mule and layering rings are not a single wire. Funds can arrive, rest for minutes, and leave under another purpose. A threshold cannot see that shared device. The bank is left an alert, and no memory of the network.",
+      "headline": "An alert with no network memory",
+      "hero": "Isolated alert card + ghost unknowns → 3 institutions · 3 accounts · 1 device",
+      "ui": [],
+      "camera": "amber ring on alert; resolve network"
+    },
+    {
+      "id": "S02",
+      "name": "Brand moment",
+      "vo_start": 34.95,
+      "vo_end": 35.29,
+      "vo_text": "(visual bridge — VO resumes on next scene)",
+      "headline": "Corridor Watch",
+      "hero": "Logo lockup / match-cut into app window",
+      "ui": [],
+      "camera": "graph collapses → logo → device frame",
+      "note": "Primary brand VO lands at 9.49s inside S00; this beat is the match-cut into product UI."
+    },
+    {
+      "id": "S03",
+      "name": "Triage → case",
+      "vo_start": 35.29,
+      "vo_end": 75.0,
+      "vo_text": "This console is the middle bank, BANK_SG. Case CW-MID-02 is $9,050, Singapore to the Philippines, risk 91, mule pass-through. Queue partial. Visibility is coverage, not guilt. CW-MID-01 / D-MID-MULE. The object under review is the corridor.",
+      "headline": "Ranked by risk · 91",
+      "hero": "Real Investigations UI — select CW-MID-02, then queue CW-MID-01 on feeder VO",
+      "ui": ["queue", "case/overview", "queue (CW-MID-01)"],
+      "camera": "device frame 80% width; cursor to CW-MID-02; punch-ins on 91/visibility; cut to CW-MID-01 queue @ feeder VO"
+    },
+    {
+      "id": "S04",
+      "name": "Evidence before AI",
+      "vo_start": 75.0,
+      "vo_end": 105.94,
+      "vo_text": "Corridor Watch constructs that corridor before a model speaks. Ingest never calls Gemini. 12-step DAG → evidence pack → deterministic verdict. Pill high · 91. Next step is a human decision, not an automatic clear.",
+      "headline": "Built deterministically",
+      "hero": "Evidence tiles E-TXN…E-VIS (visibility incomplete)",
+      "ui": ["verdict/evidence"],
+      "camera": "rows → tiles; bars fill on VO nouns"
+    },
+    {
+      "id": "S05",
+      "name": "Corridor map",
+      "vo_start": 105.94,
+      "vo_end": 112.86,
+      "vo_text": "Downstream of the Philippines hop the graph keeps an unknown boundary. It does not invent a bank.",
+      "headline": "Follow the money across institutions",
+      "hero": "One corridor graph only (native or capture — never double)",
+      "ui": ["flow/network"],
+      "camera": "glide along path; unknown hop dashed"
+    },
+    {
+      "id": "S06",
+      "name": "Grounded AI + guardrail",
+      "vo_start": 112.86,
+      "vo_end": 159.4,
+      "vo_text": "Gemini does not see the raw ledger… Force Gemini explains only the pack… pause for FIU lead… provenance / gate fail… deterministic verdict stands. Evidence chips cite the pack.",
+      "headline": "The model cannot override the evidence",
+      "hero": "AI brief + pipeline + designed gate-fail claim",
+      "ui": ["verdict/brief"],
+      "camera": "pipeline stages light with VO; reject flash; HIGH·91 lock",
+      "on_screen_vendor": "AI / the model (SHOW_VENDOR_NAME=false); VO may say Gemini"
+    },
+    {
+      "id": "S07",
+      "name": "A human decides",
+      "vo_start": 159.4,
+      "vo_end": 182.36,
+      "vo_text": "Consequential actions stay with the FIU lead. Hold payment / escalate / freeze refused for analyst. Lead records hold payment. Human authorization — not a core-banking freeze. Gemini recommended. A person decided.",
+      "headline": "Recommendation is not authorization",
+      "hero": "Two large cards + AUTHORIZED stamp + clean audit row",
+      "ui": ["decision/workflow"],
+      "camera": "card1 → line → card2; stamp; audit row"
+    },
+    {
+      "id": "S08",
+      "name": "Institutional memory",
+      "vo_start": 182.36,
+      "vo_end": 203.38,
+      "vo_text": "Confirming decision writes Crime Pattern DNA. Multi-hop layering fingerprint. Reusable memory. Next network can match. Library holds the pattern. The single wire does not.",
+      "headline": "Every confirmed case strengthens the next one",
+      "hero": "Pattern DNA library → CW-005 card ≥40% frame",
+      "ui": ["patterns/library"],
+      "camera": "shared-element zoom; match glow; matches count-up"
+    },
+    {
+      "id": "S09",
+      "name": "Outro / CTA",
+      "vo_start": 203.38,
+      "vo_end": 212.2,
+      "picture_end": 220.0,
+      "vo_text": "The transaction is not the crime. The network is. Corridor Watch turns investigations into institutional memory.",
+      "headline": "Investigate the corridor. Preserve the evidence. Keep the decision human.",
+      "hero": "Logo + CTA + URL placeholder + Synthetic demo data",
+      "ui": [],
+      "camera": "slow push; music resolve through 220.0s"
+    }
+  ]
+}

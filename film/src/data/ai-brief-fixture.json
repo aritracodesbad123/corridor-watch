@@ -1,0 +1,18 @@
+{
+  "mode": "fixture",
+  "vendor_on_screen": "AI",
+  "risk": "high",
+  "score": 91,
+  "pattern": "mule pass through",
+  "network_visibility_pct": 61,
+  "summary": "Observed path BANK_IN → BANK_SG → BANK_PH carries $9,050 with mule device D-MID-MULE on the PH side. Downstream off-ramp BANK_HK remains unresolved. Coverage is incomplete — treat as investigation priority, not guilt confidence.",
+  "still_unknown": [
+    "Final off-ramp BANK_HK / Bank D",
+    "Beneficial owner of mule account"
+  ],
+  "next": [
+    "Hold payment",
+    "Request corridor counterparties",
+    "Confirm device reuse"
+  ]
+}
