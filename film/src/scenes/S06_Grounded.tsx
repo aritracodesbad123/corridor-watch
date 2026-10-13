@@ -6,6 +6,7 @@ import { colors, radius, safe, shadow } from "../design/tokens";
 import { enter } from "../motion/easing";
 import { fade, useLocalSec } from "../motion/useLocalSec";
 import caseData from "../data/case-cw-mid-02.json";
+import gateCase from "../data/case-cw-mid-03.json";
 
 const BRIEF_SECTIONS = [
   {
@@ -299,26 +300,41 @@ export const S06_Grounded: React.FC = () => {
         </div>
       </div>
 
-      {/* Ungrounded claim reject */}
+      {/* Safety test — real gate_fail path on a different case (CW-MID-03) */}
+      <AbsoluteFill style={{ opacity: rejectOp * 0.92, zIndex: 6 }}>
+        <DeviceFrame
+          src="captures/verdict/gate-fail-safety.jpg"
+          widthPx={1280}
+          heightPx={720}
+          scale={0.92}
+          objectPosition="0% 0%"
+        />
+      </AbsoluteFill>
       <div
         style={{
           position: "absolute",
           right: safe.x,
-          top: safe.y + 660,
-          width: 380,
+          top: safe.y + 48,
+          width: 420,
           opacity: rejectOp,
-          zIndex: 7,
+          zIndex: 8,
           padding: "18px 20px",
           borderRadius: radius.card,
           background: colors.criticalTint,
           border: `2px solid ${colors.critical}`,
           fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+          boxShadow: shadow.card,
         }}
       >
-        <div style={{ fontSize: 20, fontWeight: 700, color: colors.critical, textDecoration: "line-through" }}>
-          Invented Bank D owner
+        <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: "0.08em", color: colors.critical }}>
+          SAFETY TEST · {gateCase.id}
         </div>
-        <div style={{ marginTop: 8, fontSize: 16, fontWeight: 700, color: colors.critical }}>Gate fail — no E-chip</div>
+        <div style={{ marginTop: 10, fontSize: 20, fontWeight: 700, color: colors.critical, textDecoration: "line-through" }}>
+          Invented bank owner
+        </div>
+        <div style={{ marginTop: 8, fontSize: 16, fontWeight: 700, color: colors.critical }}>
+          Gate fail — ungrounded claim rejected
+        </div>
       </div>
 
       {/* Deterministic verdict stands */}

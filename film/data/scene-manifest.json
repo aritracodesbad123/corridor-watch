@@ -1,0 +1,71 @@
+{
+  "note": "Day 2–3 storyboard map. No single case >~30% runtime. ≥5 distinct case IDs from seed data.",
+  "target_runtime_s": [180, 230],
+  "scenes": [
+    {
+      "id": "A",
+      "film": "S00",
+      "name": "Title",
+      "case_ids": [],
+      "feature": "Brand lockup on clean plain stage — no graph behind title",
+      "approx_s": [0, 8]
+    },
+    {
+      "id": "B",
+      "film": "S01",
+      "name": "Problem",
+      "case_ids": ["CW-MID-01"],
+      "feature": "One-transaction alerts miss hops and shared devices; memory lost",
+      "approx_s": [8, 33]
+    },
+    {
+      "id": "C",
+      "film": "S03",
+      "name": "What it is",
+      "case_ids": ["CW-MID-02", "CW-LOTUS-04", "CW-MID-01"],
+      "feature": "Triage queue across typologies; three pillars",
+      "approx_s": [33, 58]
+    },
+    {
+      "id": "D",
+      "film": ["S04", "S05"],
+      "name": "Features",
+      "case_ids": ["CW-LOTUS-04", "CW-MID-01", "CW-LOTUS-02", "CW-MID-02"],
+      "feature": "Corridor map coverage; shared device; split/multi-hop; deterministic score + DAG",
+      "approx_s": [58, 118],
+      "cut_first_if_over_runtime": true
+    },
+    {
+      "id": "E",
+      "film": "S06",
+      "name": "How Gemini helps",
+      "case_ids": ["CW-MID-02", "CW-MID-03"],
+      "feature": "Tokenised pack → grounded brief; safety-test gate_fail on CW-MID-03",
+      "approx_s": [118, 173]
+    },
+    {
+      "id": "F",
+      "film": "S07",
+      "name": "Governance",
+      "case_ids": ["CW-LOTUS-04"],
+      "feature": "Analyst refused vs FIU lead; human authorization; readable audit",
+      "approx_s": [173, 198]
+    },
+    {
+      "id": "G",
+      "film": "S08",
+      "name": "Memory",
+      "case_ids": ["CW-MID-02", "CW-MID-03"],
+      "feature": "Confirm → library update → new alert CW-MID-03 non-zero match",
+      "approx_s": [198, 228]
+    },
+    {
+      "id": "H",
+      "film": "S09",
+      "name": "Close",
+      "case_ids": [],
+      "feature": "Tagline + URL plain text; Synthetic demo data ≥18px",
+      "approx_s": [228, 240]
+    }
+  ]
+}

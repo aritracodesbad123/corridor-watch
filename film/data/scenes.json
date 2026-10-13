@@ -3,7 +3,7 @@
   "vo_source": "video/audio/voiceover.wav",
   "vo_duration_s": 212.2,
   "master_duration_s": 220.0,
-  "note": "Scene cuts locked to voiceover_phrases.json / vo-transcript.json. Master = full VO + 7.8s music-only outro. Do not rewrite VO.",
+  "note": "Day 2–3: visual storyboard A–H in scene-manifest.json + narration.txt (new SOT). Old VO still muxed until Day-3 TTS regen. Multi-case plates from seed data.",
   "breathing": {
     "intro_music_only_s": 0,
     "outro_music_only_s": 7.8,

@@ -1,0 +1,9 @@
+{
+  "id": "CW-MID-03",
+  "amount": 7200,
+  "corridor": "SG→PH",
+  "risk": 88,
+  "pattern": "mule_pass_through",
+  "role": "next_alert_match",
+  "note": "Follow-on alert for Pattern DNA match after CW-MID-02 confirm; gate-fail safety fixture in demo replay."
+}

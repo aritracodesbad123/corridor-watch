@@ -6,30 +6,31 @@ import { colors, safe } from "../design/tokens";
 import { enter } from "../motion/easing";
 import { fade, useLocalSec } from "../motion/useLocalSec";
 import caseData from "../data/case-cw-mid-02.json";
+import lotus from "../data/case-cw-lotus-04.json";
 
 /** CW-MID-02 triage row from captures/boxes.json (capture px @ 1920×1080). */
 const MID02_ROW = { x: 232, y: 217.234375, w: 319, h: 72.2890625 };
 
 /**
- * S03 Triage → case — VO 35.29–75.00 (~39.7 s local).
- * Queue click on CW-MID-02 row → case overview for hero VO;
- * cut back to queue (CW-MID-01) on feeder VO.
+ * S03 — storyboard C: triage across typologies (MID-02 → LOTUS-04 → MID-01 feeder).
  */
 export const S03_Triage: React.FC = () => {
   const t = useLocalSec();
   const dur = 75.0 - 35.29;
-  // Absolute → local: Case CW-MID-02 @ 39.85 → 4.56; feeder @ ~59.85 → 24.56
-  // Land on MID-02 overview before VO names the case (abs ~39s).
   const caseIn = 2.6;
+  const lotusIn = 14.0;
   const feederIn = 24.4;
 
-  const frameScale = interpolate(t, [0.5, dur], [0.92, 1.06], {
+  // Discrete punch-in then still (Day-2 shake rule)
+  const frameScale = interpolate(t, [0.5, 1.05, 1.05, dur], [0.96, 1.04, 1.04, 1.04], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
-  }) * 1.05;
+    easing: enter,
+  });
 
   const queueOpenOp = fade(t, 0.05, 0.35, caseIn, caseIn + 0.9);
-  const caseOp = fade(t, caseIn, caseIn + 0.9, feederIn, feederIn + 0.9);
+  const caseOp = fade(t, caseIn, caseIn + 0.9, lotusIn, lotusIn + 0.8);
+  const lotusOp = fade(t, lotusIn, lotusIn + 0.8, feederIn, feederIn + 0.8);
   const queueFeederOp = fade(t, feederIn, feederIn + 0.9);
   const queueOp = Math.max(queueOpenOp, queueFeederOp);
 
@@ -83,6 +84,31 @@ export const S03_Triage: React.FC = () => {
       >
         <DeviceFrame src="captures/case/overview.jpg" scale={frameScale * 0.92} objectPosition="0% 0%" />
       </AbsoluteFill>
+      <AbsoluteFill style={{ opacity: lotusOp }}>
+        <DeviceFrame
+          src="captures/cases/CW-LOTUS-04/overview.jpg"
+          scale={frameScale * 0.92}
+          objectPosition="0% 0%"
+        />
+      </AbsoluteFill>
+      <div
+        style={{
+          position: "absolute",
+          left: safe.x,
+          top: safe.y + 24,
+          opacity: lotusOp,
+          zIndex: 5,
+          padding: "10px 16px",
+          borderRadius: 999,
+          background: colors.ink,
+          color: "#fff",
+          fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
+          fontSize: 18,
+          fontWeight: 700,
+        }}
+      >
+        {lotus.id} · {lotus.pattern.replace(/_/g, " ")}
+      </div>
 
       {/* Highlight ring on CW-MID-02 queue row during open */}
       <div

@@ -329,7 +329,7 @@ export const S08_PatternDNA: React.FC = () => {
                 color: colors.positive,
               }}
             >
-              Match · CW-MID-02 network
+              Match · CW-MID-03 network
             </span>
           </div>
           <div

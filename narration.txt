@@ -1,0 +1,52 @@
+CORRIDOR WATCH — hackathon narration (single source of truth)
+Claims limited to docs/demo-claims.md. Synthetic demo data only.
+Target 3:00–3:50. Old VO discarded; regenerate TTS from this file.
+
+=== A · TITLE (0:00–0:08) ===
+Corridor Watch.
+Investigate the corridor. Keep the decision human.
+
+=== B · PROBLEM (~25s) ===
+Alerts are still judged one transaction at a time.
+Laundering hides in the hops and shared devices around a payment.
+What investigators learn is lost when the case closes.
+And in regulated work, an LLM that invents a bank owner is not a tool — it is a risk.
+
+=== C · WHAT IT IS (~25s) ===
+Corridor Watch is the triage console across several cases and typologies —
+mule pass-through, split-transaction laundering, shared-device rings, multi-hop chains.
+Three pillars: see the corridor, explain with grounded AI, remember what is confirmed.
+
+=== D · FEATURES (~60s, different case each beat) ===
+On CW-LOTUS-04, the corridor map shows coverage — not guilt:
+observed, external, inferred, and unknown.
+On CW-MID-01, shared device and beneficiary links surface the mule fingerprint.
+On CW-LOTUS-02, split-transaction and multi-hop structure light up in the money flow.
+On CW-MID-02, the score is deterministic from a twelve-step evidence pack —
+the model does not write the number.
+
+=== E · HOW GEMINI HELPS (~55s) ===
+The deterministic engine builds the evidence pack first.
+Gemini sees tokens only — never the raw ledger.
+It returns a structured brief: why this looks this way, still unknown, what to check next —
+with evidence chips that cite the pack.
+Provenance is visible: prefetch, grounded, fallback, or gate fail.
+Safety test on CW-MID-03: the output gate rejects an invented bank owner.
+Gemini cannot hold, escalate, or freeze — and cannot change the score.
+Model in use: gemini-2.5-flash.
+
+=== F · GOVERNANCE (~25s) ===
+On CW-LOTUS-04, an analyst is refused consequential actions.
+The FIU lead is allowed — and a human must authorize.
+Every decision writes a readable audit entry.
+
+=== G · MEMORY (~30s) ===
+Confirm the decision as FIU lead.
+The Pattern DNA library updates.
+A new alert, CW-MID-03, matches the fingerprint with a non-zero score.
+Institutional memory — not a one-off wire.
+
+=== H · CLOSE (~12s) ===
+The transaction is not the crime. The network is.
+Corridor Watch.
+Synthetic demo data.

@@ -5,7 +5,7 @@ import { DeviceFrame } from "../components/DeviceFrame";
 import { colors, radius, safe, shadow, type as typeScale } from "../design/tokens";
 import { enter } from "../motion/easing";
 import { fade, useLocalSec } from "../motion/useLocalSec";
-import caseData from "../data/case-cw-mid-02.json";
+import caseData from "../data/case-cw-lotus-04.json";
 
 const ACTIONS = ["hold_payment", "escalate_fiu", "freeze_account"] as const;
 const LABELS: Record<(typeof ACTIONS)[number], string> = {

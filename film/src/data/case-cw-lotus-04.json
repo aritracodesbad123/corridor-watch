@@ -1,0 +1,9 @@
+{
+  "id": "CW-LOTUS-04",
+  "amount": 14800,
+  "corridor": "IN→SG→AE",
+  "risk": 91,
+  "pattern": "mule_pass_through",
+  "role": "features_corridor",
+  "note": "Lotus Ring hero for multi-case feature beats (split feeders / multi-hop)."
+}
