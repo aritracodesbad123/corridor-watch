@@ -51,12 +51,12 @@ export const S04_Evidence: React.FC = () => {
 
   const uiBehind = uiOp * (1 - dagOp * 0.75);
   // Discrete late punch then still
-  const latePush = interpolate(t, [21, 21.55, 21.55, 30.9], [1.0, 1.04, 1.04, 1.04], {
+  const latePush = interpolate(t, [21, 21.55, 21.551, 30.9], [1.0, 1.04, 1.04, 1.04], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,
   });
-  const latePan = interpolate(t, [21, 21.55, 21.55, 30.9], [0, -10, -10, -10], {
+  const latePan = interpolate(t, [21, 21.55, 21.551, 30.9], [0, -10, -10, -10], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,

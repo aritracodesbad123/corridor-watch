@@ -27,7 +27,7 @@ export const Pass2DagSlice: React.FC = () => {
   const wallOp = fade(t, 0.4, 1.0, 4.8, 5.5);
   const dagOp = fade(t, 1.0, 1.8);
   const uiOp = fade(t, 0.15, 0.7);
-  const uiScale = interpolate(t, [1.0, 1.55, 1.55, 14.5], [0.98, 1.04, 1.04, 1.04], {
+  const uiScale = interpolate(t, [1.0, 1.55, 1.551, 14.5], [0.98, 1.04, 1.04, 1.04], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,

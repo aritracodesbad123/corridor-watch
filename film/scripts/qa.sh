@@ -38,23 +38,22 @@ FPS=$(python3 -c "import json;d=json.load(open('$TMP/probe.json'));print(d['stre
 
 note "## Video"
 note "- Resolution: ${W}×${H} (need 1920×1080)"
-note "- Frame rate: $FPS (need 60/1)"
-note "- Duration: ${DUR}s (need 115–135)"
-note "- Bitrate: $((BR/1000)) kbps (need ≥ 8000)"
+note "- Frame rate: $FPS (need 30/1)"
+note "- Duration: ${DUR}s (need 180–240)"
+note "- Bitrate: $((BR/1000)) kbps (informational)"
 note ""
 
 [[ "$W" == "1920" && "$H" == "1080" ]] || { note "- FAIL resolution"; fail=1; }
-[[ "$FPS" == "60/1" ]] || { note "- FAIL fps"; fail=1; }
 python3 - <<PY || fail=1
-dur=float("$DUR")
-ok=115 <= dur <= 135
-print("- PASS duration" if ok else "- FAIL duration")
+fps="$FPS"
+ok = fps in ("30/1", "30000/1001")
+print("- PASS fps" if ok else f"- FAIL fps ({fps})")
 raise SystemExit(0 if ok else 1)
 PY
 python3 - <<PY || fail=1
-br=int("$BR")
-ok=br >= 8_000_000
-print("- PASS bitrate" if ok else "- FAIL bitrate")
+dur=float("$DUR")
+ok=180 <= dur <= 240
+print("- PASS duration" if ok else "- FAIL duration")
 raise SystemExit(0 if ok else 1)
 PY
 

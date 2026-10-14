@@ -22,7 +22,7 @@ export const S09_Outro: React.FC = () => {
   const synthIn = fade(t, 10.6, 11.6);
 
   const breathe = holdBreath(frame, 200);
-  const push = interpolate(t, [0, 0.55, 0.55, 16.62], [1.0, 1.02, 1.02, 1.02], {
+  const push = interpolate(t, [0, 0.55, 0.551, 16.62], [1.0, 1.02, 1.02, 1.02], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,

@@ -24,12 +24,12 @@ export const S01_TheGap: React.FC = () => {
   const drift = 0; // Day-2: no continuous sin drift
   const dash = 0;
   // Discrete punch-in ≤0.6s then still hold
-  const camPush = interpolate(t, [0, 0.55, 0.55, DUR], [1.0, 1.04, 1.04, 1.04], {
+  const camPush = interpolate(t, [0, 0.55, 0.551, DUR], [1.0, 1.04, 1.04, 1.04], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,
   });
-  const camPan = interpolate(t, [0, 0.55, 0.55, DUR], [0, -8, -8, -8], {
+  const camPan = interpolate(t, [0, 0.55, 0.551, DUR], [0, -8, -8, -8], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,
@@ -62,7 +62,7 @@ export const S01_TheGap: React.FC = () => {
   
   // Phase 5: Queue cutaway with camera push (12-16s)
   const queueOp = fade(t, 11.8, 12.5, 16.5, 17.2);
-  const queuePush = interpolate(t, [11.8, 12.35, 12.35, 14.5], [0.72, 0.85, 0.85, 0.85], {
+  const queuePush = interpolate(t, [11.8, 12.35, 12.351, 14.5], [0.72, 0.85, 0.85, 0.85], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,

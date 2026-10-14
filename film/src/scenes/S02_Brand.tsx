@@ -1,31 +1,34 @@
 import React from "react";
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, interpolate, useVideoConfig } from "remotion";
 import { Background } from "../components/Background";
 import { colors, safe, type as typeScale } from "../design/tokens";
 import { enter } from "../motion/easing";
+import { useLocalSec } from "../motion/useLocalSec";
 
 /**
- * S02 Brand moment — 7 s @ 60fps = 420 frames.
- * Graph collapse residual → logo lockup + light sweep + tagline.
+ * S02 — Brand bridge between A and B (music-only gap; short).
+ * Timings scale to local duration so a 0.75s cut still lands a logo beat.
  */
 export const S02_Brand: React.FC = () => {
-  const frame = useCurrentFrame();
+  const t = useLocalSec();
+  const { durationInFrames, fps } = useVideoConfig();
+  const dur = Math.max(durationInFrames / fps, 0.35);
 
-  const collapse = interpolate(frame, [0, 36], [1, 0], {
+  const collapse = interpolate(t, [0, dur * 0.45], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,
   });
-  const logoIn = interpolate(frame, [24, 60], [0, 1], {
+  const logoIn = interpolate(t, [dur * 0.2, dur * 0.55], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,
   });
-  const sweep = interpolate(frame, [70, 160], [-0.2, 1.2], {
+  const sweep = interpolate(t, [dur * 0.35, dur], [-0.2, 1.2], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
-  const tagIn = interpolate(frame, [90, 130], [0, 1], {
+  const tagIn = interpolate(t, [dur * 0.45, Math.min(dur * 0.85, dur - 0.05)], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,
@@ -35,7 +38,6 @@ export const S02_Brand: React.FC = () => {
     <AbsoluteFill>
       <Background />
 
-      {/* residual corridor collapsing into center */}
       <svg
         width={1920}
         height={1080}

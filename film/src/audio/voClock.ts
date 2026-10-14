@@ -6,11 +6,11 @@ export const MASTER_DURATION_S = scenes.master_duration_s as number;
 export const VO_WORDS = transcript.words;
 export const SCENES = scenes.scenes;
 
-export function secToFrame(sec: number, fps = 60): number {
+export function secToFrame(sec: number, fps = 30): number {
   return Math.round(sec * fps);
 }
 
-export function frameToSec(frame: number, fps = 60): number {
+export function frameToSec(frame: number, fps = 30): number {
   return frame / fps;
 }
 

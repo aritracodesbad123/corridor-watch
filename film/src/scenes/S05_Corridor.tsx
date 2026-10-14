@@ -23,7 +23,7 @@ export const S05_Corridor: React.FC = () => {
     easing: enter,
   });
   // Discrete pan ≤0.6s (@60fps ≈36f) then still
-  const panX = interpolate(frame, [30, 66, 66, 400], [30, 0, 0, 0], {
+  const panX = interpolate(frame, [30, 66, 66.001, 400], [30, 0, 0, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });

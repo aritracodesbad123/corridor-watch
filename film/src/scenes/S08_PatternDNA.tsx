@@ -23,12 +23,12 @@ export const S08_PatternDNA: React.FC = () => {
 
   const libraryIn = fade(t, 6.8, 8.8);
   // Discrete punch-ins then still holds
-  const libraryScale = interpolate(t, [6.8, 7.35, 7.35, 17.5], [1.06, 1.1, 1.1, 1.1], {
+  const libraryScale = interpolate(t, [6.8, 7.35, 7.351, 17.5], [1.06, 1.1, 1.1, 1.1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,
   });
-  const settleZoom = interpolate(t, [17.5, 18.05, 18.05, 20.5], [1.1, 1.16, 1.16, 1.16], {
+  const settleZoom = interpolate(t, [17.5, 18.05, 18.051, 20.5], [1.1, 1.16, 1.16, 1.16], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,

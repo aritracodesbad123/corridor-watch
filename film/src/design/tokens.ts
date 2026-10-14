@@ -53,6 +53,6 @@ export const shadow = {
   device: "0 8px 24px rgba(11,18,32,0.10), 0 40px 80px rgba(11,18,32,0.12)",
 } as const;
 
-export const fps = 60;
+export const fps = 30;
 export const width = 1920;
 export const height = 1080;

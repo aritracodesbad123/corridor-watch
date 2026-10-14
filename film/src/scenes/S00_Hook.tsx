@@ -1,31 +1,25 @@
 import React from "react";
 import { AbsoluteFill, interpolate, useVideoConfig } from "remotion";
-import { Background } from "../components/Background";
-import { NetworkGraph } from "../components/Graph";
-import { colors, safe, type as typeScale } from "../design/tokens";
+import { colors, type as typeScale } from "../design/tokens";
 import { enter } from "../motion/easing";
 import { fade, useLocalSec } from "../motion/useLocalSec";
 
 /**
- * S00 — Storyboard A then bridge into B.
- * 0–8s: Corridor Watch title on clean plain stage (no graph / no UI).
- * Title fully exits before any network graphic enters.
+ * S00 — Storyboard A: clean Corridor Watch title (no graph / no UI).
+ * Duration follows scenes.json (section A VO); timings scale to local length.
  */
 export const S00_Hook: React.FC = () => {
   const t = useLocalSec();
-  const { fps } = useVideoConfig();
-  const f = (s: number) => Math.round(s * fps);
+  const { durationInFrames, fps } = useVideoConfig();
+  const dur = durationInFrames / fps;
+  const inEnd = Math.min(0.55, dur * 0.12);
+  const outStart = Math.max(dur - 0.55, inEnd + 0.2);
+  const tagIn = Math.min(1.2, dur * 0.25);
+  const tagInEnd = Math.min(tagIn + 0.5, outStart - 0.05);
 
-  const titleIn = fade(t, 0.15, 0.7);
-  const titleHold = fade(t, 0.7, 7.0) * (1 - fade(t, 7.2, 8.0));
-  const titleOp = Math.max(titleIn * titleHold, fade(t, 0.15, 0.7) * (1 - fade(t, 7.2, 8.0)));
-  const tagOp = fade(t, 1.4, 2.2) * (1 - fade(t, 7.2, 8.0));
-
-  // After title clears: short problem bridge (payment arc) then network — never under title
-  const problemOp = fade(t, 8.1, 8.8, 12.0, 12.8);
-  const graphOp = fade(t, 12.4, 13.2);
-
-  const brandScale = interpolate(t, [0.15, 0.7, 0.7, 7.2], [0.96, 1, 1, 1], {
+  const titleOp = fade(t, 0.12, inEnd) * (1 - fade(t, outStart, dur));
+  const tagOp = fade(t, tagIn, tagInEnd) * (1 - fade(t, outStart, dur));
+  const brandScale = interpolate(t, [0.12, inEnd], [0.96, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,
@@ -33,7 +27,6 @@ export const S00_Hook: React.FC = () => {
 
   return (
     <AbsoluteFill>
-      {/* Plain stage for title — no decorative graph behind brand */}
       <AbsoluteFill style={{ background: colors.canvas }} />
       <AbsoluteFill
         style={{
@@ -78,48 +71,6 @@ export const S00_Hook: React.FC = () => {
           </div>
         </div>
       </AbsoluteFill>
-
-      {/* Problem bridge — only after title exit */}
-      <AbsoluteFill style={{ opacity: problemOp, zIndex: 2 }}>
-        <Background intensity={0.7} />
-        <div
-          style={{
-            position: "absolute",
-            left: safe.x,
-            right: safe.x,
-            top: safe.y + 120,
-            textAlign: "center",
-            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            fontSize: 52,
-            fontWeight: 700,
-            color: colors.ink,
-            letterSpacing: "-0.02em",
-          }}
-        >
-          The transaction is not the crime.
-        </div>
-        <div
-          style={{
-            position: "absolute",
-            left: safe.x,
-            right: safe.x,
-            top: safe.y + 200,
-            textAlign: "center",
-            fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
-            fontSize: 36,
-            fontWeight: 500,
-            color: colors.inkSecondary,
-          }}
-        >
-          The network is.
-        </div>
-      </AbsoluteFill>
-
-      {t >= 12.2 ? (
-        <AbsoluteFill style={{ opacity: graphOp, zIndex: 3 }}>
-          <NetworkGraph start={f(12.4)} showLabels />
-        </AbsoluteFill>
-      ) : null}
     </AbsoluteFill>
   );
 };

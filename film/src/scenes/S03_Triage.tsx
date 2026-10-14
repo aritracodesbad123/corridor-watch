@@ -22,7 +22,7 @@ export const S03_Triage: React.FC = () => {
   const feederIn = 24.4;
 
   // Discrete punch-in then still (Day-2 shake rule)
-  const frameScale = interpolate(t, [0.5, 1.05, 1.05, dur], [0.96, 1.04, 1.04, 1.04], {
+  const frameScale = interpolate(t, [0.5, 1.05, 1.051, dur], [0.96, 1.04, 1.04, 1.04], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,

@@ -19,7 +19,7 @@ export const S07_Human: React.FC = () => {
   const t = useLocalSec();
 
   // Discrete eased punch-in then still hold (no continuous drift — Day-1/2 shake fix).
-  const heroScale = interpolate(t, [0, 0.55, 0.55, 22], [1.0, 1.06, 1.06, 1.06], {
+  const heroScale = interpolate(t, [0, 0.55, 0.551, 22], [1.0, 1.06, 1.06, 1.06], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: enter,
