@@ -203,6 +203,31 @@ def _dist_f_db() -> Iterator[None]:
         shutil.rmtree(tmpdir, ignore_errors=True)
 
 
+@contextmanager
+def _dist_h_db() -> Iterator[None]:
+    """Score structure-holdout generator H. Do not retune the detector on this seed."""
+    import db
+    from validation.external import generator_h
+    from validation.external.generator_b import write_db
+
+    old_db = db.DB_PATH
+    tmpdir = Path(tempfile.mkdtemp(prefix="cw-eval-h-"))
+    tmp = tmpdir / "dist_h.db"
+    db.DB_PATH = tmp
+    try:
+        accounts, txns = generator_h.build(seed=generator_h.SEED)
+        write_db(accounts, txns)
+        from graph_features import score_all, write_scores
+        con = connect()
+        scores, _, _ = score_all(con)
+        write_scores(con, scores, txns)
+        con.close()
+        yield
+    finally:
+        db.DB_PATH = old_db
+        shutil.rmtree(tmpdir, ignore_errors=True)
+
+
 def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: set[str] | None = None, family: dict[str, str] | None = None) -> dict[str, Any]:
     if cut == "clean":
         with _clean_synthetic_db():
@@ -227,6 +252,10 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
         from validation.external.generator_f import FAMILY, POSITIVE_F
         with _dist_f_db():
             return run_evaluation(include_trace=include_trace, cut="ledger_f", positive=POSITIVE_F, family=FAMILY)
+    if cut == "dist_h":
+        from validation.external.generator_h import POSITIVE_H
+        with _dist_h_db():
+            return run_evaluation(include_trace=include_trace, cut="ledger_h", positive=POSITIVE_H)
     init_schema()
     con = connect()
     rows = [dict(r) for r in con.execute(
@@ -285,19 +314,38 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
 
     metrics = _binary_metrics(y_true, y_pred)
     per_scenario = {}
+    graph_true: list[bool] = []
+    graph_pred: list[bool] = []
+    graph_per_scenario: dict[str, dict[str, Any]] = {}
     for scenario, stats in sorted(by_scenario.items()):
         per_scenario[scenario] = {
             **stats,
             "flag_rate": round(stats["flagged"] / stats["total"], 4) if stats["total"] else 0.0,
         }
+        is_pos = scenario in positive
+        flagged = stats["flagged"] > 0
+        graph_true.append(is_pos)
+        graph_pred.append(flagged)
+        graph_per_scenario[scenario] = {
+            "is_positive_family": is_pos,
+            "n_txns": stats["total"],
+            "n_flagged": stats["flagged"],
+            "graph_pred_positive": flagged,
+        }
+    graph_metrics = _binary_metrics(graph_true, graph_pred)
 
     result = {
         "status": "ok",
-        "benchmark": {"ledger_f": "dist_f", "ledger_e": "dist_e", "ledger_d": "dist_d", "ledger_c": "dist_c", "ledger_b": "dist_b"}.get(cut, "synthetic_v1"),
+        "benchmark": {
+            "ledger_h": "dist_h", "ledger_f": "dist_f", "ledger_e": "dist_e",
+            "ledger_d": "dist_d", "ledger_c": "dist_c", "ledger_b": "dist_b",
+        }.get(cut, "synthetic_v1"),
         "ground_truth": "validation.oracle (eval-only; runtime ignores fraud_scenario)",
         "positive_scenarios": sorted(positive),
         "sample_count": len(rows),
         "metrics": metrics,
+        "graph_metrics": graph_metrics,
+        "graph_per_scenario": graph_per_scenario,
         "per_scenario": per_scenario,
         "pattern_accuracy": round(pattern_correct / positive_total, 4) if positive_total else 0.0,
         "pattern_confusion": {f"{truth}->{pred}": n for (truth, pred), n in sorted(pattern_confusion.items())},
@@ -318,7 +366,7 @@ def run_evaluation(include_trace: bool = False, cut: str = "clean", positive: se
         result["examples"] = examples
     result["baseline_comparison"] = compare_to_transaction_baseline(rows, positive=positive)
     result["impact"] = impact_metrics(result, result["baseline_comparison"])
-    if cut not in {"ledger_b", "ledger_c", "ledger_d", "ledger_e", "ledger_f"}:
+    if cut not in {"ledger_b", "ledger_c", "ledger_d", "ledger_e", "ledger_f", "ledger_h"}:
         result["network_metrics"] = _network_eval(rows, labels)
     return result
 

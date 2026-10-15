@@ -1,0 +1,193 @@
+{
+  "run_id": "de69ef779721",
+  "timestamp_utc": "2026-10-15T23:25:03.822875+00:00",
+  "git_commit": "546cab963da1da5fe2372099cd5645d053b3d830",
+  "environment": "local",
+  "dataset": "dist_h",
+  "dataset_version": "generator_h.seed59",
+  "model": null,
+  "model_version": null,
+  "prompt_version": "investigator-v8",
+  "tool_schema_version": "investigation-report-v1",
+  "case_count": 95,
+  "random_seed": 59,
+  "status": "ok",
+  "benchmark": "dist_h",
+  "ground_truth": "validation.oracle (eval-only; runtime ignores fraud_scenario)",
+  "positive_scenarios": [
+    "hub_braid",
+    "mesh_clique",
+    "noise_peel",
+    "ring4_loop",
+    "spine_relay"
+  ],
+  "sample_count": 95,
+  "metrics": {
+    "tp": 51,
+    "fp": 0,
+    "fn": 0,
+    "tn": 44,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "false_positive_rate": 0.0
+  },
+  "graph_metrics": {
+    "tp": 5,
+    "fp": 0,
+    "fn": 0,
+    "tn": 3,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "false_positive_rate": 0.0
+  },
+  "graph_per_scenario": {
+    "ambiguous_dues": {
+      "is_positive_family": false,
+      "n_txns": 7,
+      "n_flagged": 0,
+      "graph_pred_positive": false
+    },
+    "benign_payroll": {
+      "is_positive_family": false,
+      "n_txns": 10,
+      "n_flagged": 0,
+      "graph_pred_positive": false
+    },
+    "hub_braid": {
+      "is_positive_family": true,
+      "n_txns": 15,
+      "n_flagged": 15,
+      "graph_pred_positive": true
+    },
+    "mesh_clique": {
+      "is_positive_family": true,
+      "n_txns": 20,
+      "n_flagged": 20,
+      "graph_pred_positive": true
+    },
+    "noise_peel": {
+      "is_positive_family": true,
+      "n_txns": 6,
+      "n_flagged": 6,
+      "graph_pred_positive": true
+    },
+    "normal": {
+      "is_positive_family": false,
+      "n_txns": 27,
+      "n_flagged": 0,
+      "graph_pred_positive": false
+    },
+    "ring4_loop": {
+      "is_positive_family": true,
+      "n_txns": 4,
+      "n_flagged": 4,
+      "graph_pred_positive": true
+    },
+    "spine_relay": {
+      "is_positive_family": true,
+      "n_txns": 6,
+      "n_flagged": 6,
+      "graph_pred_positive": true
+    }
+  },
+  "per_scenario": {
+    "ambiguous_dues": {
+      "total": 7,
+      "flagged": 0,
+      "flag_rate": 0.0
+    },
+    "benign_payroll": {
+      "total": 10,
+      "flagged": 0,
+      "flag_rate": 0.0
+    },
+    "hub_braid": {
+      "total": 15,
+      "flagged": 15,
+      "flag_rate": 1.0
+    },
+    "mesh_clique": {
+      "total": 20,
+      "flagged": 20,
+      "flag_rate": 1.0
+    },
+    "noise_peel": {
+      "total": 6,
+      "flagged": 6,
+      "flag_rate": 1.0
+    },
+    "normal": {
+      "total": 27,
+      "flagged": 0,
+      "flag_rate": 0.0
+    },
+    "ring4_loop": {
+      "total": 4,
+      "flagged": 4,
+      "flag_rate": 1.0
+    },
+    "spine_relay": {
+      "total": 6,
+      "flagged": 6,
+      "flag_rate": 1.0
+    }
+  },
+  "pattern_accuracy": 0.0,
+  "pattern_confusion": {
+    "hub_braid->mule_pass_through": 2,
+    "hub_braid->multi_hop_chain": 13,
+    "mesh_clique->mule_pass_through": 20,
+    "noise_peel->mule_pass_through": 6,
+    "ring4_loop->multi_hop_chain": 4,
+    "spine_relay->mule_pass_through": 2,
+    "spine_relay->multi_hop_chain": 4
+  },
+  "quality_gate": {
+    "minimum_recall": 0.9,
+    "minimum_precision": 0.5,
+    "minimum_pattern_accuracy": 0.9,
+    "passed": false
+  },
+  "baseline_comparison": {
+    "name": "transaction_only",
+    "rules": [
+      "amount >= 8000",
+      "account_age_days <= 3 and amount >= 2500",
+      "sender_velocity >= 4 and amount >= 2000"
+    ],
+    "metrics": {
+      "tp": 9,
+      "fp": 10,
+      "fn": 42,
+      "tn": 34,
+      "precision": 0.4737,
+      "recall": 0.1765,
+      "f1": 0.2571,
+      "false_positive_rate": 0.2273
+    },
+    "network_detection": null,
+    "note": "Threshold-only baseline. No graph, Pattern DNA, or Gemini."
+  },
+  "impact": {
+    "investigation_compression": {
+      "flagged_transactions": 51,
+      "baseline_items_reviewed": 51,
+      "network_items_reviewed": 51,
+      "network_investigations": 51,
+      "compression_ratio": 1.0,
+      "unit_of_work": "network_investigation",
+      "note": "Traditional review counts flagged wires. Corridor Watch reviews the collapsed network. Measured, not claimed."
+    },
+    "false_positive_reduction": 0.2273,
+    "network_detection_lift": 0.8235,
+    "evidence_coverage": null,
+    "analyst_actionability_rate": null,
+    "time_to_case_ready": null,
+    "note": "Compression and lift are measured on the synthetic ledger, not production banks."
+  },
+  "one_shot": true,
+  "do_not_tune": true,
+  "structure_holdout": true
+}

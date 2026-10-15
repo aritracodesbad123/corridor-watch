@@ -636,7 +636,8 @@ def _parse_verdict(text: str, fallback_score: float) -> dict:
 def investigate_with_gemini(txn: dict, dag_bundle: dict | None = None) -> dict:
     global _CURRENT_TXN_ID
     c = client()
-    payload = {"transaction": txn}
+    from privacy import runtime_txn_view
+    payload = {"transaction": runtime_txn_view(txn)}
     if dag_bundle:
         payload["dag_deterministic_verdict"] = dag_bundle.get("verdict")
         payload["dag_evidence_keys"] = list((dag_bundle.get("evidence") or {}).keys())
@@ -1125,12 +1126,15 @@ def _investigation_payload(txn_id: str, dag_bundle: dict, verdict: dict, report:
 
 
 def _safe_evidence(evidence: dict) -> dict:
+    from privacy import runtime_txn_view
     keep = [
         "transaction", "sender_profile", "receiver_profile", "sender_risk", "receiver_risk",
         "sender_sessions", "receiver_sessions", "shared_devices", "shared_beneficiaries",
         "corridor_velocity", "named_patterns", "evidence_pack",
     ]
     out = {k: evidence.get(k) for k in keep if k in evidence}
+    if "transaction" in out and isinstance(out["transaction"], dict):
+        out["transaction"] = runtime_txn_view(out["transaction"])
     out["neighborhood_count"] = len(evidence.get("neighborhood") or [])
     return out
 

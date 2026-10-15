@@ -78,3 +78,13 @@ def minimize_txn(txn: dict) -> dict:
         "account_age_band": age_band(txn.get("account_age_days")),
         "risk_score": txn.get("risk_score"),
     }
+
+
+_ORACLE_KEYS = frozenset({"fraud_scenario", "fraud_label"})
+
+
+def runtime_txn_view(txn: dict | None) -> dict:
+    """Txn fields safe for Gemini / evidence packs. Drops eval-only oracle labels."""
+    if not txn:
+        return {}
+    return {k: v for k, v in dict(txn).items() if k not in _ORACLE_KEYS}

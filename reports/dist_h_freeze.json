@@ -1,0 +1,11 @@
+{
+  "frozen_seed": 59,
+  "dataset_version": "generator_h.seed59",
+  "generator": "validation/external/generator_h.py",
+  "graph_features_sha256_12": "34a3e1a3dff0",
+  "flag_threshold": 40,
+  "do_not_tune": true,
+  "frozen_before_run": true,
+  "structure_holdout": true,
+  "note": "Topologies are not Dist C\u2013G skip-hop / 6-ring / pure-smurf / inject-peel templates."
+}

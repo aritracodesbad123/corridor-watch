@@ -1,16 +1,70 @@
 # Corridor Watch
 
-> **The transaction is not the crime. The network is.**
+Banks see ordinary transfers. Fraud rings hide in the **networks** those transfers form — mule, smurf, and layering paths that no single wire looks like crime.
 
-**Live demo:** [https://corridor-watch-836108471099.asia-southeast1.run.app/](https://corridor-watch-836108471099.asia-southeast1.run.app/) (Cloud Run, asia-southeast1). The console at `/` is the React app.
+**Corridor Watch** finds those suspicious networks, builds a deterministic evidence pack, runs a graph investigation, and asks a human before consequential actions. Confirmed cases become **Crime Pattern DNA** — a reusable fingerprint of confirmed fraud that the institution can match on later networks (institutional memory, not a one-off alert).
 
-Corridor Watch detects **suspicious transaction networks**, builds a deterministic evidence pack, investigates the graph, grounds Gemini on that evidence, requires a human for consequential actions, and turns confirmed cases into **Crime Pattern DNA** — institutional memory, not a one-off alert.
+**Gemini** writes narrative on that evidence after a **grounding gate** (claims must be supported by the pack). It is not an ingest detector: ingest never calls Gemini. The path is Evidence → grounding gate → human (**FIU** = Financial Intelligence Unit lead for freeze / hold / escalate).
 
-Gemini is **Evidence → grounding gate → human**, not User → chatbot → answer. Ingest never calls Gemini.
+**Synthetic data only.** Live demo: [https://corridor-watch-836108471099.asia-southeast1.run.app/](https://corridor-watch-836108471099.asia-southeast1.run.app/) (Cloud Run, asia-southeast1). The console at `/` is the React app.
+
+## What it does
+
+1. Detect suspicious networks
+2. Build deterministic evidence
+3. Investigate the network
+4. Ground Gemini on that evidence
+5. Require human authorization
+6. Convert confirmed cases into Crime Pattern DNA
+
+## 5-minute local demo
+
+```bash
+git clone https://github.com/aritracodesbad123/corridor-watch.git
+cd corridor-watch
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp credentials.example.json credentials.json
+python data_gen.py
+python graph_features.py
+cd web && npm ci && npm run build && cd ..
+# optional: export GEMINI_API_KEY=...  (DAG runs without it; Gemini tool calls do not)
+uvicorn main:app --reload --port 8080
+```
+
+Open http://localhost:8080 — the React console. Sign in as `fiu_lead` / `change-me-fiu` (from the example file). The `web` build is what `/` serves.
+
+Demo path (3–5 min, one case): **Home (network lights up) → Investigations (graph + money flow) → deterministic evidence → Gemini on that evidence → grounding → confirm → export → Pattern DNA library.** Full script: [`docs/COMPETITION.md`](docs/COMPETITION.md).
+
+Cloud Run: [`docs/CLOUD_RUN.md`](docs/CLOUD_RUN.md). Live URL above. Do not put API keys in the image or in git.
+
+## Headline measured results
+
+**Synthetic data only.** Canonical scorecard: [`reports/SCORECARD.md`](reports/SCORECARD.md). Judge brief: [`docs/COMPETITION.md`](docs/COMPETITION.md). Claims policy: [`docs/COMPETITION_CLAIMS.md`](docs/COMPETITION_CLAIMS.md). Full narrative: [`FINAL_VALIDATION_REPORT.md`](FINAL_VALIDATION_REPORT.md).
+
+Dist A–G are **synthetic test ledgers** (independent generators / holdouts). Dist E/F “new” cases mean **new synthetic scenario names**; network shapes often reuse familiar motifs (fan-in, skip-hop, peel) — not a claim of structurally novel real-world fraud families.
+
+| Claim | Number | Bound |
+|---|---|---|
+| Dist E / Dist F detection recall | **1.0** on those frozen synthetic holdouts | Not “100% accuracy on all fraud” |
+| Dist B F1 | **1.0** (was 0.4118) | Seed 7, FPR 0 |
+| Dist H structure holdout | **txn F1 1.0 / graph F1 1.0 / FPR 0** (seed 59, n=95) | Synthetic Level-3-style structure probe — not real-bank performance ([`reports/dist_h.json`](reports/dist_h.json)) |
+| Dist G GenAI (unknown) | **P 1.0 / R 0.4688 / F1 0.6383 / FPR 0.0** | n=80, 48 benign; GenAI agrees with the DAG and does not recover detector misses |
+| Sustained ingest under SLO | **814 TPS** | passing 1,000 TPS gate (`reports/scale/`) |
+
+\*F1 = harmonic mean of precision and recall. FPR = false positive rate on benign cases. Dist H also reports **graph-level** metrics (one observation per scenario family), not only per-transaction scores.
+
+Also measured (same frozen packs): GenAI USD winner **`gemini-2.5-flash` at $0.002012/case** (Dist G; agreement pack also selects flash at $0.002032/case); historical single-model agreement **1.0, n=100**, p95 4.025 s, **$0.00143**/case; DeepEval **205 cases** (custom metrics); official Gemini Faithfulness **n=10**.
+
+Dist C/D keep frozen competition numbers (C: F1 0.5 / FPR 0.7568; D: F1 0.7397 / FPR 0.3585). The current detector hash may differ from the freeze; artifacts were not rewritten.
+
+Dist B–G remain name/seed holdouts (shapes may overlap). Dist H is a separate structure-holdout probe (continuous hops, 4-cycles, overlapping motifs, clique, noisy peel) on synthetic data only.
+
+All competition benchmark artifacts are frozen one-shot evaluations. Subsequent code changes are not used to alter or replace benchmark results.
 
 ## End-to-end architecture
 
-The interactive maps are [`docs/archify/architecture.html`](docs/archify/architecture.html) and [`docs/archify/run-process.html`](docs/archify/run-process.html). Open those files in a browser to pan, focus a role, and follow the Gemini tool calls. The views below are the same diagrams.
+The interactive maps are [`docs/archify/architecture.html`](docs/archify/architecture.html) and [`docs/archify/run-process.html`](docs/archify/run-process.html). Open those files in a browser to pan, focus a role, and follow the Gemini tool calls.
 
 ![Corridor Watch system map: analyst, FIU lead, MRM auditor, FastAPI, Cloud SQL, the investigation DAG, and Gemini’s four evidence tools](docs/archify/architecture.visual-check.1440x900.light.png)
 
@@ -44,61 +98,7 @@ flowchart TD
   dna --> ui
 ```
 
-```text
-Transactions / Pub/Sub
-     ↓
-Cloud Run ingest  (idempotent persist, no Gemini)
-     ↓
-Cheap screen → investigation queue
-     ↓
-Network construction
-     ↓
-Deterministic detection
-     ↓
-Investigation DAG
-     ↓
-Evidence pack
-     ↓
-Gemini copilot  (skipped when no API key)
-     ↓
-Grounding gate
-     ↓
-Human decision  (FIU lead for hold / escalate / freeze)
-     ↓
-Crime Pattern DNA
-     ↓
-Institutional memory
-     ↺
-Future investigations
-```
-
 Detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
-
-## What it does
-
-1. Detect suspicious networks
-2. Build deterministic evidence
-3. Investigate the network
-4. Ground Gemini on that evidence
-5. Require human authorization
-6. Convert confirmed cases into Crime Pattern DNA
-
-## Strongest measured results
-
-Canonical scorecard: [`reports/SCORECARD.md`](reports/SCORECARD.md). Judge brief: [`docs/COMPETITION.md`](docs/COMPETITION.md). Claims policy: [`docs/COMPETITION_CLAIMS.md`](docs/COMPETITION_CLAIMS.md). Full narrative: [`FINAL_VALIDATION_REPORT.md`](FINAL_VALIDATION_REPORT.md).
-
-| Claim | Number | Bound |
-|---|---|---|
-| Dist E / Dist F detection recall | **1.0** on those frozen unseen families | Not “100% accuracy on all fraud” |
-| Dist B F1 | **1.0** (was 0.4118) | Seed 7, FPR 0 |
-| Dist G GenAI (unknown) | **P 1.0 / R 0.4688 / F1 0.6383 / FPR 0.0** | n=80, 48 benign; all 5 models tied on quality |
-| GenAI USD winner | **`gemini-2.5-flash` at $0.002012/case** | Dist G; agreement pack also selects flash ($0.002032/case) |
-| Historical single-model agreement | **1.0, n=100**, p95 4.025 s, **$0.00143**/case | `gemini-2.5-flash` only — not the 5-model comparison |
-| DeepEval | **205 cases** | custom metrics |
-| Official Gemini Faithfulness | **n=10** | not 205 Gemini-judged cases |
-| Sustained ingest under SLO | **814 TPS** | passing 1,000 TPS gate (`reports/scale/`) |
-
-All competition benchmark artifacts are frozen one-shot evaluations. Subsequent code changes are not used to alter or replace benchmark results.
 
 ## Load testing (ingest TPS)
 
@@ -119,7 +119,7 @@ Absolute 5-model comparison (methodology: [`docs/GENAI_MODEL_BENCHMARK.md`](docs
 
 ### Dist G — unknown holdout (P / R / F1 / FPR / USD)
 
-Seed 53, n=80 (32 fraud / 48 benign). Novel families disjoint from Dist A–F and golden. Artifact: [`reports/genai_dist_g_bakeoff.md`](reports/genai_dist_g_bakeoff.md).
+Seed 53, n=80 (32 fraud / 48 benign). Novel synthetic scenario names disjoint from Dist A–F and golden; network shapes often reuse familiar motifs. Artifact: [`reports/genai_dist_g_bakeoff.md`](reports/genai_dist_g_bakeoff.md).
 
 | Model | P | R | F1 | FPR | $/case | p95 ms |
 |---|---:|---:|---:|---:|---:|---:|
@@ -141,34 +141,15 @@ Same investigate path as historical `gemini_agreement`, once per model. Artifact
 | `gemini-2.5-pro` | 0.99 | 0.010631 | 10377 | 0.022 |
 | `gemini-3.1-pro-preview` | 1.0 | 0.018758 | 16218 | 0.0 |
 
-## 5-minute local demo
-
-```bash
-git clone https://github.com/aritracodesbad123/corridor-watch.git
-cd corridor-watch
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-cp credentials.example.json credentials.json
-python data_gen.py
-python graph_features.py
-cd web && npm ci && npm run build && cd ..
-# optional: export GEMINI_API_KEY=...  (DAG runs without it; Gemini tool calls do not)
-uvicorn main:app --reload --port 8080
-```
-
-Open http://localhost:8080 — the React console. Sign in as `fiu_lead` / `change-me-fiu` (from the example file). The `web` build is what `/` serves.
-
-Demo path (3–5 min, one case): **Home (network lights up) → Investigations (graph + money flow) → deterministic evidence → Gemini on that evidence → grounding → confirm → export → Pattern DNA library.** Full script: [`docs/COMPETITION.md`](docs/COMPETITION.md).
-
-Cloud Run: [`docs/CLOUD_RUN.md`](docs/CLOUD_RUN.md). Live URL above. Do not put API keys in the image or in git.
-
 ## Known limitations
 
 - Synthetic data only.
 - Sustained ingest under SLO is **814 TPS**; 2,000 TPS gate missed at 1148.32.
-- Dist C/D have frozen false-positive weaknesses.
+- Dist C/D have frozen false-positive weaknesses (frozen competition numbers retained; current detector hash may differ — artifacts not rewritten).
 - Investigation-path recall = 0.667.
 - Exact novel taxonomy classification remains imperfect (Dist F name-match 0; eval-only taxonomy 0.25).
+- Dist G: GenAI agrees with the DAG; it does not recover detector misses.
+- Dist H is a synthetic structure probe (seed 59), not evidence of real-bank generalization.
 - PITR-to-past not measured.
 - Official Gemini Faithfulness n=10.
 

@@ -1,6 +1,9 @@
 """Runtime must not use generator labels, filenames, or Pattern DNA names as features."""
+import json
+
+from agent import _safe_evidence
 from evaluation import POSITIVE_SCENARIOS
-from privacy import minimize_txn
+from privacy import minimize_txn, runtime_txn_view
 from patterns.matcher import observed_signals
 from risk.tiers import cheap_screen
 from validation.oracle import extract
@@ -32,3 +35,35 @@ def test_matcher_ignores_scenario_name():
 def test_privacy_omits_fraud_scenario():
     out = minimize_txn({"txn_id": "T1", "sender_id": "ACC-1", "fraud_scenario": "mule_pass_through"})
     assert "fraud_scenario" not in out
+
+
+def test_runtime_txn_view_drops_fraud_scenario():
+    out = runtime_txn_view({
+        "txn_id": "T1",
+        "sender_id": "ACC-1",
+        "amount": 100,
+        "fraud_scenario": "dock_smurf",
+        "fraud_label": 1,
+    })
+    assert "fraud_scenario" not in out
+    assert "fraud_label" not in out
+    assert out["txn_id"] == "T1"
+    assert out["amount"] == 100
+
+
+def test_safe_evidence_payload_has_no_fraud_scenario():
+    evidence = {
+        "transaction": {
+            "txn_id": "F-0001-DOC",
+            "sender_id": "A",
+            "receiver_id": "B",
+            "fraud_scenario": "dock_smurf",
+            "amount": 500,
+        },
+        "neighborhood": [],
+    }
+    safe = _safe_evidence(evidence)
+    dumped = json.dumps(safe, default=str)
+    assert "fraud_scenario" not in safe["transaction"]
+    assert "fraud_scenario" not in dumped
+    assert "dock_smurf" not in dumped

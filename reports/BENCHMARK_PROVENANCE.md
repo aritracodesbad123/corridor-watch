@@ -12,9 +12,12 @@ Chain for each independent distribution: **dataset → seed → freeze artifact 
 | D | `validation/external/generator_d.py` (`generator_d.seed37`) | 37 | `reports/dist_d_freeze.json` | `reports/dist_d.json` | `8323b0486fc1` | `50938d088d57` |
 | E | `validation/external/generator_e.py` (`generator_e.seed41`) | 41 | `reports/dist_e_freeze.json` | `reports/dist_e.json` | `0a0c06ce73ce` | `87fcdbefdd16` |
 | F | `validation/external/generator_f.py` (`generator_f.seed47`) | 47 | `reports/dist_f_freeze.json` | `reports/dist_f.json` | `129bb69febcd` | `34a3e1a3dff0` |
+| H | `validation/external/generator_h.py` (`generator_h.seed59`) | 59 | `reports/dist_h_freeze.json` | `reports/dist_h.json` | (this freeze) | `34a3e1a3dff0` |
 
 `FLAG_THRESHOLD` was 40 on every freeze. Dist F was scored at commit `129bb69febcd` (the Dist E freeze HEAD) **before** the Dist F sources were committed. That is the detector that the freeze hash fingerprints. Do not re-hash current `graph_features.py` against seed 47.
 
-Runtime never reads `fraud_scenario`. Dist F `FAMILY` is eval-only and lives in the generator **and** the freeze file.
+Dist H is a **structure holdout** (not a name-only rename of Dist C–G cores). It also records `graph_metrics`. Do not retune on seed 59.
 
-Do not overwrite `reports/dist_{c,d,e,f}.json` or their freeze files.
+Runtime never reads `fraud_scenario` as a detector feature; Gemini/evidence packs scrub via `privacy.runtime_txn_view`. Dist F `FAMILY` is eval-only and lives in the generator **and** the freeze file.
+
+Do not overwrite `reports/dist_{c,d,e,f}.json` or their freeze files. Dist H freeze is new; do not overwrite after the first pin.
