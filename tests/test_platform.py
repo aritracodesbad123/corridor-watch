@@ -328,6 +328,45 @@ def test_counterfactual_works_with_sparse_risk(isolated_db):
     assert body["baseline"]["risk_score"] != 22
 
 
+def test_alert_detail_exposes_cached_debate_key(isolated_db):
+    from main import app
+    _seed_case("T-DETAIL-1")
+    client = TestClient(app)
+    res = client.get("/api/alerts/T-DETAIL-1", headers={"X-Analyst-Role": "analyst"})
+    assert res.status_code == 200, res.text
+    body = res.json()
+    assert "cached_verdict" in body
+    assert "cached_debate" in body
+    assert "analyst_decisions" in body
+
+
+def test_templated_sar_has_form_sections():
+    from sar_generator import _templated_sar
+
+    evidence = {
+        "transaction": {
+            "txn_id": "T-SAR-1",
+            "amount": 1200,
+            "corridor": "IN->SG",
+            "sender_id": "A-SEND",
+            "receiver_id": "A-RECV",
+        },
+        "sender_profile": {"occupation": "Student"},
+    }
+    verdict = {
+        "primary_pattern": "mule_pass_through",
+        "risk_level": "high",
+        "risk_score": 81,
+        "recommended_action": "hold_payment",
+    }
+    for jur in ("fincen", "mas", "austrac"):
+        draft = _templated_sar("T-SAR-1", jur, evidence, verdict)
+        assert draft["narrative_sections"]
+        assert draft["section_titles"]
+        assert "\n\n" in draft["full_narrative_text"]
+        assert "{" not in draft["full_narrative_text"]
+
+
 def test_password_login_and_alert_sort(isolated_db, monkeypatch):
     from main import app
     monkeypatch.setenv("ENVIRONMENT", "local")

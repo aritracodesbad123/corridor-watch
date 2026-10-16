@@ -302,6 +302,11 @@ def alert_detail(txn_id: str, auth: AuthContext = Depends(require("alerts:read")
     cached = agent.get_cached_verdict(txn_id)
     decisions = _decisions_for(txn_id)
     try:
+        from agent_debate import get_cached_debate
+        cached_debate = get_cached_debate(txn_id)
+    except Exception:
+        cached_debate = None
+    try:
         whatif_features = counterfactual.features_for_case(txn_id)
     except Exception:
         whatif_features = {}
@@ -317,6 +322,7 @@ def alert_detail(txn_id: str, auth: AuthContext = Depends(require("alerts:read")
         "receiver": receiver,
         "network": network,
         "cached_verdict": cached,
+        "cached_debate": cached_debate,
         "analyst_decisions": decisions,
         "whatif_features": whatif_features,
         "dag_steps": step_catalog(),

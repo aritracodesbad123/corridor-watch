@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api, isFiu, isMrm } from '../api'
 import { useAuth } from '../auth'
@@ -24,6 +24,45 @@ type AccountCtx = {
   [key: string]: unknown
 }
 
+type DecisionRow = {
+  decision: string
+  decided_at: string
+  notes?: string
+  analyst_id?: string
+  actor?: string
+}
+
+type SarPayload = {
+  txn_id?: string
+  jurisdiction?: string
+  filing_form?: string
+  mode?: string
+  note?: string
+  full_narrative_text?: string
+  narrative?: string
+  narrative_sections?: Record<string, string>
+  section_titles?: Record<string, string>
+  requires_human_review?: boolean
+}
+
+type WhatIfResult = {
+  txn_id?: string
+  score_delta?: number
+  risk_level_change?: string
+  baseline?: { risk_score?: number; primary_pattern?: string }
+  counterfactual?: {
+    risk_score?: number
+    primary_pattern?: string
+    applied_overrides?: Record<string, { baseline?: unknown; perturbed?: unknown }>
+  }
+  sensitivity_rankings?: Array<{
+    feature?: string
+    perturbation?: string
+    impact_delta?: number
+    sensitivity?: string
+  }>
+}
+
 type CaseDetail = {
   transaction: Record<string, unknown>
   sender: AccountCtx
@@ -31,13 +70,66 @@ type CaseDetail = {
   network?: Record<string, unknown>
   workflow_state?: string
   cached_verdict?: Record<string, unknown> | null
+  cached_debate?: Record<string, unknown> | null
   dag_steps?: Array<{ id: number | string; name: string; description?: string }>
   pattern_matches?: PatternMatch[]
   visibility?: Record<string, unknown>
   boundaries?: Array<{ boundary_id?: string; direction?: string; description?: string }>
-  analyst_decisions?: Array<{ decision: string; decided_at: string; notes?: string }>
+  analyst_decisions?: DecisionRow[]
   debate?: Record<string, unknown>
   [key: string]: unknown
+}
+
+const SAR_SECTION_LABELS: Record<string, string> = {
+  section_1_summary: 'Part I — Summary of suspicious activity',
+  section_2_subject_profile: 'Part II — Subject & account characteristics',
+  section_3_methodology: 'Part III — Methodology & money movement',
+  section_4_institution_action: 'Part IV — Action taken by the financial institution',
+  part_a_subject: 'PART A — Subject & remittance corridor',
+  part_b_typology: 'PART B — Detected typology & money flow',
+  part_c_grounds: 'PART C — Grounds for suspicion & compliance action',
+  part_1_summary: 'PART 1 — Suspicious matter summary',
+  part_2_identity: 'PART 2 — Customer & counterparty identity',
+  part_3_grounds: 'PART 3 — Reasonable grounds for suspicion',
+}
+
+function parseAuditDetail(raw: unknown): Record<string, unknown> | string {
+  if (raw == null) return ''
+  if (typeof raw === 'object') return raw as Record<string, unknown>
+  if (typeof raw !== 'string') return String(raw)
+  const s = raw.trim()
+  if ((s.startsWith('{') && s.endsWith('}')) || (s.startsWith('[') && s.endsWith(']'))) {
+    try {
+      const parsed = JSON.parse(s) as unknown
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>
+      }
+    } catch {
+      /* keep string */
+    }
+  }
+  return s
+}
+
+function summarizeAuditDetail(detail: Record<string, unknown> | string): string {
+  if (typeof detail === 'string') return detail.length > 160 ? `${detail.slice(0, 160)}…` : detail
+  const parts = [
+    detail.tool,
+    detail.step,
+    detail.decision,
+    detail.action,
+    detail.what,
+    detail.who,
+    detail.reason,
+    detail.notes,
+    detail.mode,
+    detail.error,
+    detail.delta != null ? `Δ ${detail.delta}` : null,
+    detail.jurisdiction,
+  ]
+    .filter(Boolean)
+    .map(String)
+  return parts.join(' · ')
 }
 
 type PatternMatch = {
@@ -164,13 +256,15 @@ export function InvestigateView() {
   const [verdict, setVerdict] = useState<Record<string, unknown> | null>(null)
   const [debate, setDebate] = useState<Record<string, unknown> | null>(null)
   const [audit, setAudit] = useState<unknown[]>([])
-  const [sar, setSar] = useState('')
+  const [sar, setSar] = useState<SarPayload | null>(null)
   const [sarJurisdiction, setSarJurisdiction] = useState<'fincen' | 'mas' | 'austrac'>('fincen')
-  const [whatIf, setWhatIf] = useState('')
+  const [whatIf, setWhatIf] = useState<WhatIfResult | null>(null)
   const [docStatus, setDocStatus] = useState('')
   const [disposition, setDisposition] = useState('hold_payment')
   const [notes, setNotes] = useState('')
   const [wfOut, setWfOut] = useState('')
+  const caseLoadSeq = useRef(0)
+  const loadedCaseId = useRef('')
   const [queueCorridor, setQueueCorridor] = useState('')
   const [queuePattern, setQueuePattern] = useState('')
   const [queueSeverity, setQueueSeverity] = useState('')
@@ -192,22 +286,65 @@ export function InvestigateView() {
   }, [queueSort])
 
   const loadCase = useCallback(async (id: string) => {
+    const seq = ++caseLoadSeq.current
+    const switching = id !== loadedCaseId.current
+    // Wipe session panels only when the open case changes — not on soft refresh
+    // (decision/workflow) or queue poll side-effects.
+    if (switching) {
+      loadedCaseId.current = id
+      setVerdict(null)
+      setInvestPayload(null)
+      setDebate(null)
+      setSar(null)
+      setWhatIf(null)
+      setNotes('')
+      setWfOut('')
+      setMsg('')
+      setDocStatus('')
+      setSideOut('')
+      setSofData(null)
+      setMemData(null)
+      setAudit([])
+    }
     if (!id) {
       setDetail(null)
+      loadedCaseId.current = ''
       return
     }
     const d = await api<CaseDetail>(`/alerts/${encodeURIComponent(id)}`)
+    if (seq !== caseLoadSeq.current) return
     setDetail(d)
-    if (d.cached_verdict) {
-      setVerdict(d.cached_verdict)
-      setInvestPayload({ verdict: d.cached_verdict, cached: true })
+    if (switching) {
+      setVerdict(d.cached_verdict ?? null)
+      setInvestPayload(d.cached_verdict ? { verdict: d.cached_verdict, cached: true } : null)
+      setDebate(d.cached_debate ?? (d.debate as Record<string, unknown> | undefined) ?? null)
+      const wf = (d as { whatif_features?: Record<string, number> }).whatif_features
+      if (wf) {
+        if (wf.account_age_days != null) setAge(Number(wf.account_age_days))
+        if (wf.pass_through_ratio != null) setPtr(Number(wf.pass_through_ratio))
+        if (wf.avg_hold_time_minutes != null) setHold(Number(wf.avg_hold_time_minutes))
+        if (wf.shared_device_count != null) setDev(Number(wf.shared_device_count))
+      }
+    } else {
+      setVerdict((prev) => prev ?? d.cached_verdict ?? null)
+      setInvestPayload((prev) =>
+        prev ?? (d.cached_verdict ? { verdict: d.cached_verdict, cached: true } : null),
+      )
+      setDebate(
+        (prev) =>
+          prev ?? d.cached_debate ?? (d.debate as Record<string, unknown> | undefined) ?? null,
+      )
     }
-    const wf = (d as { whatif_features?: Record<string, number> }).whatif_features
-    if (wf) {
-      if (wf.account_age_days != null) setAge(Number(wf.account_age_days))
-      if (wf.pass_through_ratio != null) setPtr(Number(wf.pass_through_ratio))
-      if (wf.avg_hold_time_minutes != null) setHold(Number(wf.avg_hold_time_minutes))
-      if (wf.shared_device_count != null) setDev(Number(wf.shared_device_count))
+  }, [])
+
+  const refreshAudit = useCallback(async (id: string) => {
+    if (!id) return
+    try {
+      const rows = await api<unknown[]>(`/alerts/${encodeURIComponent(id)}/audit`)
+      if (id !== loadedCaseId.current) return
+      setAudit(rows)
+    } catch {
+      /* keep prior trail on transient errors */
     }
   }, [])
 
@@ -217,27 +354,22 @@ export function InvestigateView() {
     return () => clearInterval(t)
   }, [loadAlerts])
 
+  // Auto-pick a case only when the URL has none — do not depend on alerts for loadCase.
   useEffect(() => {
-    if (!current && alerts.length) {
-      const mid = alerts.find((a) => a.showcase === 'middle_bank') || alerts[0]
-      navigate(`/investigate/${mid.txn_id}`, { replace: true })
-      return
-    }
-    if (current) {
-      setMsg('')
-      void loadCase(current).catch((e) => setMsg(String(e.message || e)))
-    }
-  }, [current, alerts, navigate, loadCase])
+    if (current || !alerts.length) return
+    const mid = alerts.find((a) => a.showcase === 'middle_bank') || alerts[0]
+    navigate(`/investigate/${mid.txn_id}`, { replace: true })
+  }, [current, alerts, navigate])
 
   useEffect(() => {
-    if (!current) return
-    void api<unknown[]>(`/alerts/${encodeURIComponent(current)}/audit`)
-      .then(setAudit)
-      .catch(() => setAudit([]))
-    setSideOut('')
-    setSofData(null)
-    setMemData(null)
-  }, [current])
+    if (!current) {
+      loadedCaseId.current = ''
+      setDetail(null)
+      return
+    }
+    void loadCase(current).catch((e) => setMsg(String(e.message || e)))
+    void refreshAudit(current)
+  }, [current, loadCase, refreshAudit])
 
   const t = detail?.transaction
   const network = (detail?.network || {}) as Record<string, unknown>
@@ -270,6 +402,7 @@ export function InvestigateView() {
       setVerdict(v)
       setInvestPayload(data)
       await loadCase(current)
+      void refreshAudit(current)
       setTab('verdict')
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'Investigate failed')
@@ -287,6 +420,7 @@ export function InvestigateView() {
         method: 'POST',
       })
       setDebate(data)
+      void refreshAudit(current)
       setTab('debate')
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'Debate failed')
@@ -300,7 +434,10 @@ export function InvestigateView() {
     setMsg('')
     try {
       await api('/intelligence/simulate', { method: 'POST' })
-      if (current) await loadCase(current)
+      if (current) {
+        await loadCase(current)
+        void refreshAudit(current)
+      }
       setMsg('Synthetic intelligence applied (external hop).')
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'Intel failed')
@@ -318,7 +455,9 @@ export function InvestigateView() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ decision: disposition, notes }),
       })
+      setNotes('')
       await loadCase(current)
+      void refreshAudit(current)
       setMsg('Decision recorded.')
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'Decision failed')
@@ -347,9 +486,7 @@ export function InvestigateView() {
       )
       await loadCase(current)
       await loadAlerts()
-      void api<unknown[]>(`/alerts/${encodeURIComponent(current)}/audit`)
-        .then(setAudit)
-        .catch(() => {})
+      void refreshAudit(current)
     } catch (e) {
       setWfOut(e instanceof Error ? e.message : 'Workflow failed')
     } finally {
@@ -361,25 +498,12 @@ export function InvestigateView() {
     if (!current) return
     setBusy('sar')
     try {
-      const data = await api<{
-        full_narrative_text?: string
-        narrative?: string
-        jurisdiction?: string
-        filing_form?: string
-        mode?: string
-      }>(`/alerts/${encodeURIComponent(current)}/sar?jurisdiction=${sarJurisdiction}`)
-      const text = data.full_narrative_text || data.narrative || JSON.stringify(data, null, 2)
-      setSar(
-        [
-          data.jurisdiction || sarJurisdiction,
-          data.filing_form || '',
-          data.mode ? `mode ${data.mode}` : '',
-          '',
-          text,
-        ]
-          .filter((x, i, a) => x || i === a.length - 1)
-          .join('\n'),
+      const data = await api<SarPayload>(
+        `/alerts/${encodeURIComponent(current)}/sar?jurisdiction=${sarJurisdiction}`,
       )
+      setSar(data)
+      void refreshAudit(current)
+      setTab('sar')
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'SAR failed')
     } finally {
@@ -391,7 +515,7 @@ export function InvestigateView() {
     if (!current) return
     setBusy('whatif')
     try {
-      const data = await api(`/alerts/${encodeURIComponent(current)}/counterfactual`, {
+      const data = await api<WhatIfResult>(`/alerts/${encodeURIComponent(current)}/counterfactual`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -401,7 +525,8 @@ export function InvestigateView() {
           shared_device_count: dev,
         }),
       })
-      setWhatIf(JSON.stringify(data, null, 2))
+      setWhatIf(data)
+      void refreshAudit(current)
       setTab('whatif')
     } catch (e) {
       setMsg(e instanceof Error ? e.message : 'What-if failed')
@@ -1042,7 +1167,75 @@ export function InvestigateView() {
                   <button className="btn secondary" type="button" disabled={!!busy} onClick={() => void runWhatIf()}>
                     {busy === 'whatif' ? 'Simulating…' : 'Simulate What-If'}
                   </button>
-                  {whatIf && <pre className="pre">{whatIf}</pre>}
+                  {whatIf && (
+                    <div style={{ marginTop: 12 }}>
+                      <div className="grid2">
+                        <div className="card">
+                          <h3>Baseline</h3>
+                          <div className="kv">
+                            <span>risk score</span>
+                            <span>{whatIf.baseline?.risk_score ?? '—'}</span>
+                          </div>
+                          <div className="kv">
+                            <span>pattern</span>
+                            <span>{whatIf.baseline?.primary_pattern ?? '—'}</span>
+                          </div>
+                        </div>
+                        <div className="card">
+                          <h3>Counterfactual</h3>
+                          <div className="kv">
+                            <span>risk score</span>
+                            <span>{whatIf.counterfactual?.risk_score ?? '—'}</span>
+                          </div>
+                          <div className="kv">
+                            <span>pattern</span>
+                            <span>{whatIf.counterfactual?.primary_pattern ?? '—'}</span>
+                          </div>
+                          <div className="kv">
+                            <span>delta</span>
+                            <span>
+                              {whatIf.score_delta != null ? `${whatIf.score_delta > 0 ? '+' : ''}${whatIf.score_delta}` : '—'}
+                              {whatIf.risk_level_change ? ` · ${whatIf.risk_level_change}` : ''}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      {whatIf.counterfactual?.applied_overrides &&
+                      Object.keys(whatIf.counterfactual.applied_overrides).length ? (
+                        <div className="card" style={{ marginTop: 12 }}>
+                          <h3>Applied overrides</h3>
+                          <div className="btn-row" style={{ flexWrap: 'wrap', gap: 6 }}>
+                            {Object.entries(whatIf.counterfactual.applied_overrides).map(([k, v]) => (
+                              <span key={k} className="pill">
+                                {k}: {String(v.baseline)} → {String(v.perturbed)}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+                      {Array.isArray(whatIf.sensitivity_rankings) && whatIf.sensitivity_rankings.length ? (
+                        <div className="card" style={{ marginTop: 12 }}>
+                          <h3>Feature sensitivity</h3>
+                          {whatIf.sensitivity_rankings.map((row, i) => (
+                            <div key={i} style={{ marginBottom: 8 }}>
+                              <div className="kv">
+                                <span>{row.feature || row.perturbation || 'feature'}</span>
+                                <span>
+                                  {row.impact_delta != null
+                                    ? `${row.impact_delta > 0 ? '+' : ''}${row.impact_delta}`
+                                    : '—'}
+                                  {row.sensitivity ? ` · ${row.sensitivity}` : ''}
+                                </span>
+                              </div>
+                              {row.perturbation ? (
+                                <div className="muted">{row.perturbation}</div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1051,8 +1244,8 @@ export function InvestigateView() {
                   <div className="card">
                     <h3>Multi-Jurisdiction Regulatory Filing Generator (SAR / STR)</h3>
                     <p className="muted">
-                      Generates official regulatory narrative sections for FinCEN (US), MAS
-                      (Singapore), or AUSTRAC (Australia).
+                      Draft narrative sections aligned to FinCEN Form 111, MAS STR Form A, or
+                      AUSTRAC SMR Form B. Human review required before filing.
                     </p>
                     <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 10 }}>
                       <select
@@ -1075,7 +1268,44 @@ export function InvestigateView() {
                         {busy === 'sar' ? 'Drafting…' : 'Generate SAR Narrative'}
                       </button>
                     </div>
-                    {sar && <pre className="pre">{sar}</pre>}
+                    {sar && (
+                      <div>
+                        <div className="kv">
+                          <span>jurisdiction</span>
+                          <span>{sar.jurisdiction || sarJurisdiction}</span>
+                        </div>
+                        <div className="kv">
+                          <span>form</span>
+                          <span>{sar.filing_form || '—'}</span>
+                        </div>
+                        <div className="kv">
+                          <span>mode</span>
+                          <span>
+                            {sar.mode || '—'}
+                            {sar.requires_human_review ? ' · human review required' : ''}
+                          </span>
+                        </div>
+                        {sar.narrative_sections &&
+                          Object.entries(sar.narrative_sections).map(([key, body]) => (
+                            <div className="card" key={key} style={{ marginTop: 10 }}>
+                              <h3 style={{ fontSize: 12 }}>
+                                {(sar.section_titles && sar.section_titles[key]) ||
+                                  SAR_SECTION_LABELS[key] ||
+                                  key}
+                              </h3>
+                              <p style={{ lineHeight: 1.55, whiteSpace: 'pre-wrap', margin: 0 }}>
+                                {body}
+                              </p>
+                            </div>
+                          ))}
+                        {!sar.narrative_sections && (sar.full_narrative_text || sar.narrative) && (
+                          <p style={{ lineHeight: 1.55, whiteSpace: 'pre-wrap', marginTop: 12 }}>
+                            {sar.full_narrative_text || sar.narrative}
+                          </p>
+                        )}
+                        {sar.note ? <p className="muted" style={{ marginTop: 8 }}>{sar.note}</p> : null}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
@@ -1190,14 +1420,23 @@ export function InvestigateView() {
                     </h3>
                     {decisions.length ? (
                       decisions.map((d, i) => (
-                        <div key={i}>
+                        <div key={`${d.decided_at}-${d.decision}-${i}`}>
                           <div className="kv">
                             <span>{d.decision}</span>
-                            <span>{new Date(d.decided_at).toLocaleString()}</span>
+                            <span>{d.decided_at ? new Date(d.decided_at).toLocaleString() : ''}</span>
                           </div>
-                          <div className="muted" style={{ marginBottom: 6 }}>
-                            {d.notes || ''}
+                          <div className="muted" style={{ marginBottom: 2 }}>
+                            by {d.analyst_id || d.actor || 'unknown'}
                           </div>
+                          {d.notes ? (
+                            <div className="muted" style={{ marginBottom: 6 }}>
+                              {d.notes}
+                            </div>
+                          ) : (
+                            <div className="muted" style={{ marginBottom: 6 }}>
+                              (no notes)
+                            </div>
+                          )}
                         </div>
                       ))
                     ) : (
@@ -1257,14 +1496,8 @@ export function InvestigateView() {
                     const ts = String(row.ts || row.created_at || '')
                     const ev = String(row.event_type || row.type || 'event')
                     const actor = String(row.actor || row.role || '')
-                    let detail = row.detail ?? row.payload ?? ''
-                    if (detail && typeof detail === 'object') {
-                      const d = detail as Record<string, unknown>
-                      detail = [d.decision, d.action, d.tool, d.mode, d.notes]
-                        .filter(Boolean)
-                        .map(String)
-                        .join(' · ')
-                    }
+                    const parsed = parseAuditDetail(row.detail ?? row.payload ?? '')
+                    const summary = summarizeAuditDetail(parsed)
                     return (
                       <div key={i} className="audit-row">
                         <div className="audit-meta">
@@ -1272,7 +1505,15 @@ export function InvestigateView() {
                           <span>{actor}</span>
                           <span>{ts ? new Date(ts).toLocaleString() : ''}</span>
                         </div>
-                        {detail ? <div className="audit-detail">{String(detail)}</div> : null}
+                        {summary ? <div className="audit-detail">{summary}</div> : null}
+                        {typeof parsed === 'object' ? (
+                          <details className="muted" style={{ marginTop: 4 }}>
+                            <summary style={{ cursor: 'pointer' }}>raw</summary>
+                            <pre className="pre" style={{ marginTop: 4, fontSize: 11 }}>
+                              {JSON.stringify(parsed, null, 2)}
+                            </pre>
+                          </details>
+                        ) : null}
                       </div>
                     )
                   })

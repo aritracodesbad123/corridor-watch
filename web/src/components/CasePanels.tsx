@@ -300,36 +300,72 @@ export function DebatePanel({ data }: { data: Record<string, unknown> | null }) 
   const j = (data.judge || {}) as Record<string, unknown>
   const p = (data.prosecutor || {}) as Record<string, unknown>
   const dfn = (data.defense || {}) as Record<string, unknown>
+  const pText = String(p.prosecution_argument || p.argument || p.summary || '')
+  const dText = String(dfn.defense_argument || dfn.argument || dfn.summary || '')
+  const pStory = String(p.case_story || '')
+  const dStory = String(dfn.case_story || '')
+  const jRuling = String(
+    j.final_verdict || j.ruling || j.disposition || card.recommended_disposition || '—',
+  )
+  const jText = String(
+    j.plain_english_outcome || j.verdict_summary || j.rationale || j.summary || '',
+  )
+  const jBullets = j.points_for_prosecution || j.recommended_actions || j.concerns || j.next_checks
+  const scoreEntries = Object.entries(card).filter(
+    ([, v]) => v != null && typeof v !== 'object',
+  )
   return (
     <div className="grid2" style={{ marginTop: 12 }}>
       <div className="card">
         <h3>Prosecutor</h3>
-        <p style={{ lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{String(p.argument || p.summary || '')}</p>
-        <ul className="tight">{bullets(p.key_evidence || p.points)}</ul>
+        {pStory && pStory !== pText ? (
+          <p className="muted" style={{ lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
+            {pStory}
+          </p>
+        ) : null}
+        <p style={{ lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{pText || pStory || '—'}</p>
+        <ul className="tight">{bullets(p.key_incriminating_evidence || p.key_evidence || p.points)}</ul>
+        {p.what_you_want_the_human_to_do ? (
+          <p className="muted" style={{ marginTop: 8 }}>
+            Ask: {String(p.what_you_want_the_human_to_do)}
+          </p>
+        ) : null}
       </div>
       <div className="card">
         <h3>Defense</h3>
-        <p style={{ lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{String(dfn.argument || dfn.summary || '')}</p>
-        <ul className="tight">{bullets(dfn.key_evidence || dfn.points)}</ul>
+        {dStory && dStory !== dText ? (
+          <p className="muted" style={{ lineHeight: 1.45, whiteSpace: 'pre-wrap' }}>
+            {dStory}
+          </p>
+        ) : null}
+        <p style={{ lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{dText || dStory || '—'}</p>
+        <ul className="tight">{bullets(dfn.key_mitigating_evidence || dfn.key_evidence || dfn.points)}</ul>
+        {dfn.what_you_want_the_human_to_do ? (
+          <p className="muted" style={{ marginTop: 8 }}>
+            Ask: {String(dfn.what_you_want_the_human_to_do)}
+          </p>
+        ) : null}
       </div>
       <div className="card">
         <h3>Judge</h3>
         <div className="kv">
           <span>ruling</span>
-          <span>{String(j.ruling || j.disposition || card.recommended_disposition || '—')}</span>
+          <span>{jRuling}</span>
         </div>
-        <p style={{ lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{String(j.rationale || j.summary || '')}</p>
-        <ul className="tight">{bullets(j.concerns || j.next_checks)}</ul>
+        <p style={{ lineHeight: 1.55, whiteSpace: 'pre-wrap' }}>{jText || '—'}</p>
+        <ul className="tight">{bullets(jBullets)}</ul>
       </div>
-      <div className="card">
-        <h3>Scorecard</h3>
-        {Object.entries(card).slice(0, 8).map(([k, v]) => (
-          <div className="kv" key={k}>
-            <span>{k}</span>
-            <span>{typeof v === 'object' ? JSON.stringify(v) : String(v ?? '—')}</span>
-          </div>
-        ))}
-      </div>
+      {scoreEntries.length ? (
+        <div className="card">
+          <h3>Scorecard</h3>
+          {scoreEntries.slice(0, 8).map(([k, v]) => (
+            <div className="kv" key={k}>
+              <span>{k}</span>
+              <span>{String(v ?? '—')}</span>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
